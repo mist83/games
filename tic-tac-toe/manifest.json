@@ -1,0 +1,11 @@
+{
+  "slug": "tic-tac-toe",
+  "name": "Tic Tac Toe",
+  "description": "Classic 3x3 grid game. Get three in a row to win!",
+  "minPlayers": 2,
+  "maxPlayers": 2,
+  "version": "1.0.0",
+  "tags": ["board", "classic", "strategy", "quick", "sequential-turns"],
+  "thumbnail": "thumbnail.svg",
+  "rules": "OVERVIEW\nPerfect-information 3x3 alignment game. X moves first, O second. A player wins by occupying any full row, column, or diagonal; a full board with no line is a draw.\n\nVIEW\nboard is 9 cells in row-major order, using null, X, or O. agentView prints coordinates and marks. turn is the player to move; marks maps players to X/O; winner and draw end the game.\n\nACTIONS\nplace(cell) marks one empty cell 0-8."
+}

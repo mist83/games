@@ -1,0 +1,1316 @@
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #0a0a14;
+  color: #e0e0e0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+/* === Header === */
+.header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 12px; background: #12121e; border-bottom: 1px solid #1e1e30;
+  flex-shrink: 0; flex-wrap: wrap; gap: 6px;
+}
+.header-phase { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+.header-round { font-size: 13px; color: #888; }
+.header-status { font-size: 13px; padding: 3px 10px; border-radius: 12px; font-weight: 600; }
+.header-status.your-turn { background: #22c55e22; color: #22c55e; }
+.header-status.waiting { background: #f59e0b22; color: #f59e0b; }
+.header-status.game-over { background: #ef444422; color: #ef4444; }
+
+/* === Scoreboard: race-to-5 dots === */
+.scoreboard {
+  display: flex; flex-direction: column; gap: 3px; padding: 6px 12px;
+  background: #0f0f1a;
+}
+.sc-row {
+  display: flex; align-items: center; gap: 6px; font-size: 12px;
+}
+.sc-row .sc-name {
+  width: 100px; font-weight: 600; text-align: right;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.sc-row .sc-dots {
+  display: flex; gap: 4px; align-items: center;
+}
+.sc-dot {
+  width: 14px; height: 14px; border-radius: 50%;
+  border: 2px solid #333; transition: background 0.4s, border-color 0.4s, transform 0.3s;
+}
+.sc-dot.filled {
+  border-color: transparent;
+}
+.sc-dot.just-gained {
+  animation: dot-gain 0.6s ease-out;
+}
+.sc-dot.just-lost {
+  animation: dot-lose 0.4s ease-out;
+}
+.sc-row .sc-army-count {
+  font-size: 10px; color: #666; margin-left: 4px;
+}
+@keyframes dot-gain {
+  0% { transform: scale(0.3); }
+  50% { transform: scale(1.4); }
+  100% { transform: scale(1); }
+}
+@keyframes dot-lose {
+  0% { transform: scale(1.3); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Win label */
+.sc-row .sc-win-label {
+  font-size: 9px; font-weight: 700; color: #f59e0b;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+
+/* === Map === */
+.map-wrapper {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  padding: 8px; min-height: 0; position: relative;
+}
+.map {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(6, 1fr);
+  gap: 3px;
+  width: min(95vw, 500px);
+  max-height: min(66vh, 600px);
+  aspect-ratio: 3/6;
+  position: relative;
+}
+#arrow-overlay {
+  position: absolute; top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none; z-index: 10;
+}
+
+/* === Territory cells === */
+.territory {
+  position: relative;
+  background: #16182a;
+  border: 2px solid #252540;
+  border-radius: 6px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 2px; cursor: default;
+  transition: border-color 0.3s, background 0.8s, box-shadow 0.3s;
+  min-height: 40px; overflow: hidden;
+}
+.territory.has-army { border-width: 2px; }
+
+/* === SUPPLY CENTERS: prominent golden accent === */
+.territory.sc {
+  border-color: #b8860b55;
+  background: #16182a;
+}
+.territory.sc::before {
+  content: '\2605'; position: absolute; top: 2px; left: 50%;
+  transform: translateX(-50%);
+  font-size: clamp(16px, 4vw, 22px);
+  color: rgba(245, 185, 50, 0.35);
+  pointer-events: none; z-index: 0;
+  line-height: 1;
+}
+/* SC with an owner: tinted background */
+.territory.sc.sc-owned {
+  border-color: var(--owner-color-dim);
+}
+
+.territory .t-name {
+  font-size: clamp(8px, 2vw, 11px); font-weight: 600;
+  text-align: center; line-height: 1.2; color: #ccc;
+  position: relative; z-index: 1;
+}
+.territory .t-army {
+  font-size: clamp(14px, 3.5vw, 22px); line-height: 1; margin-top: 1px;
+  transition: opacity 0.5s, transform 0.5s;
+  position: relative; z-index: 1;
+}
+
+/* === CURRENT ORDER GLOW === */
+.territory.current-order {
+  border-color: #f59e0b !important;
+  box-shadow: 0 0 16px 4px rgba(245, 158, 11, 0.5), inset 0 0 12px rgba(245, 158, 11, 0.15) !important;
+  animation: current-order-pulse 1.5s ease-in-out infinite;
+}
+@keyframes current-order-pulse {
+  0%, 100% { box-shadow: 0 0 16px 4px rgba(245, 158, 11, 0.5), inset 0 0 12px rgba(245, 158, 11, 0.15); }
+  50% { box-shadow: 0 0 24px 8px rgba(245, 158, 11, 0.7), inset 0 0 20px rgba(245, 158, 11, 0.25); }
+}
+
+.territory .t-order {
+  font-size: clamp(7px, 1.5vw, 9px); color: #aaa;
+  text-align: center; line-height: 1.1; margin-top: 1px;
+  position: relative; z-index: 1;
+}
+
+/* === HOLD === */
+.territory.resolve-hold {
+  animation: hold-fortify 2.5s ease-in-out infinite;
+}
+@keyframes hold-fortify {
+  0%, 100% { box-shadow: inset 0 0 8px 2px currentColor; }
+  50% { box-shadow: inset 0 0 18px 5px currentColor; }
+}
+.territory.resolve-hold .t-army {
+  animation: hold-plant 2.5s ease-in-out infinite;
+}
+@keyframes hold-plant {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+
+/* === MOVE === */
+.territory .t-army.army-departing { animation: army-depart 0.5s ease-out 1.8s forwards; }
+.territory .t-army.army-arriving {
+  opacity: 0; transform: scale(0.3);
+  animation: army-arrive 0.5s ease-out 2.2s forwards;
+}
+.territory .t-army.army-bounce { animation: army-bounce 0.6s ease-in-out 1.5s; }
+.territory .t-army.army-dislodged { animation: army-dislodge 0.8s ease-in 2s forwards; }
+
+/* === REINFORCE: spawn glow burst on SC === */
+.territory.reinforce-spawn {
+  animation: spawn-burst 1s ease-out 0.3s;
+}
+.territory .t-army.army-spawning {
+  opacity: 0; transform: scale(0);
+  animation: army-spawn 0.6s ease-out 0.3s forwards;
+}
+@keyframes spawn-burst {
+  0% { box-shadow: 0 0 0 0 rgba(245, 185, 50, 0); }
+  20% { box-shadow: 0 0 24px 8px rgba(245, 185, 50, 0.7); }
+  100% { box-shadow: 0 0 0 0 rgba(245, 185, 50, 0); }
+}
+@keyframes army-spawn {
+  0% { opacity: 0; transform: scale(0); }
+  60% { opacity: 1; transform: scale(1.3); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* === REINFORCE: disband shrink + red flash === */
+.territory.reinforce-disband {
+  animation: disband-flash 0.6s ease-out 0.3s;
+}
+.territory .t-army.army-disbanding {
+  animation: army-disband 0.8s ease-in 0.3s forwards;
+}
+@keyframes disband-flash {
+  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+  30% { box-shadow: 0 0 16px 4px rgba(239, 68, 68, 0.5); }
+  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+@keyframes army-disband {
+  0% { opacity: 1; transform: scale(1); }
+  40% { opacity: 0.7; transform: scale(0.8); filter: hue-rotate(300deg); }
+  100% { opacity: 0; transform: scale(0); }
+}
+
+/* === COLLISION === */
+.territory.resolve-contested { animation: contested-pulse 0.8s ease-out 1.2s; }
+@keyframes contested-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+  30% { box-shadow: 0 0 20px 6px rgba(239, 68, 68, 0.6); }
+  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+/* === SC CAPTURE: dramatic full-cell flash + scale === */
+.territory.sc-captured {
+  animation: capture-boom 1.5s ease-out 2.2s;
+}
+.territory.sc-captured::after {
+  content: ''; position: absolute; inset: 0; border-radius: 6px;
+  background: white; opacity: 0; z-index: 5;
+  animation: capture-white-flash 0.4s ease-out 2.2s;
+}
+@keyframes capture-boom {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+  15% { transform: scale(1.08); box-shadow: 0 0 30px 10px rgba(245, 158, 11, 0.8); }
+  40% { transform: scale(1.02); box-shadow: 0 0 20px 6px rgba(245, 158, 11, 0.5); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+}
+@keyframes capture-white-flash {
+  0% { opacity: 0.7; }
+  100% { opacity: 0; }
+}
+
+/* === Strength badge === */
+.territory .t-strength {
+  position: absolute; top: 1px; left: 3px;
+  font-size: 10px; font-weight: 700;
+  background: rgba(0,0,0,0.7); border-radius: 3px;
+  padding: 1px 4px; opacity: 0; z-index: 2;
+  animation: fade-in 0.3s ease-out 0.8s forwards;
+}
+
+/* === Animations === */
+@keyframes fade-in { to { opacity: 1; } }
+@keyframes army-arrive { to { opacity: 1; transform: scale(1); } }
+@keyframes army-depart { to { opacity: 0; transform: scale(0.3); } }
+@keyframes army-bounce {
+  0% { transform: translateY(0); }
+  25% { transform: translateY(-8px); }
+  50% { transform: translateY(4px); }
+  75% { transform: translateY(-2px); }
+  100% { transform: translateY(0); }
+}
+@keyframes army-dislodge {
+  0% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.7); }
+  100% { opacity: 0; transform: scale(0); }
+}
+
+/* SVG arrow animations */
+@keyframes arrow-draw { from { stroke-dashoffset: 300; } to { stroke-dashoffset: 0; } }
+@keyframes arrow-succeed-pulse {
+  0% { stroke-width: 3; opacity: 1; }
+  50% { stroke-width: 6; opacity: 1; }
+  100% { stroke-width: 4; opacity: 1; }
+}
+@keyframes arrow-fail-dissolve {
+  0% { opacity: 1; stroke-dasharray: 300; }
+  50% { opacity: 0.6; stroke-dasharray: 8, 6; }
+  100% { opacity: 0.15; stroke-dasharray: 3, 8; }
+}
+@keyframes support-flow { from { stroke-dashoffset: 20; } to { stroke-dashoffset: 0; } }
+
+/* === Action Panel === */
+.action-panel {
+  background: #12121e; border-top: 1px solid #1e1e30;
+  padding: 8px 12px; flex-shrink: 0;
+}
+.action-label { font-size: 12px; color: #888; margin-bottom: 6px; text-align: center; }
+.action-tray {
+  display: flex; gap: 6px; flex-wrap: wrap; justify-content: center;
+  max-height: 120px; overflow-y: auto;
+}
+.action-btn {
+  padding: 6px 12px; border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 6px; background: rgba(30,30,60,0.8); color: #e0e0e0;
+  font-size: 12px; cursor: pointer; transition: background 0.15s, transform 0.1s;
+  white-space: nowrap;
+}
+.action-btn:hover { background: rgba(50,50,80,0.9); }
+.action-btn:active { transform: scale(0.97); }
+.action-btn.hold { border-color: #6366f1; }
+.action-btn.move { border-color: #22c55e; }
+.action-btn.support { border-color: #f59e0b; }
+.phase-info { text-align: center; padding: 12px; font-size: 14px; color: #aaa; }
+.phase-info strong { color: #e0e0e0; }
+.reinforce-list { font-size: 12px; text-align: center; padding: 4px 12px; }
+.reinforce-entry { padding: 2px 0; }
+#player-container { display: none; }
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+</style>
+
+<div class="header" id="header">
+  <span class="header-phase" id="phase-label"></span>
+  <span class="header-round" id="round-label"></span>
+  <span class="header-status" id="status-label"></span>
+</div>
+<div class="scoreboard" id="scoreboard"></div>
+<div class="map-wrapper">
+  <div class="map" id="map"></div>
+  <svg id="arrow-overlay" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="ah-move" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto" markerUnits="userSpaceOnUse">
+        <polygon points="0 0, 10 3.5, 0 7" fill="currentColor"/>
+      </marker>
+      <marker id="ah-success" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto" markerUnits="userSpaceOnUse">
+        <polygon points="0 0, 10 3.5, 0 7" fill="#22c55e"/>
+      </marker>
+      <marker id="ah-fail" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto" markerUnits="userSpaceOnUse">
+        <polygon points="0 0, 10 3.5, 0 7" fill="#ef4444" opacity="0.4"/>
+      </marker>
+    </defs>
+  </svg>
+</div>
+<div class="action-panel" id="action-panel"></div>
+<div id="player-container"></div>
+
+<script>
+(function() {
+  var E2E_GAME_SLUG = "diplomacy";
+  var E2E = window.__playgentE2EState || {
+    version: 1,
+    regions: [],
+    lastPhase: "loading",
+    lastStatus: "loading",
+    lastPlayerId: "",
+    lastCurrentPlayer: "",
+    lastLegalActionCount: 0,
+    lastVisibleLegalActionCount: 0,
+    lastActions: [],
+    lastRawActions: []
+  };
+  window.__playgentE2EState = E2E;
+
+  function setE2EAttr(el, name, value) {
+    if (!el) return;
+    el.setAttribute(name, value == null ? "" : String(value));
+  }
+
+  function unwrapE2EAction(option) {
+    if (option && typeof option === "object" && option.decision !== undefined) return option.decision;
+    if (option && typeof option === "object" && option.action !== undefined) return option.action;
+    return option;
+  }
+
+  function isVisibleE2EAction(action) {
+    action = unwrapE2EAction(action);
+    if (!action || typeof action !== "object") return false;
+    if (action.type === "advance_phase" || action.type === "system" || action.type === "noop") return false;
+    return true;
+  }
+
+  function getVisibleE2EActions(actions) {
+    var out = [];
+    for (var i = 0; actions && i < actions.length; i++) {
+      if (isVisibleE2EAction(actions[i])) out.push(unwrapE2EAction(actions[i]));
+    }
+    return out;
+  }
+
+  function ensureE2ETelemetry() {
+    var el = document.getElementById("e2e-telemetry");
+    if (!el) {
+      el = document.createElement("div");
+      el.id = "e2e-telemetry";
+      if (document.body) document.body.appendChild(el);
+    }
+    el.setAttribute("aria-hidden", "true");
+    el.style.cssText = "position:fixed;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;left:0;top:0;";
+    setE2EAttr(el, "data-game", E2E_GAME_SLUG);
+    setE2EAttr(el, "data-phase", E2E.lastPhase);
+    setE2EAttr(el, "data-status", E2E.lastStatus);
+    setE2EAttr(el, "data-player", E2E.lastPlayerId || "spectator");
+    return el;
+  }
+
+  function addUnique(list, el) {
+    if (!el) return;
+    for (var i = 0; i < list.length; i++) if (list[i] === el) return;
+    list.push(el);
+  }
+
+  function getE2ERoots() {
+    var roots = [];
+    addUnique(roots, ensureE2ETelemetry());
+    addUnique(roots, document.getElementById("telemetry"));
+    addUnique(roots, document.getElementById("game"));
+    addUnique(roots, document.getElementById("game-container"));
+    addUnique(roots, document.querySelector("[data-board]"));
+    return roots;
+  }
+
+  function getCurrentPlayerE2E(view) {
+    if (!view) return "";
+    return view.currentPlayer || view.currentPlayerId || view.currentActor || view.turn || "";
+  }
+
+  function updateE2EPlayers(players) {
+    var telemetry = ensureE2ETelemetry();
+    var host = document.getElementById("e2e-players");
+    if (!host) {
+      host = document.createElement("div");
+      host.id = "e2e-players";
+      telemetry.appendChild(host);
+    }
+    host.textContent = "";
+    for (var i = 0; players && i < players.length; i++) {
+      var p = players[i] || {};
+      var span = document.createElement("span");
+      setE2EAttr(span, "data-player", p.id || "");
+      setE2EAttr(span, "data-player-name", p.name || p.id || "");
+      span.textContent = p.name || p.id || "";
+      host.appendChild(span);
+    }
+  }
+
+  function updateE2ELandmarks(view, legalActions, context) {
+    var visibleActions = getVisibleE2EActions(legalActions || []);
+    var phase = context && context.gameOver ? "game-over" : (view && (view.phase || view.mode || view.stage) ? (view.phase || view.mode || view.stage) : "playing");
+    var status = context && context.gameOver ? "game-over" : (visibleActions.length > 0 ? "your-turn" : "waiting");
+    var playerId = context && context.myId ? context.myId : "spectator";
+    var currentPlayer = getCurrentPlayerE2E(view);
+    var roots = getE2ERoots();
+    E2E.lastPhase = phase;
+    E2E.lastStatus = status;
+    E2E.lastPlayerId = playerId;
+    E2E.lastCurrentPlayer = currentPlayer;
+    E2E.lastRawActions = legalActions || [];
+    E2E.lastActions = visibleActions;
+    E2E.lastLegalActionCount = (legalActions || []).length;
+    E2E.lastVisibleLegalActionCount = visibleActions.length;
+    for (var i = 0; i < roots.length; i++) {
+      setE2EAttr(roots[i], "data-game", E2E_GAME_SLUG);
+      setE2EAttr(roots[i], "data-phase", phase);
+      setE2EAttr(roots[i], "data-status", status);
+      setE2EAttr(roots[i], "data-player", playerId);
+      setE2EAttr(roots[i], "data-current-player", currentPlayer);
+      if (view && view.round != null) setE2EAttr(roots[i], "data-round", view.round);
+      if (view && view.turnNumber != null) setE2EAttr(roots[i], "data-turn", view.turnNumber);
+    }
+    updateE2EPlayers(context && context.players ? context.players : []);
+  }
+
+  function actionTypeForIndex(idx) {
+    var raw = E2E.lastRawActions && E2E.lastRawActions[idx] ? unwrapE2EAction(E2E.lastRawActions[idx]) : null;
+    return raw && raw.type ? raw.type : "choose";
+  }
+
+  function safeLabelFromNode(node) {
+    var label = node.getAttribute("data-action-label") || node.getAttribute("aria-label") || node.title || node.textContent || node.value || "";
+    return String(label).replace(/\s+/g, " ").trim().slice(0, 100);
+  }
+
+  function decorateE2EDOMControls() {
+    var nodes = document.querySelectorAll("[data-action-idx], [data-action], button, [role='button'], input[type='button'], input[type='submit'], input:not([type='hidden']), select, textarea, [data-cell], [data-card], [data-card-id], [data-option-id], [data-brainrot], canvas");
+    for (var i = 0; i < nodes.length; i++) {
+      var node = nodes[i];
+      if (node.hasAttribute("data-action") && !node.hasAttribute("data-action-idx")) {
+        node.setAttribute("data-action-idx", node.getAttribute("data-action"));
+      }
+      if (node.hasAttribute("data-action-idx")) {
+        var idx = parseInt(node.getAttribute("data-action-idx"), 10);
+        if (!isNaN(idx) && !node.hasAttribute("data-action-type")) node.setAttribute("data-action-type", actionTypeForIndex(idx));
+        if (!node.hasAttribute("data-action-label")) node.setAttribute("data-action-label", safeLabelFromNode(node));
+      }
+      if (node.hasAttribute("data-cell") && !node.getAttribute("aria-label")) {
+        node.setAttribute("aria-label", "cell " + node.getAttribute("data-cell"));
+      }
+      if ((node.hasAttribute("data-card") || node.hasAttribute("data-card-id")) && !node.getAttribute("aria-label")) {
+        node.setAttribute("aria-label", "card " + (node.getAttribute("data-card") || node.getAttribute("data-card-id")));
+      }
+      if (node.tagName === "CANVAS" && !node.getAttribute("aria-label")) {
+        node.setAttribute("aria-label", E2E_GAME_SLUG + " canvas");
+      }
+    }
+  }
+
+  function e2eBeginFrame(view, legalActions, context) {
+    E2E.regions = [];
+    updateE2ELandmarks(view || {}, legalActions || [], context || {});
+  }
+
+  function e2eAfterRender() {
+    decorateE2EDOMControls();
+  }
+
+  function isVisibleE2ENode(node) {
+    if (!node || !node.getBoundingClientRect) return false;
+    var rect = node.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return false;
+    if (rect.right <= 0 || rect.bottom <= 0 || rect.left >= window.innerWidth || rect.top >= window.innerHeight) return false;
+    var style = window.getComputedStyle ? window.getComputedStyle(node) : null;
+    if (style && (style.display === "none" || style.visibility === "hidden" || style.opacity === "0")) return false;
+    if (node.disabled || node.getAttribute("aria-disabled") === "true") return false;
+    return true;
+  }
+
+  function regionKindForNode(node) {
+    if (node.tagName === "CANVAS") return "canvas";
+    if (node.tagName === "INPUT" || node.tagName === "SELECT" || node.tagName === "TEXTAREA") return "input";
+    if (node.hasAttribute("data-cell")) return "cell";
+    if (node.hasAttribute("data-card") || node.hasAttribute("data-card-id")) return "card";
+    return "button";
+  }
+
+  function getDOMActionRegions() {
+    decorateE2EDOMControls();
+    var nodes = document.querySelectorAll("[data-action-idx], button, [role='button'], input[type='button'], input[type='submit'], input:not([type='hidden']), select, textarea, [data-cell], [data-card], [data-card-id], [data-option-id], [data-brainrot], canvas");
+    var out = [];
+    for (var i = 0; i < nodes.length; i++) {
+      var node = nodes[i];
+      if (!isVisibleE2ENode(node)) continue;
+      var r = clipE2ERect(node.getBoundingClientRect());
+      if (!r) continue;
+      var id = node.id || node.getAttribute("data-action-idx") || node.getAttribute("data-cell") || node.getAttribute("data-card") || node.getAttribute("data-card-id") || node.getAttribute("data-option-id") || node.getAttribute("data-brainrot") || ("control-" + i);
+      out.push({
+        id: String(id),
+        kind: regionKindForNode(node),
+        label: safeLabelFromNode(node),
+        actionType: node.getAttribute("data-action-type") || "",
+        selector: node.id ? ("#" + node.id) : "",
+        rect: { x: r.left, y: r.top, width: r.width, height: r.height },
+        center: { x: r.left + r.width / 2, y: r.top + r.height / 2 }
+      });
+    }
+    return out;
+  }
+
+  function clipE2ERect(rect) {
+    if (!rect) return null;
+    var x = Number(rect.x != null ? rect.x : rect.left) || 0;
+    var y = Number(rect.y != null ? rect.y : rect.top) || 0;
+    var width = Number(rect.width) || 0;
+    var height = Number(rect.height) || 0;
+    var left = Math.max(0, x);
+    var top = Math.max(0, y);
+    var right = Math.min(window.innerWidth, x + width);
+    var bottom = Math.min(window.innerHeight, y + height);
+    if (right - left <= 0 || bottom - top <= 0) return null;
+    return { x: left, y: top, width: right - left, height: bottom - top };
+  }
+
+  function e2eRegisterRegion(region) {
+    if (!region || !region.id || !region.rect) return;
+    var r = clipE2ERect(region.rect);
+    if (!r || r.width == null || r.height == null) return;
+    var item = {
+      id: String(region.id),
+      kind: region.kind || "button",
+      label: region.label || "",
+      actionType: region.actionType || "",
+      rect: { x: Number(r.x) || 0, y: Number(r.y) || 0, width: Number(r.width) || 0, height: Number(r.height) || 0 },
+      center: region.center || { x: (Number(r.x) || 0) + (Number(r.width) || 0) / 2, y: (Number(r.y) || 0) + (Number(r.height) || 0) / 2 }
+    };
+    for (var i = 0; i < E2E.regions.length; i++) {
+      if (E2E.regions[i].id === item.id) {
+        E2E.regions[i] = item;
+        return;
+      }
+    }
+    E2E.regions.push(item);
+  }
+
+  function e2eCanvasRect(localRect, app) {
+    var canvas = app && app.canvas ? app.canvas : document.querySelector("canvas");
+    var screen = app && app.screen ? app.screen : null;
+    if (!canvas || !localRect) return null;
+    var canvasRect = canvas.getBoundingClientRect();
+    var screenW = screen && screen.width ? screen.width : canvasRect.width;
+    var screenH = screen && screen.height ? screen.height : canvasRect.height;
+    var sx = canvasRect.width / (screenW || canvasRect.width || 1);
+    var sy = canvasRect.height / (screenH || canvasRect.height || 1);
+    return {
+      x: canvasRect.left + localRect.x * sx,
+      y: canvasRect.top + localRect.y * sy,
+      width: localRect.width * sx,
+      height: localRect.height * sy
+    };
+  }
+
+  function e2ePixiBounds(displayObject, app) {
+    if (!displayObject || !displayObject.getBounds) return null;
+    var b = displayObject.getBounds();
+    return e2eCanvasRect({ x: b.x, y: b.y, width: b.width, height: b.height }, app);
+  }
+
+  function getE2ECanvasInfo() {
+    var canvas = document.querySelector("canvas");
+    if (!canvas) return null;
+    var rect = canvas.getBoundingClientRect();
+    return { selector: "canvas", width: rect.width, height: rect.height };
+  }
+
+  function getAllE2ERegions() {
+    var out = E2E.regions.slice();
+    var dom = getDOMActionRegions();
+    var seen = {};
+    var merged = [];
+    for (var i = 0; i < out.length; i++) { seen[out[i].id] = true; merged.push(out[i]); }
+    for (var j = 0; j < dom.length; j++) {
+      if (!seen[dom[j].id]) merged.push(dom[j]);
+    }
+    return merged;
+  }
+
+  function runE2ELayoutChecks() {
+    var failures = [];
+    var regions = getAllE2ERegions();
+    var canvas = getE2ECanvasInfo();
+    if (E2E.lastVisibleLegalActionCount > 0 && regions.length === 0) {
+      failures.push({ severity: "error", message: "active legal actions did not create visible controls" });
+    }
+    if (canvas && (canvas.width <= 0 || canvas.height <= 0)) {
+      failures.push({ severity: "error", message: "canvas has empty bounds" });
+    }
+    for (var i = 0; i < regions.length; i++) {
+      var region = regions[i];
+      var r = region.rect;
+      if (!r) {
+        failures.push({ severity: "error", message: region.id + " has no rect" });
+        continue;
+      }
+      if (r.width <= 0 || r.height <= 0) failures.push({ severity: "error", message: region.id + " has empty bounds" });
+      if (r.x < -1 || r.y < -1 || r.x + r.width > window.innerWidth + 1 || r.y + r.height > window.innerHeight + 1) {
+        failures.push({ severity: "error", message: region.id + " is offscreen" });
+      }
+      if (region.kind !== "canvas" && (r.width < 36 || r.height < 36)) {
+        failures.push({ severity: "warning", message: region.id + " is a small touch target" });
+      }
+    }
+    return failures;
+  }
+
+  window.__playgentE2EBegin = e2eBeginFrame;
+  window.__playgentE2EAfterRender = e2eAfterRender;
+  window.__playgentE2ERegisterRegion = e2eRegisterRegion;
+  window.__playgentE2ECanvasRect = e2eCanvasRect;
+  window.__playgentE2EPixiBounds = e2ePixiBounds;
+  window.__playgentE2ERunLayoutChecks = runE2ELayoutChecks;
+  window.__playgentE2E = {
+    version: 1,
+    getSnapshot: function() {
+      return {
+        phase: E2E.lastPhase,
+        status: E2E.lastStatus,
+        playerId: E2E.lastPlayerId,
+        currentPlayer: E2E.lastCurrentPlayer,
+        legalActionCount: E2E.lastVisibleLegalActionCount,
+        regionCount: getAllE2ERegions().length,
+        canvas: getE2ECanvasInfo()
+      };
+    },
+    getInteractiveRegions: function() { return getAllE2ERegions(); },
+    checkLayout: function() { return runE2ELayoutChecks(); }
+  };
+
+  if (typeof window.__playgentCheckLayout !== "function") {
+    window.__playgentCheckLayout = function() { return runE2ELayoutChecks(); };
+  }
+
+  function patchPlaygentE2E() {
+    if (!window.playgent || !window.playgent.onStateChange || window.playgent.__e2ePatched) return false;
+    var original = window.playgent.onStateChange;
+    window.playgent.onStateChange = function(cb) {
+      return original.call(window.playgent, function(view, legalActions, context) {
+        e2eBeginFrame(view, legalActions, context || {});
+        var result = cb.apply(this, arguments);
+        e2eAfterRender();
+        return result;
+      });
+    };
+    window.playgent.__e2ePatched = true;
+    return true;
+  }
+
+  ensureE2ETelemetry();
+  decorateE2EDOMControls();
+  if (!patchPlaygentE2E()) {
+    var tries = 0;
+    var timer = setInterval(function() {
+      tries++;
+      if (patchPlaygentE2E() || tries > 80) clearInterval(timer);
+    }, 50);
+  }
+}());
+</script>
+
+<script>
+var FACTION_COLORS = ['#4a90d9', '#2ecc71', '#f39c12', '#9b59b6'];
+var GRID = [
+  ['ironhold', 'northwood', 'stormwall'],
+  ['westmarch', 'highland', 'frostpeak'],
+  ['moorland', 'crossroads', 'eastmarch'],
+  ['ashwick', 'deepvale', 'coastwatch'],
+  ['southwood', 'kingsbridge', 'thornfield'],
+  ['duskwall', 'goldplain', 'sunhollow']
+];
+var SC_SET = {
+  ironhold:1, stormwall:1, sunhollow:1, duskwall:1,
+  highland:1, crossroads:1, deepvale:1, kingsbridge:1
+};
+var WIN_SC = 5;
+
+function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+var _uiSeed = 12345;
+function uiRandom() { _uiSeed = (_uiSeed * 16807) % 2147483647; return _uiSeed / 2147483647; }
+
+function getColor(view, ctx, pid) {
+  if (!pid || !view.factionMap) return '#444';
+  var fi = view.factionMap[pid];
+  return fi !== undefined ? FACTION_COLORS[fi] : '#444';
+}
+function getPlayerName(view, pid) {
+  if (!pid) return '?';
+  if (view.playerNames && view.playerNames[pid]) return view.playerNames[pid];
+  if (_lastCtx && _lastCtx.players) {
+    for (var i = 0; i < _lastCtx.players.length; i++) {
+      if (_lastCtx.players[i].id === pid) {
+        return _lastCtx.players[i].username || _lastCtx.players[i].name || pid;
+      }
+    }
+  }
+  if (!view.factionMap) return pid;
+  var fi = view.factionMap[pid];
+  return fi !== undefined ? 'Player ' + (fi + 1) : pid;
+}
+function scCount(scs, pid) {
+  var c = 0; for (var s in scs) { if (scs[s] === pid) c++; } return c;
+}
+
+// Track previous SC counts per player for dot animation
+var prevSCCounts = {};
+
+function renderHeader(view, ctx, actions) {
+  var phaseNames = {
+    negotiate: 'Negotiate', orders: 'Orders', resolve: 'Resolve',
+    reinforce: 'Reinforce', gameOverDisplay: 'Game Over', gameOver: 'Game Over'
+  };
+  document.getElementById('phase-label').textContent = phaseNames[view.phase] || view.phase;
+  document.getElementById('round-label').textContent = 'Round ' + view.round + '/' + view.maxRounds;
+  var statusEl = document.getElementById('status-label');
+  if (ctx.gameOver) { statusEl.textContent = 'Game Over'; statusEl.className = 'header-status game-over'; }
+  else if (actions.length > 0) { statusEl.textContent = view.phase === 'negotiate' ? 'Negotiating' : 'Your Turn'; statusEl.className = 'header-status your-turn'; }
+  else { statusEl.textContent = 'Waiting'; statusEl.className = 'header-status waiting'; }
+}
+
+function renderScoreboard(view, ctx) {
+  var sb = document.getElementById('scoreboard');
+  sb.innerHTML = '';
+  var players = ctx.players || [];
+  for (var i = 0; i < players.length; i++) {
+    var pid = players[i].id;
+    var color = getColor(view, ctx, pid);
+    var count = scCount(view.supplyCenters, pid);
+    var prevCount = prevSCCounts[pid] !== undefined ? prevSCCounts[pid] : count;
+    var armyCount = 0;
+    for (var t in view.armies) { if (view.armies[t] === pid) armyCount++; }
+
+    var row = document.createElement('div');
+    row.className = 'sc-row';
+
+    // Faction name
+    var nameSpan = document.createElement('span');
+    nameSpan.className = 'sc-name';
+    nameSpan.style.color = color;
+    nameSpan.textContent = getPlayerName(view, pid);
+    row.appendChild(nameSpan);
+
+    // 5 dots: filled = owned SC, empty = needed
+    var dotsDiv = document.createElement('span');
+    dotsDiv.className = 'sc-dots';
+    for (var d = 0; d < WIN_SC; d++) {
+      var dot = document.createElement('span');
+      dot.className = 'sc-dot';
+      if (d < count) {
+        dot.classList.add('filled');
+        dot.style.background = color;
+        // Animate newly gained dots
+        if (d >= prevCount) dot.classList.add('just-gained');
+      } else {
+        // Animate recently lost dots
+        if (d < prevCount) dot.classList.add('just-lost');
+      }
+      dotsDiv.appendChild(dot);
+    }
+    row.appendChild(dotsDiv);
+
+    // Army count (subtle)
+    var armySpan = document.createElement('span');
+    armySpan.className = 'sc-army-count';
+    armySpan.textContent = armyCount + ' armies';
+    row.appendChild(armySpan);
+
+    sb.appendChild(row);
+    prevSCCounts[pid] = count;
+  }
+}
+
+function findContested(od) {
+  var movesTo = {};
+  for (var t in od) {
+    if (od[t].type === 'move') {
+      var dest = od[t].to;
+      if (!movesTo[dest]) movesTo[dest] = [];
+      movesTo[dest].push(t);
+    }
+  }
+  var contested = {};
+  for (var d in movesTo) { if (movesTo[d].length > 1) contested[d] = true; }
+  for (var t2 in od) {
+    if (od[t2].type === 'move') {
+      var dest2 = od[t2].to;
+      if (od[dest2] && od[dest2].type === 'hold') contested[dest2] = true;
+    }
+  }
+  return contested;
+}
+
+function buildSupportMap(od) {
+  var supportMap = {};
+  for (var t in od) {
+    if (od[t].type === 'support') {
+      var sf = od[t].supportFrom;
+      var st = od[t].supportTo;
+      if (od[sf] && od[sf].type === 'move' && od[sf].to === st) {
+        supportMap[sf] = (supportMap[sf] || 0) + 1;
+      }
+      if (sf === st && od[sf] && od[sf].type === 'hold') {
+        supportMap[sf] = (supportMap[sf] || 0) + 1;
+      }
+    }
+  }
+  return supportMap;
+}
+
+function renderMap(view, ctx, actions) {
+  var mapEl = document.getElementById('map');
+  mapEl.innerHTML = '';
+  var currentArmy = view.currentArmy || null;
+  var myOrders = view.myOrders || {};
+  var rr = view.resolveResults || null;
+  var isResolve = view.phase === 'resolve';
+  var isReinforce = view.phase === 'reinforce';
+  var od = (rr && rr.orderDisplay) ? rr.orderDisplay : null;
+
+  var displayArmies = (isResolve && view.preResolveArmies) ? view.preResolveArmies
+    : (isReinforce && view.preReinforceArmies) ? view.preReinforceArmies
+    : view.armies;
+  var displaySCs = (isResolve && view.preResolveSCs) ? view.preResolveSCs : view.supplyCenters;
+  var contested = od ? findContested(od) : {};
+
+  // Build sets of spawned/disbanded territories for reinforce phase
+  var spawnSet = {}, disbandSet = {};
+  if (isReinforce && view.reinforceResults) {
+    for (var pid in view.reinforceResults) {
+      var rc = view.reinforceResults[pid];
+      if (rc.built) { for (var bi = 0; bi < rc.built.length; bi++) spawnSet[rc.built[bi]] = pid; }
+      if (rc.disbanded) { for (var di = 0; di < rc.disbanded.length; di++) disbandSet[rc.disbanded[di]] = pid; }
+    }
+  }
+
+  for (var r = 0; r < 6; r++) {
+    for (var c = 0; c < 3; c++) {
+      var t = GRID[r][c];
+      var div = document.createElement('div');
+      div.className = 'territory';
+      div.setAttribute('data-territory', t);
+
+      var isSC = !!SC_SET[t];
+      if (isSC) div.classList.add('sc');
+
+      var armyOwner = displayArmies[t] || null;
+      var color = getColor(view, ctx, armyOwner);
+      var scOwner = displaySCs[t] || null;
+
+      if (armyOwner) {
+        div.classList.add('has-army');
+        div.style.borderColor = color;
+        div.style.background = color + '15';
+      }
+
+      // SC ownership: visible tinted border even without army
+      if (isSC && scOwner) {
+        var ownerColor = getColor(view, ctx, scOwner);
+        div.classList.add('sc-owned');
+        div.style.setProperty('--owner-color-dim', ownerColor + '88');
+        if (!armyOwner) {
+          div.style.borderColor = ownerColor + '88';
+          div.style.background = ownerColor + '0a';
+        }
+      }
+
+      if (view.phase === 'orders' && t === currentArmy) div.classList.add('current-order');
+
+      // Territory name
+      var nameDiv = document.createElement('div');
+      nameDiv.className = 't-name';
+      nameDiv.textContent = cap(t);
+      div.appendChild(nameDiv);
+
+      // Army icon
+      if (armyOwner) {
+        var armyDiv = document.createElement('div');
+        armyDiv.className = 't-army';
+        armyDiv.textContent = '\u2694';
+        armyDiv.style.color = color;
+        if (isResolve && od && od[t]) {
+          if (od[t].type === 'move' && od[t].succeeded) armyDiv.classList.add('army-departing');
+          else if (od[t].type === 'move' && !od[t].succeeded) armyDiv.classList.add('army-bounce');
+        }
+        div.appendChild(armyDiv);
+      }
+
+      // Arriving army
+      if (isResolve && view.armies[t] && !displayArmies[t]) {
+        var arrDiv = document.createElement('div');
+        arrDiv.className = 't-army army-arriving';
+        arrDiv.textContent = '\u2694';
+        arrDiv.style.color = getColor(view, ctx, view.armies[t]);
+        div.appendChild(arrDiv);
+      }
+
+      // HOLD glow
+      if (isResolve && od && od[t] && od[t].type === 'hold') {
+        div.classList.add('resolve-hold');
+        div.style.color = color;
+      }
+
+      // Contested pulse
+      if (isResolve && contested[t]) div.classList.add('resolve-contested');
+
+      // SC CAPTURE: dramatic boom + white flash
+      if (isResolve && isSC && view.preResolveSCs && view.supplyCenters[t] !== view.preResolveSCs[t]) {
+        div.classList.add('sc-captured');
+      }
+
+      // Strength badge
+      if (isResolve && od && od[t] && (od[t].type === 'move' || od[t].type === 'hold') && od[t].strength > 1) {
+        var strDiv = document.createElement('div');
+        strDiv.className = 't-strength';
+        strDiv.textContent = od[t].strength + '\u00D7';
+        strDiv.style.color = od[t].succeeded !== false ? '#22c55e' : '#ef4444';
+        div.appendChild(strDiv);
+      }
+
+      // REINFORCE: spawn animation (new army appearing on SC)
+      if (isReinforce && spawnSet[t]) {
+        div.classList.add('reinforce-spawn');
+        var spawnDiv = document.createElement('div');
+        spawnDiv.className = 't-army army-spawning';
+        spawnDiv.textContent = '\u2694';
+        spawnDiv.style.color = getColor(view, ctx, spawnSet[t]);
+        div.appendChild(spawnDiv);
+      }
+
+      // REINFORCE: disband animation (army fading out)
+      if (isReinforce && disbandSet[t] && armyOwner) {
+        div.classList.add('reinforce-disband');
+        // Find the existing army div and add disbanding class
+        var existingArmy = div.querySelector('.t-army');
+        if (existingArmy) existingArmy.classList.add('army-disbanding');
+      }
+
+      // My orders during orders phase
+      if (view.phase === 'orders' && myOrders[t]) {
+        var orderDiv = document.createElement('div');
+        orderDiv.className = 't-order';
+        var o = myOrders[t];
+        if (o.order === 'hold') orderDiv.textContent = 'HOLD';
+        else if (o.order === 'move') orderDiv.textContent = '\u2192 ' + cap(o.to);
+        else if (o.order === 'support') orderDiv.textContent = 'SUP ' + cap(o.supportTo);
+        div.appendChild(orderDiv);
+      }
+
+      mapEl.appendChild(div);
+    }
+  }
+
+  if (isResolve) { setTimeout(function() { renderArrows(view, ctx); }, 50); }
+  else { clearArrows(); }
+}
+
+function clearArrows() {
+  var svg = document.getElementById('arrow-overlay');
+  var ch = svg.childNodes;
+  for (var i = ch.length - 1; i >= 0; i--) {
+    if (ch[i].nodeName !== 'defs') svg.removeChild(ch[i]);
+  }
+}
+
+function getCellCenter(territory) {
+  var el = document.querySelector('[data-territory="' + territory + '"]');
+  if (!el) return null;
+  var mapEl = document.getElementById('map');
+  var mapRect = mapEl.getBoundingClientRect();
+  var cellRect = el.getBoundingClientRect();
+  return {
+    x: cellRect.left - mapRect.left + cellRect.width / 2,
+    y: cellRect.top - mapRect.top + cellRect.height / 2
+  };
+}
+
+function renderArrows(view, ctx) {
+  clearArrows();
+  var svg = document.getElementById('arrow-overlay');
+  var mapEl = document.getElementById('map');
+  var mapRect = mapEl.getBoundingClientRect();
+  svg.setAttribute('width', mapRect.width);
+  svg.setAttribute('height', mapRect.height);
+  svg.style.width = mapRect.width + 'px';
+  svg.style.height = mapRect.height + 'px';
+  svg.style.position = 'absolute';
+  svg.style.left = mapEl.offsetLeft + 'px';
+  svg.style.top = mapEl.offsetTop + 'px';
+
+  var rr = view.resolveResults;
+  if (!rr || !rr.orderDisplay) return;
+  var od = rr.orderDisplay;
+  var supportMap = buildSupportMap(od);
+  var t, order, fromPos, toPos, color, dx, dy, len, nx, ny, line;
+  var shortenPx = 20;
+
+  // Move arrows
+  for (t in od) {
+    order = od[t];
+    if (order.type !== 'move') continue;
+    color = getColor(view, ctx, order.playerId);
+    fromPos = getCellCenter(t);
+    toPos = getCellCenter(order.to);
+    if (!fromPos || !toPos) continue;
+    dx = toPos.x - fromPos.x; dy = toPos.y - fromPos.y;
+    len = Math.sqrt(dx * dx + dy * dy);
+    nx = dx / len; ny = dy / len;
+    var boosted = supportMap[t] || 0;
+    var baseWidth = 3 + boosted * 1.5;
+
+    line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', fromPos.x + nx * shortenPx);
+    line.setAttribute('y1', fromPos.y + ny * shortenPx);
+    line.setAttribute('x2', toPos.x - nx * shortenPx);
+    line.setAttribute('y2', toPos.y - ny * shortenPx);
+    line.setAttribute('stroke', color);
+    line.setAttribute('stroke-width', String(baseWidth));
+    line.setAttribute('stroke-linecap', 'round');
+    line.setAttribute('marker-end', 'url(#ah-move)');
+    line.style.color = color;
+    line.setAttribute('stroke-dasharray', '300');
+    line.setAttribute('stroke-dashoffset', '300');
+    line.style.animation = 'arrow-draw 0.6s ease-out 0.2s forwards';
+
+    if (order.succeeded) {
+      setTimeout((function(el, bw) {
+        return function() {
+          el.setAttribute('stroke', '#22c55e');
+          el.setAttribute('marker-end', 'url(#ah-success)');
+          el.setAttribute('stroke-dasharray', 'none');
+          el.setAttribute('stroke-dashoffset', '0');
+          el.style.animation = 'arrow-succeed-pulse 0.6s ease-in-out';
+          el.setAttribute('stroke-width', String(bw));
+        };
+      })(line, baseWidth), 1500);
+    } else {
+      setTimeout((function(el) {
+        return function() {
+          el.setAttribute('stroke', '#ef4444');
+          el.setAttribute('marker-end', 'url(#ah-fail)');
+          el.setAttribute('stroke-dasharray', 'none');
+          el.setAttribute('stroke-dashoffset', '0');
+          el.style.animation = 'arrow-fail-dissolve 0.8s ease-out forwards';
+        };
+      })(line), 1500);
+    }
+
+    if (boosted > 0) {
+      var glow = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      glow.setAttribute('x1', line.getAttribute('x1'));
+      glow.setAttribute('y1', line.getAttribute('y1'));
+      glow.setAttribute('x2', line.getAttribute('x2'));
+      glow.setAttribute('y2', line.getAttribute('y2'));
+      glow.setAttribute('stroke', color);
+      glow.setAttribute('stroke-width', String(baseWidth + 4));
+      glow.setAttribute('stroke-opacity', '0.2');
+      glow.setAttribute('stroke-linecap', 'round');
+      glow.setAttribute('stroke-dasharray', '300');
+      glow.setAttribute('stroke-dashoffset', '300');
+      glow.style.animation = 'arrow-draw 0.6s ease-out 0.2s forwards';
+      svg.appendChild(glow);
+    }
+    svg.appendChild(line);
+  }
+
+  // Support beams
+  for (t in od) {
+    order = od[t];
+    if (order.type !== 'support') continue;
+    color = getColor(view, ctx, order.playerId);
+    fromPos = getCellCenter(t);
+    toPos = getCellCenter(order.supportTo);
+    if (!fromPos || !toPos) continue;
+    dx = toPos.x - fromPos.x; dy = toPos.y - fromPos.y;
+    len = Math.sqrt(dx * dx + dy * dy);
+    nx = dx / len; ny = dy / len;
+    line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', fromPos.x + nx * 15);
+    line.setAttribute('y1', fromPos.y + ny * 15);
+    line.setAttribute('x2', toPos.x - nx * 15);
+    line.setAttribute('y2', toPos.y - ny * 15);
+    line.setAttribute('stroke', color);
+    line.setAttribute('stroke-width', '2');
+    line.setAttribute('stroke-dasharray', '4, 3');
+    line.setAttribute('stroke-opacity', '0.6');
+    line.setAttribute('stroke-linecap', 'round');
+    line.style.opacity = '0';
+    line.style.animation = 'fade-in 0.3s ease-out 0.4s forwards, support-flow 0.8s linear 0.4s infinite';
+    svg.appendChild(line);
+  }
+}
+
+function renderActions(view, ctx, actions) {
+  var panel = document.getElementById('action-panel');
+  panel.innerHTML = '';
+  if (actions.length === 0 && !ctx.gameOver) {
+    if (view.phase === 'negotiate') {
+      var info = document.createElement('div');
+      info.className = 'phase-info';
+      info.innerHTML = '<strong>Negotiate!</strong> Use whisper to make deals with other players.';
+      panel.appendChild(info);
+    } else if (view.phase === 'orders') {
+      var info2 = document.createElement('div');
+      info2.className = 'phase-info';
+      info2.innerHTML = view.submitted && view.submitted[ctx.myId]
+        ? '<strong>Orders submitted!</strong> Waiting for others...'
+        : '<strong>Waiting...</strong>';
+      panel.appendChild(info2);
+    } else if (view.phase === 'resolve') {
+      /* arrows tell the story */
+    } else if (view.phase === 'reinforce') {
+      var info3 = document.createElement('div');
+      info3.className = 'phase-info';
+      info3.innerHTML = '<strong>Reinforcements!</strong> Adjusting armies to match supply centers.';
+      panel.appendChild(info3);
+      if (view.reinforceResults) {
+        var rList = document.createElement('div');
+        rList.className = 'reinforce-list';
+        var players = ctx.players || [];
+        for (var ri = 0; ri < players.length; ri++) {
+          var rpid = players[ri].id;
+          var rc = view.reinforceResults[rpid];
+          if (!rc) continue;
+          var rDiv = document.createElement('div');
+          rDiv.className = 'reinforce-entry';
+          var rColor = getColor(view, ctx, rpid);
+          var rText = '<span style="color:' + rColor + '">' + getPlayerName(view, rpid) + '</span>: ';
+          if (rc.diff > 0) rText += '+' + rc.built.length + ' built';
+          else if (rc.diff < 0) rText += '-' + rc.disbanded.length + ' disbanded';
+          else rText += 'no change';
+          rDiv.innerHTML = rText;
+          rList.appendChild(rDiv);
+        }
+        panel.appendChild(rList);
+      }
+    }
+    return;
+  }
+  if (ctx.gameOver) {
+    var goInfo = document.createElement('div');
+    goInfo.className = 'phase-info';
+    goInfo.innerHTML = '<strong>Game Over!</strong>';
+    panel.appendChild(goInfo);
+    return;
+  }
+  if (view.phase === 'orders' && view.currentArmy) {
+    var label2 = document.createElement('div');
+    label2.className = 'action-label';
+    label2.textContent = 'Order for ' + cap(view.currentArmy) + ' (' + view.remainingArmies + ' remaining)';
+    panel.appendChild(label2);
+  }
+  var tray = document.createElement('div');
+  tray.className = 'action-tray';
+  for (var i = 0; i < actions.length; i++) {
+    var action = actions[i];
+    var btn = document.createElement('button');
+    btn.className = 'action-btn';
+    if (action.type === 'order') {
+      if (action.order === 'hold') { btn.textContent = 'Hold'; btn.classList.add('hold'); }
+      else if (action.order === 'move') { btn.textContent = '\u2192 ' + cap(action.to); btn.classList.add('move'); }
+      else if (action.order === 'support') {
+        btn.textContent = action.supportFrom === action.supportTo
+          ? 'Sup ' + cap(action.supportFrom) + ' hold'
+          : 'Sup ' + cap(action.supportFrom) + '\u2192' + cap(action.supportTo);
+        btn.classList.add('support');
+      }
+    } else if (action.type === 'autoCompleteOrders') {
+      btn.textContent = 'Auto hold rest';
+    }
+    (function(a) { btn.addEventListener('click', function() {
+      if (playgent.sound) {
+        if (a.type === 'order' && a.order === 'move') playgent.sound('board.move');
+        else if (a.type === 'order' && a.order === 'support') playgent.sound('ui.select');
+        else playgent.sound('ui.confirm');
+      }
+      playgent.submitAction(a);
+    }); })(action);
+    tray.appendChild(btn);
+  }
+  panel.appendChild(tray);
+}
+
+function renderPlayerContainer(ctx) {
+  var container = document.getElementById('player-container');
+  container.innerHTML = '';
+  var players = ctx.players || [];
+  for (var i = 0; i < players.length; i++) {
+    var span = document.createElement('span');
+    span.setAttribute('data-player', players[i].id);
+    span.textContent = players[i].username || players[i].name || players[i].id;
+    container.appendChild(span);
+  }
+}
+
+var _resizeTimer = null;
+window.addEventListener('resize', function() {
+  clearTimeout(_resizeTimer);
+  _resizeTimer = setTimeout(function() {
+    if (_lastView && _lastView.phase === 'resolve') renderArrows(_lastView, _lastCtx);
+  }, 200);
+});
+
+var _lastView = null, _lastCtx = null, _lastSoundPhase = null, _lastResultSoundKey = "";
+
+function unwrapAction(option) {
+  if (option && typeof option === 'object' && option.decision !== undefined) return option.decision;
+  if (option && typeof option === 'object' && option.action !== undefined) return option.action;
+  return option;
+}
+
+function playVisibleResultSounds(view) {
+  var key = view.phase + ':' + view.round;
+  var hasMove = false;
+  var hasCapture = false;
+  var hasDisband = false;
+  var results, orders, terr, pid, change;
+  if (view.phase === 'resolve' && view.resolveResults) {
+    results = view.resolveResults;
+    key += ':resolve:' + JSON.stringify(results.orderDisplay || {}) + ':' + JSON.stringify(results.retreats || {}) + ':' + JSON.stringify(results.disbanded || []);
+    if (key === _lastResultSoundKey) return;
+    _lastResultSoundKey = key;
+    orders = results.orderDisplay || {};
+    for (terr in orders) {
+      if (orders[terr].type === 'move' && orders[terr].succeeded) hasMove = true;
+    }
+    hasCapture = Object.keys(results.retreats || {}).length > 0 || (results.disbanded && results.disbanded.length > 0);
+    if (view.preResolveSCs) {
+      for (terr in view.supplyCenters) {
+        if (view.supplyCenters[terr] !== view.preResolveSCs[terr]) hasCapture = true;
+      }
+    }
+    if (hasMove && playgent.sound) setTimeout(function() { if (playgent.sound) playgent.sound('board.move'); }, 220);
+    if (hasCapture && playgent.sound) setTimeout(function() { if (playgent.sound) playgent.sound('board.capture'); }, 760);
+  } else if (view.phase === 'reinforce' && view.reinforceResults) {
+    key += ':reinforce:' + JSON.stringify(view.reinforceResults || {});
+    if (key === _lastResultSoundKey) return;
+    _lastResultSoundKey = key;
+    for (pid in view.reinforceResults) {
+      change = view.reinforceResults[pid];
+      if (change && change.disbanded && change.disbanded.length > 0) hasDisband = true;
+    }
+    if (hasDisband && playgent.sound) setTimeout(function() { if (playgent.sound) playgent.sound('piece.capture'); }, 420);
+  } else if (view.phase !== 'resolve' && view.phase !== 'reinforce') {
+    _lastResultSoundKey = "";
+  }
+}
+
+playgent.onStateChange(function(view, legalActions, context) {
+  legalActions = (legalActions || []).map(unwrapAction);
+  if (_lastSoundPhase && _lastSoundPhase !== view.phase && playgent.sound) {
+    if (view.phase === 'resolve') playgent.sound('phase.battle');
+    else if (view.phase === 'reinforce') playgent.sound('board.place');
+    else if (view.phase === 'gameOverDisplay' || view.phase === 'gameOver') playgent.sound('game.over');
+    else playgent.sound('phase.change');
+  }
+  _lastSoundPhase = view.phase;
+  playVisibleResultSounds(view);
+  _lastView = view;
+  _lastCtx = context;
+  document.body.setAttribute('data-phase', view.phase);
+  document.body.setAttribute('data-status',
+    legalActions.length > 0 ? 'your-turn' : (context.gameOver ? 'game-over' : 'waiting'));
+  renderHeader(view, context, legalActions);
+  renderScoreboard(view, context);
+  renderMap(view, context, legalActions);
+  renderActions(view, context, legalActions);
+  renderPlayerContainer(context);
+});
+</script>

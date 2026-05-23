@@ -1,0 +1,2219 @@
+<style>
+  * {
+    box-sizing: border-box;
+  }
+
+  :root {
+    --ink: #101014;
+    --night: #171922;
+    --table: #153f3c;
+    --table-2: #0d2b33;
+    --cream: #fff4d7;
+    --bone: #f7dfaa;
+    --sun: #ffd34d;
+    --hot: #ff5a45;
+    --rose: #ee4d78;
+    --mint: #64e2b7;
+    --sky: #4fb7ff;
+    --violet: #9b6dff;
+    --line: rgba(255, 244, 215, 0.22);
+  }
+
+  html,
+  body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    background:
+      linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px),
+      linear-gradient(0deg, rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(145deg, #242129 0%, #142327 52%, #101014 100%);
+    background-size: 38px 38px, 38px 38px, 100% 100%;
+    color: var(--cream);
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+
+  button,
+  select {
+    font: inherit;
+  }
+
+  .game {
+    width: 100%;
+    height: 100dvh;
+    min-height: 100dvh;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    overflow: hidden;
+  }
+
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    align-items: center;
+    padding: 13px 16px 10px;
+    border-bottom: 1px solid var(--line);
+    background: rgba(16, 16, 20, 0.82);
+    backdrop-filter: blur(12px);
+  }
+
+  .topbar > div:first-child {
+    min-width: 0;
+  }
+
+  .kicker {
+    color: var(--sun);
+    font-size: 10px;
+    line-height: 1;
+    font-weight: 950;
+    letter-spacing: 0;
+    text-transform: uppercase;
+  }
+
+  .title {
+    margin-top: 4px;
+    color: var(--cream);
+    font-size: 34px;
+    line-height: 0.96;
+    font-weight: 950;
+    letter-spacing: 0;
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .status {
+    flex: 0 0 170px;
+    display: grid;
+    justify-items: end;
+    gap: 4px;
+    min-width: 150px;
+    max-width: 235px;
+    overflow: hidden;
+    font-weight: 900;
+  }
+
+  .status-pill {
+    min-height: 28px;
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 9px;
+    border: 1px solid rgba(255,211,77,0.55);
+    background: rgba(255,211,77,0.12);
+    color: var(--sun);
+    font-size: 12px;
+    text-transform: uppercase;
+    max-width: 210px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .turns {
+    color: var(--bone);
+    font-size: 12px;
+    max-width: 100%;
+    overflow: hidden;
+    text-align: right;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .table {
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(245px, 0.8fr) minmax(330px, 1.2fr);
+    gap: 14px;
+    padding: 14px;
+    overflow: hidden;
+  }
+
+  .left,
+  .right {
+    min-height: 0;
+    display: grid;
+    gap: 12px;
+  }
+
+  .left {
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .right {
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .game.has-peek .right {
+    grid-template-rows: auto auto minmax(0, 1fr);
+  }
+
+  .felt {
+    position: relative;
+    min-height: 250px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    align-items: center;
+    padding: 18px;
+    border: 1px solid rgba(255,244,215,0.18);
+    border-radius: 8px;
+    background:
+      linear-gradient(135deg, rgba(255,211,77,0.14), transparent 38%),
+      linear-gradient(150deg, var(--table), var(--table-2));
+    box-shadow:
+      inset 0 0 0 5px rgba(255,244,215,0.035),
+      0 22px 46px rgba(0,0,0,0.3);
+    overflow: hidden;
+  }
+
+  .felt::after {
+    content: "DP";
+    position: absolute;
+    right: 18px;
+    bottom: 8px;
+    color: rgba(255,244,215,0.08);
+    font-size: 74px;
+    font-weight: 950;
+    letter-spacing: 0;
+  }
+
+  .pile {
+    position: relative;
+    z-index: 1;
+    min-height: 190px;
+    display: grid;
+    align-content: center;
+    justify-items: center;
+    gap: 9px;
+    padding: 16px;
+    border: 1px solid rgba(255,244,215,0.2);
+    border-radius: 8px;
+    background: rgba(16,16,20,0.28);
+  }
+
+  .deck-card,
+  .discard-card {
+    width: min(138px, 28vw);
+    height: 176px;
+    display: grid;
+    place-items: center;
+    border-radius: 8px;
+    box-shadow: 0 16px 30px rgba(0,0,0,0.34);
+  }
+
+  .deck-card {
+    background:
+      linear-gradient(45deg, rgba(255,255,255,0.16) 25%, transparent 25% 50%, rgba(255,255,255,0.16) 50% 75%, transparent 75%),
+      linear-gradient(145deg, var(--hot), #7e2530);
+    background-size: 18px 18px, 100% 100%;
+    border: 4px solid #fff0c7;
+    color: #fff0c7;
+    font-size: 42px;
+    font-weight: 950;
+  }
+
+  .discard-card {
+    padding: 12px;
+    align-content: space-between;
+    justify-items: start;
+    background: var(--cream);
+    border: 4px solid rgba(16,16,20,0.12);
+    color: var(--ink);
+    transform: rotate(1.5deg);
+  }
+
+  .discard-card.empty {
+    justify-items: center;
+    align-content: center;
+    border-style: dashed;
+    color: rgba(16,16,20,0.5);
+    background: rgba(255,244,215,0.28);
+    transform: none;
+  }
+
+  .pile-label {
+    color: var(--bone);
+    font-size: 12px;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+
+  .count {
+    color: var(--sun);
+    font-size: 24px;
+    font-weight: 950;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .card-name {
+    font-size: 17px;
+    line-height: 1.02;
+    font-weight: 950;
+  }
+
+  .card-type {
+    align-self: end;
+    color: rgba(16,16,20,0.58);
+    font-size: 10px;
+    font-weight: 950;
+    text-transform: uppercase;
+  }
+
+  .card-effect {
+    color: rgba(16,16,20,0.72);
+    font-size: 11px;
+    line-height: 1.18;
+    font-weight: 780;
+  }
+
+  .panel {
+    min-height: 0;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: rgba(16,16,20,0.62);
+    overflow: hidden;
+  }
+
+  .hand-panel {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .panel-head {
+    min-height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--line);
+    color: var(--cream);
+    font-size: 12px;
+    font-weight: 950;
+    text-transform: uppercase;
+  }
+
+  .micro {
+    color: var(--bone);
+    font-size: 11px;
+    font-weight: 850;
+    text-transform: none;
+  }
+
+  .players {
+    display: grid;
+    gap: 8px;
+    padding: 10px;
+    overflow: auto;
+  }
+
+  .player-row {
+    min-height: 52px;
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 9px;
+    padding: 8px;
+    border: 1px solid rgba(255,244,215,0.14);
+    border-radius: 7px;
+    background: rgba(255,244,215,0.055);
+  }
+
+  .player-row.current {
+    border-color: rgba(255,211,77,0.65);
+    box-shadow: 0 0 0 1px rgba(255,211,77,0.16);
+  }
+
+  .player-row.out {
+    opacity: 0.48;
+  }
+
+  .player-row.burst {
+    border-color: rgba(255,90,69,0.48);
+    background:
+      linear-gradient(90deg, rgba(255,90,69,0.1), transparent 46%),
+      rgba(255,244,215,0.045);
+  }
+
+  .avatar {
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border-radius: 8px;
+    background: var(--sky);
+    color: #071018;
+    font-size: 15px;
+    font-weight: 950;
+  }
+
+  .pname {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 900;
+  }
+
+  .pcards {
+    color: var(--sun);
+    font-size: 13px;
+    font-weight: 950;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .pcards.burst {
+    color: var(--hot);
+    font-size: 11px;
+  }
+
+  .burst-label {
+    color: var(--hot);
+  }
+
+  .event {
+    min-height: 98px;
+    display: grid;
+    align-content: center;
+    gap: 9px;
+    padding: 14px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background:
+      linear-gradient(120deg, rgba(238,77,120,0.12), transparent 40%),
+      rgba(16,16,20,0.58);
+  }
+
+  .situation-main {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: start;
+  }
+
+  .situation-copy {
+    min-width: 0;
+    display: grid;
+    gap: 5px;
+  }
+
+  .event-title {
+    color: var(--sun);
+    font-size: 12px;
+    font-weight: 950;
+    text-transform: uppercase;
+  }
+
+  .event-text {
+    color: var(--cream);
+    font-size: 15px;
+    line-height: 1.24;
+    font-weight: 820;
+  }
+
+  .situation-meta {
+    color: var(--bone);
+    font-size: 11px;
+    line-height: 1.2;
+    font-weight: 850;
+  }
+
+  .pending-badge {
+    max-width: 148px;
+    padding: 6px 8px;
+    border: 1px solid rgba(255,211,77,0.48);
+    border-radius: 7px;
+    background: rgba(255,211,77,0.13);
+    color: var(--sun);
+    font-size: 10px;
+    line-height: 1.15;
+    font-weight: 950;
+    text-align: center;
+    text-transform: uppercase;
+  }
+
+  .pending-badge.blocked {
+    border-color: rgba(79,183,255,0.55);
+    background: rgba(79,183,255,0.14);
+    color: #9ed8ff;
+  }
+
+  .event-log {
+    display: grid;
+    gap: 4px;
+  }
+
+  .event-entry {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: 9px minmax(0, 1fr);
+    gap: 7px;
+    align-items: center;
+    color: var(--bone);
+    font-size: 11px;
+    line-height: 1.18;
+    font-weight: 780;
+  }
+
+  .event-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: rgba(255,211,77,0.84);
+  }
+
+  .event-entry.danger .event-dot {
+    background: var(--hot);
+  }
+
+  .event-entry.nah .event-dot,
+  .event-entry.pending .event-dot {
+    background: var(--sky);
+  }
+
+  .event-entry.favor .event-dot,
+  .event-entry.steal .event-dot {
+    background: var(--sun);
+  }
+
+  .event-entry.attack .event-dot {
+    background: var(--rose);
+  }
+
+  .event-entry.peek .event-dot,
+  .event-entry.deck .event-dot {
+    background: var(--mint);
+  }
+
+  .peek {
+    display: none;
+    border-color: rgba(155,109,255,0.55);
+    background: rgba(155,109,255,0.12);
+  }
+
+  .peek.visible {
+    display: block;
+    box-shadow: 0 0 0 1px rgba(155,109,255,0.18), 0 18px 34px rgba(0,0,0,0.22);
+  }
+
+  .peek-list {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    padding: 10px;
+  }
+
+  .peek-card {
+    position: relative;
+    min-width: 0;
+  }
+
+  .peek .mini-card {
+    min-height: 104px;
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    gap: 5px;
+    padding: 9px;
+  }
+
+  .peek .mini-card .card-effect {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    font-size: 9px;
+    line-height: 1.1;
+  }
+
+  .peek-order {
+    position: absolute;
+    z-index: 2;
+    top: 7px;
+    right: 7px;
+    padding: 3px 6px;
+    border-radius: 999px;
+    background: rgba(16,16,20,0.82);
+    color: var(--sun);
+    font-size: 9px;
+    font-weight: 950;
+    text-transform: uppercase;
+  }
+
+  .hand-wrap {
+    min-height: 0;
+    overflow: auto;
+    padding: 10px;
+  }
+
+  .hand-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(124px, 178px));
+    gap: 9px;
+    justify-content: start;
+  }
+
+  .spectator-hands {
+    grid-column: 1 / -1;
+    display: grid;
+    gap: 9px;
+  }
+
+  .spectator-group {
+    min-width: 0;
+    display: grid;
+    gap: 7px;
+    padding: 8px;
+    border: 1px solid rgba(255,244,215,0.14);
+    border-radius: 7px;
+    background: rgba(255,244,215,0.045);
+  }
+
+  .spectator-group.current {
+    border-color: rgba(255,211,77,0.58);
+    background: rgba(255,211,77,0.08);
+  }
+
+  .spectator-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    color: var(--cream);
+    font-size: 11px;
+    font-weight: 950;
+    text-transform: uppercase;
+  }
+
+  .spectator-name,
+  .spectator-count {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .spectator-count {
+    flex: 0 0 auto;
+    color: var(--sun);
+  }
+
+  .spectator-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(82px, 1fr));
+    gap: 7px;
+  }
+
+  .game.has-peek .hand-wrap {
+    overflow: visible;
+  }
+
+  .game.has-peek .hand-grid {
+    grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
+    gap: 8px;
+  }
+
+  .mini-card {
+    min-height: 118px;
+    display: grid;
+    grid-template-rows: auto auto minmax(18px, 1fr) auto;
+    gap: 6px;
+    padding: 11px;
+    border-radius: 8px;
+    background: var(--cream);
+    color: var(--ink);
+    box-shadow: 0 12px 24px rgba(0,0,0,0.26);
+    overflow: hidden;
+  }
+
+  button.mini-card {
+    width: 100%;
+    border: 0;
+    text-align: left;
+    font: inherit;
+  }
+
+  .mini-card.playable,
+  .mini-card.combo-ready {
+    position: relative;
+    border: 2px solid rgba(255,211,77,0.95);
+    cursor: pointer;
+    box-shadow:
+      0 0 0 2px rgba(255,211,77,0.18),
+      0 12px 24px rgba(0,0,0,0.28);
+  }
+
+  .mini-card.combo-ready {
+    border-color: rgba(79,183,255,0.78);
+    box-shadow:
+      0 0 0 2px rgba(79,183,255,0.16),
+      0 12px 24px rgba(0,0,0,0.28);
+  }
+
+  .mini-card.selected {
+    transform: translateY(-3px);
+    border-color: var(--sun);
+    box-shadow:
+      0 0 0 3px rgba(255,211,77,0.26),
+      0 18px 30px rgba(0,0,0,0.32);
+  }
+
+  .card-badge {
+    position: absolute;
+    top: 7px;
+    right: 7px;
+    max-width: calc(100% - 14px);
+    padding: 3px 6px;
+    border-radius: 999px;
+    background: rgba(16,16,20,0.82);
+    color: var(--sun);
+    font-size: 8px;
+    font-weight: 950;
+    text-transform: uppercase;
+    pointer-events: none;
+  }
+
+  .game.has-peek .hand-grid .mini-card {
+    min-height: 104px;
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    gap: 5px;
+    padding: 8px;
+  }
+
+  .game.has-peek .hand-grid .mini-card .card-name {
+    font-size: 13px;
+    line-height: 1.04;
+  }
+
+  .game.has-peek .hand-grid .mini-card .card-effect {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    font-size: 8px;
+    line-height: 1.1;
+  }
+
+  .game.has-peek .hand-grid .mini-card .card-type {
+    font-size: 8px;
+  }
+
+  .game.has-peek .hand-grid .dog-mark {
+    font-size: 16px;
+  }
+
+  .mini-card.compact {
+    min-height: 118px;
+  }
+
+  .mini-card:nth-child(2n) {
+    transform: rotate(0.55deg);
+  }
+
+  .mini-card:nth-child(3n) {
+    transform: rotate(-0.55deg);
+  }
+
+  .mini-card.danger {
+    background: linear-gradient(145deg, #fff0c7, #ff9a55);
+  }
+
+  .mini-card.safe {
+    background: linear-gradient(145deg, #fff6de, #92eccb);
+  }
+
+  .mini-card.hot {
+    background: linear-gradient(145deg, #fff1cb, #ff775b);
+  }
+
+  .mini-card.blue {
+    background: linear-gradient(145deg, #f7fbff, #85c9ff);
+  }
+
+  .mini-card.green {
+    background: linear-gradient(145deg, #f7ffe8, #9bf082);
+  }
+
+  .mini-card.purple {
+    background: linear-gradient(145deg, #fff4ff, #b99bff);
+  }
+
+  .mini-card.mint {
+    background: linear-gradient(145deg, #fafff6, #9ee6c7);
+  }
+
+  .mini-card.gold {
+    background: linear-gradient(145deg, #fff7d4, #ffd75e);
+  }
+
+  .mini-card.pack {
+    background: linear-gradient(145deg, #fff4d7, #f1c077);
+  }
+
+  .dog-mark {
+    font-size: 24px;
+    line-height: 1;
+    font-weight: 950;
+  }
+
+  .actionbar {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    align-items: center;
+    padding: 12px 14px;
+    border-top: 1px solid var(--line);
+    background: rgba(16,16,20,0.9);
+  }
+
+  .actionbar.waiting {
+    grid-template-columns: 1fr;
+  }
+
+  .actionbar.contextual {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .actionbar.defuse-mode {
+    grid-template-columns: 1fr;
+  }
+
+  .action-preview {
+    min-width: 0;
+    display: grid;
+    gap: 3px;
+    padding: 10px 12px;
+    border: 1px solid rgba(255,244,215,0.18);
+    border-radius: 8px;
+    background:
+      linear-gradient(100deg, rgba(255,211,77,0.13), transparent 42%),
+      rgba(255,244,215,0.055);
+  }
+
+  .action-eyebrow {
+    color: var(--sun);
+    font-size: 10px;
+    line-height: 1;
+    font-weight: 950;
+    text-transform: uppercase;
+  }
+
+  .action-name {
+    min-width: 0;
+    color: var(--cream);
+    font-size: 15px;
+    line-height: 1.16;
+    font-weight: 950;
+  }
+
+  .action-detail {
+    color: var(--bone);
+    font-size: 12px;
+    line-height: 1.25;
+    font-weight: 780;
+  }
+
+  .action-tray {
+    min-width: 0;
+    display: grid;
+    gap: 8px;
+  }
+
+  .action-row,
+  .action-chip-row {
+    min-width: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    align-items: center;
+  }
+
+  .action-chip-row .primary {
+    flex: 0 0 auto;
+    min-width: 116px;
+  }
+
+  .action-label {
+    color: var(--bone);
+    font-size: 10px;
+    font-weight: 950;
+    text-transform: uppercase;
+  }
+
+  .chip,
+  .target-chip {
+    min-height: 38px;
+    border: 1px solid rgba(255,244,215,0.22);
+    border-radius: 7px;
+    padding: 7px 10px;
+    background: rgba(255,244,215,0.08);
+    color: var(--cream);
+    font-weight: 900;
+    cursor: pointer;
+  }
+
+  .chip.selected,
+  .target-chip.primary-target {
+    border-color: rgba(255,211,77,0.72);
+    background: rgba(255,211,77,0.16);
+    color: var(--sun);
+  }
+
+  .tray-note {
+    color: var(--bone);
+    font-size: 12px;
+    line-height: 1.2;
+    font-weight: 820;
+  }
+
+  .combo-picker {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .defuse-control {
+    display: grid;
+    gap: 8px;
+    padding: 10px 12px;
+    border: 1px solid rgba(255,244,215,0.18);
+    border-radius: 8px;
+    background: rgba(255,244,215,0.055);
+  }
+
+  .defuse-topline {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    color: var(--cream);
+    font-size: 13px;
+    font-weight: 950;
+  }
+
+  .defuse-slider {
+    width: 100%;
+    min-height: 36px;
+    accent-color: var(--sun);
+  }
+
+  .combo-select {
+    min-width: 0;
+    width: 100%;
+    height: 46px;
+    border: 1px solid rgba(255,244,215,0.28);
+    border-radius: 7px;
+    padding: 0 10px;
+    background: rgba(255,244,215,0.1);
+    color: var(--cream);
+    font-weight: 850;
+    outline: none;
+  }
+
+  .combo-select option {
+    color: var(--ink);
+  }
+
+  .primary {
+    height: 46px;
+    min-width: 150px;
+    border: 0;
+    border-radius: 7px;
+    padding: 0 16px;
+    background: var(--sun);
+    color: #17120b;
+    font-weight: 950;
+    text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 0 12px 24px rgba(255,211,77,0.2);
+  }
+
+  .primary:disabled {
+    opacity: 0.46;
+    cursor: default;
+    box-shadow: none;
+  }
+
+  .waiting-copy {
+    min-height: 46px;
+    display: flex;
+    align-items: center;
+    color: var(--bone);
+    font-weight: 850;
+  }
+
+  .hidden {
+    display: none !important;
+  }
+
+  .hidden-roster {
+    display: none;
+  }
+
+  @media (max-width: 790px) {
+    .game {
+      grid-template-rows: auto minmax(0, 1fr) auto;
+    }
+
+    .topbar {
+      padding: 10px 11px 8px;
+      gap: 8px;
+    }
+
+    .title {
+      font-size: 21px;
+    }
+
+    .status-pill {
+      max-width: 128px;
+      font-size: 10px;
+    }
+
+    .status {
+      flex-basis: 112px;
+      min-width: 98px;
+      max-width: 124px;
+    }
+
+    .turns {
+      font-size: 10px;
+    }
+
+    .table {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto minmax(0, 1fr);
+      padding: 10px;
+      gap: 10px;
+      overflow: auto;
+      align-content: start;
+    }
+
+    .left {
+      grid-template-rows: auto auto;
+      order: 2;
+    }
+
+    .right {
+      order: 1;
+    }
+
+    .felt {
+      min-height: 172px;
+      padding: 10px;
+      gap: 8px;
+    }
+
+    .pile {
+      min-height: 144px;
+      padding: 10px;
+    }
+
+    .deck-card,
+    .discard-card {
+      width: 96px;
+      height: 120px;
+      border-width: 3px;
+    }
+
+    .deck-card {
+      font-size: 30px;
+    }
+
+    .card-name {
+      font-size: 13px;
+    }
+
+    .players {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      max-height: 132px;
+    }
+
+    .player-row {
+      min-height: 45px;
+      grid-template-columns: 28px minmax(0, 1fr) auto;
+      gap: 7px;
+      padding: 7px;
+    }
+
+    .avatar {
+      width: 28px;
+      height: 28px;
+      font-size: 12px;
+      border-radius: 7px;
+    }
+
+    .event {
+      min-height: 58px;
+      padding: 10px;
+    }
+
+    .situation-main {
+      grid-template-columns: 1fr;
+      gap: 7px;
+    }
+
+    .pending-badge {
+      max-width: none;
+      justify-self: start;
+      padding: 4px 7px;
+      font-size: 9px;
+    }
+
+    .event-text {
+      font-size: 13px;
+    }
+
+    .situation-meta,
+    .event-entry {
+      font-size: 10px;
+    }
+
+    .hand-wrap {
+      overflow: visible;
+      padding: 8px;
+    }
+
+    .hand-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 6px;
+    }
+
+    .mini-card {
+      min-height: 92px;
+      grid-template-rows: auto auto minmax(0, 1fr) auto;
+      gap: 4px;
+      padding: 7px;
+    }
+
+    .game.has-peek .hand-grid .mini-card {
+      min-height: 86px;
+      gap: 4px;
+      padding: 6px;
+    }
+
+    .mini-card .card-name {
+      font-size: 11px;
+      line-height: 1.04;
+    }
+
+    .game.has-peek .hand-grid .mini-card .card-name {
+      font-size: 10px;
+    }
+
+    .card-effect {
+      display: -webkit-box;
+      overflow: hidden;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 3;
+      font-size: 7.8px;
+      line-height: 1.08;
+    }
+
+    .game.has-peek .hand-grid .mini-card .card-effect {
+      font-size: 7px;
+      -webkit-line-clamp: 3;
+    }
+
+    .card-type {
+      font-size: 7.5px;
+    }
+
+    .game.has-peek .hand-grid .mini-card .card-type {
+      font-size: 7px;
+    }
+
+    .dog-mark {
+      font-size: 14px;
+    }
+
+    .game.has-peek .hand-grid .dog-mark {
+      font-size: 13px;
+    }
+
+    .peek-list {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+      padding: 8px;
+    }
+
+    .peek-order {
+      top: 5px;
+      right: 5px;
+      padding: 2px 5px;
+      font-size: 8px;
+    }
+
+    .actionbar {
+      grid-template-columns: 1fr;
+      padding: 10px;
+    }
+
+    .actionbar.contextual {
+      grid-template-columns: 1fr;
+    }
+
+    .action-tray {
+      gap: 7px;
+    }
+
+    .action-row,
+    .action-chip-row {
+      flex-wrap: wrap;
+      overflow: visible;
+    }
+
+    .chip,
+    .target-chip {
+      flex: 0 0 auto;
+      min-height: 36px;
+      padding: 7px 9px;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .combo-picker {
+      grid-template-columns: minmax(0, 1fr) 118px;
+    }
+
+    .defuse-control {
+      padding: 8px 10px;
+    }
+
+    .action-preview {
+      padding: 8px 10px;
+    }
+
+    .action-name {
+      font-size: 13px;
+    }
+
+    .action-detail {
+      display: -webkit-box;
+      overflow: hidden;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      font-size: 11px;
+    }
+
+    .combo-select,
+    .primary {
+      height: 42px;
+    }
+
+    .primary {
+      width: auto;
+      min-width: 0;
+      padding: 0 10px;
+    }
+
+    .card-badge {
+      top: 5px;
+      right: 5px;
+      padding: 2px 5px;
+      font-size: 7px;
+    }
+  }
+
+  @media (max-width: 430px) {
+    .hand-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .mini-card {
+      min-height: 86px;
+      padding: 6px;
+    }
+
+    .game.has-peek .hand-grid .mini-card {
+      min-height: 78px;
+      gap: 3px;
+      padding: 5px;
+    }
+
+    .mini-card .card-name {
+      font-size: 10px;
+    }
+
+    .game.has-peek .hand-grid .mini-card .card-name {
+      font-size: 9.2px;
+    }
+
+    .card-effect {
+      font-size: 7.2px;
+      -webkit-line-clamp: 3;
+    }
+
+    .game.has-peek .hand-grid .mini-card .card-effect {
+      font-size: 6.6px;
+      -webkit-line-clamp: 2;
+    }
+
+    .dog-mark {
+      font-size: 13px;
+    }
+
+    .players {
+      grid-template-columns: 1fr;
+      max-height: 108px;
+    }
+
+    .combo-picker {
+      grid-template-columns: minmax(0, 1fr) 104px;
+    }
+  }
+</style>
+
+<div class="game" id="game" data-game="detonating-puppies" data-phase="loading" data-status="waiting" data-player="spectator">
+  <div class="topbar">
+    <div>
+      <div class="kicker">Puppy pile survival</div>
+      <div class="title">Detonating Puppies</div>
+    </div>
+    <div class="status">
+      <div class="status-pill" id="current-pill">Loading</div>
+      <div class="turns" id="turns-label">0 cards</div>
+    </div>
+  </div>
+
+  <main class="table">
+    <section class="left">
+      <div class="felt">
+        <div class="pile">
+          <div class="deck-card">DP</div>
+          <div class="pile-label">Draw Pile</div>
+          <div class="count" id="draw-count">0</div>
+        </div>
+        <div class="pile">
+          <div class="discard-card empty" id="discard-card">Empty</div>
+          <div class="pile-label">Discard</div>
+          <div class="count" id="discard-count">0</div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head">
+          <span>Handlers</span>
+          <span class="micro" id="alive-count">0 alive</span>
+        </div>
+        <div class="players" id="players"></div>
+      </div>
+    </section>
+
+    <section class="right">
+      <div class="event">
+        <div class="situation-main">
+          <div class="situation-copy">
+            <div class="event-title" id="phase-title">Table</div>
+            <div class="event-text" id="event-text"></div>
+            <div class="situation-meta" id="situation-meta"></div>
+          </div>
+          <div class="pending-badge hidden" id="pending-badge"></div>
+        </div>
+        <div class="event-log" id="event-log"></div>
+      </div>
+
+      <div class="panel peek" id="peek-panel">
+        <div class="panel-head">
+          <span>Next Draw Order</span>
+          <span class="micro">private peek</span>
+        </div>
+        <div class="peek-list" id="peek-list"></div>
+      </div>
+
+      <div class="panel hand-panel">
+        <div class="panel-head">
+          <span id="hand-title">Your Hand</span>
+          <span class="micro" id="hand-count">0 cards</span>
+        </div>
+        <div class="hand-wrap">
+          <div class="hand-grid" id="hand-grid"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="actionbar waiting" id="actionbar">
+    <div class="waiting-copy" id="waiting-copy">Waiting for the table.</div>
+  </footer>
+  <div class="hidden-roster" id="hidden-roster"></div>
+</div>
+
+<script>
+(function () {
+  var COLORS = ["#ffd34d", "#4fb7ff", "#64e2b7", "#ee4d78", "#9b6dff"];
+  var DOG_MARKS = ["BOW", "WAG", "RUF", "YIP", "SIT", "PAW"];
+  var lastPhase = "";
+  var lastStatus = "";
+  var latestActions = [];
+  var latestRecords = [];
+  var latestDefuseRecords = [];
+  var latestView = null;
+  var latestGameOver = null;
+  var focusedAction = null;
+
+  function escapeHtml(value) {
+    return String(value == null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function unwrap(option) {
+    if (option && typeof option === "object" && option.decision !== undefined) return option.decision;
+    if (option && typeof option === "object" && option.action !== undefined) return option.action;
+    return option;
+  }
+
+  function optionLabel(option) {
+    if (option && typeof option === "object" && option.label) return option.label;
+    var decision = unwrap(option);
+    if (!decision || !decision.type) return "Choose action";
+    if (decision.type === "draw") return "Draw from the puppy pile";
+    if (decision.type === "play_nah") return "Play Nah";
+    if (decision.type === "defuse") return "Hide the Detonating Puppy";
+    if (decision.type === "give_card") return "Give selected card";
+    return decision.type.replace(/_/g, " ");
+  }
+
+  function playerName(view, id) {
+    return (view.playerNames && view.playerNames[id]) || id || "Spectator";
+  }
+
+  function initial(name) {
+    return String(name || "?").charAt(0).toUpperCase();
+  }
+
+  function playerColor(view, id) {
+    var idx = (view.players || []).indexOf(id);
+    if (idx < 0) idx = 0;
+    return COLORS[idx % COLORS.length];
+  }
+
+  function plural(n, word) {
+    return n + " " + word + (n === 1 ? "" : "s");
+  }
+
+  function aliveText(n) {
+    return n + " alive";
+  }
+
+  function phaseTitle(phase) {
+    if (phase === "play") return "Play or Draw";
+    if (phase === "response") return "Nah Window";
+    if (phase === "give") return "Fetch Favor";
+    if (phase === "defuse") return "Safety Squeak";
+    if (phase === "gameOver") return "Game Over";
+    return "Table";
+  }
+
+  function cardHtml(card, compact, attrs, interactive, badge, extraClass) {
+    var tone = card && card.tone ? card.tone : "plain";
+    var title = card && card.title ? card.title : "Unknown";
+    var short = card && card.short ? card.short : "DP";
+    var effect = card && card.effect ? card.effect : "";
+    var mark = DOG_MARKS[(String(card && card.id || title).length + title.length) % DOG_MARKS.length];
+    var tag = interactive ? "button" : "div";
+    var typeAttr = interactive ? ' type="button"' : "";
+    return (
+      "<" + tag + typeAttr + ' class="mini-card ' + escapeHtml(tone) + (compact ? " compact" : "") + (extraClass ? " " + extraClass : "") + '"' + (attrs || "") + ">" +
+      (badge ? '<div class="card-badge">' + escapeHtml(badge) + "</div>" : "") +
+      '<div class="dog-mark">' + escapeHtml(compact ? short : mark) + "</div>" +
+      '<div class="card-name">' + escapeHtml(title) + "</div>" +
+      (compact || !effect ? "" : '<div class="card-effect">' + escapeHtml(effect) + "</div>") +
+      '<div class="card-type">' + escapeHtml(short) + "</div>" +
+      "</" + tag + ">"
+    );
+  }
+
+  function renderPlayers(view, ctx) {
+    var ids = view.players || [];
+    var html = "";
+    var live = 0;
+    var i, id, cls, name, burst;
+    for (i = 0; i < ids.length; i++) {
+      id = ids[i];
+      name = playerName(view, id);
+      burst = view.bursts && view.bursts[id];
+      if (view.alive && view.alive[id]) live++;
+      cls = "player-row" + (id === view.currentPlayerId ? " current" : "") + (!(view.alive && view.alive[id]) ? " out" : "") + (burst ? " burst" : "");
+      html += '<div class="' + cls + '">';
+      html += '<div class="avatar" style="background:' + playerColor(view, id) + '">' + escapeHtml(initial(name)) + "</div>";
+      html += '<div class="pname">' + escapeHtml(name) + (id === ctx.myId ? " / you" : "") + (burst ? ' <span class="burst-label">/ out</span>' : "") + "</div>";
+      html += '<div class="pcards' + (burst ? " burst" : "") + '">' + (burst ? "BOOM" : ((view.handCounts && view.handCounts[id]) || 0)) + "</div>";
+      html += "</div>";
+    }
+    document.getElementById("players").innerHTML = html;
+    document.getElementById("alive-count").textContent = aliveText(live);
+  }
+
+  function renderDiscard(view) {
+    var card = view.discardTop && view.discardTop.length ? view.discardTop[view.discardTop.length - 1] : null;
+    var el = document.getElementById("discard-card");
+    if (!card) {
+      el.className = "discard-card empty";
+      el.innerHTML = "Empty";
+    } else {
+      el.className = "discard-card";
+      el.innerHTML =
+        '<div class="card-name">' +
+        escapeHtml(card.title) +
+        '</div><div class="card-effect">' +
+        escapeHtml(card.effect || "") +
+        '</div><div class="card-type">' +
+        escapeHtml(card.short) +
+        "</div>";
+    }
+    document.getElementById("discard-count").textContent = String(view.discardCount || 0);
+  }
+
+  function actionRecords(legalActions) {
+    var out = [];
+    var i, option, action;
+    for (i = 0; i < (legalActions || []).length; i++) {
+      option = legalActions[i];
+      action = unwrap(option);
+      out.push({
+        index: i,
+        option: option,
+        action: action,
+        label: optionLabel(option),
+      });
+    }
+    return out;
+  }
+
+  function pushMap(map, key, record) {
+    if (key == null) return;
+    if (!map[key]) map[key] = [];
+    map[key].push(record);
+  }
+
+  function buildActionGroups(records) {
+    var groups = {
+      draw: null,
+      nah: null,
+      playByCard: {},
+      giveByCard: {},
+      pairByType: {},
+      pairByCard: {},
+      tripleByType: {},
+      tripleByCard: {},
+      defuses: [],
+      others: [],
+    };
+    var i, record, action, j;
+    for (i = 0; i < records.length; i++) {
+      record = records[i];
+      action = record.action || {};
+      if (action.type === "draw") groups.draw = record;
+      else if (action.type === "play_nah") groups.nah = record;
+      else if (action.type === "play_card") pushMap(groups.playByCard, action.cardId, record);
+      else if (action.type === "give_card") pushMap(groups.giveByCard, action.cardId, record);
+      else if (action.type === "pair") {
+        pushMap(groups.pairByType, action.cardType, record);
+        if (action.cardIds) {
+          for (j = 0; j < action.cardIds.length; j++)
+            pushMap(groups.pairByCard, action.cardIds[j], record);
+        }
+      } else if (action.type === "triple") {
+        pushMap(groups.tripleByType, action.cardType, record);
+        if (action.cardIds) {
+          for (j = 0; j < action.cardIds.length; j++)
+            pushMap(groups.tripleByCard, action.cardIds[j], record);
+        }
+      } else if (action.type === "defuse") groups.defuses.push(record);
+      else groups.others.push(record);
+    }
+    return groups;
+  }
+
+  function focusMatches(kind, key) {
+    return focusedAction && focusedAction.kind === kind && focusedAction.key === key;
+  }
+
+  function submitRecord(record) {
+    if (!record || !record.action) return;
+    var buttons = document.querySelectorAll("[data-submit-idx], #draw-action, #phase-action, #combo-submit");
+    var i;
+    for (i = 0; i < buttons.length; i++) buttons[i].disabled = true;
+    actionSound(record.action);
+    playgent.submitAction(record.action);
+  }
+
+  function bindHandActions() {
+    var grid = document.getElementById("hand-grid");
+    grid.onclick = function (event) {
+      var target = event.target && event.target.closest ? event.target.closest("[data-submit-idx], [data-focus-kind]") : null;
+      var idx, kind, key;
+      if (!target) return;
+      idx = target.getAttribute("data-submit-idx");
+      if (idx !== null) {
+        submitRecord(latestRecords[Number(idx)]);
+        return;
+      }
+      kind = target.getAttribute("data-focus-kind");
+      key = target.getAttribute("data-focus-key");
+      if (!kind || !key) return;
+      focusedAction = { kind: kind, key: key };
+      renderActions(latestActions || []);
+      renderHand(latestView || {});
+    };
+  }
+
+  function renderHand(view) {
+    var spectatorHands = view.spectatorHands || null;
+    var hand = view.myHand || [];
+    var grid = document.getElementById("hand-grid");
+    var groups = buildActionGroups(latestRecords || []);
+    var html = "";
+    var ids, i, j, id, cards, total, card, attrs, direct, give, pair, triple, interactive, badge, extraClass, key;
+    if (spectatorHands) {
+      ids = view.players || Object.keys(spectatorHands);
+      total = 0;
+      html = '<div class="spectator-hands">';
+      for (i = 0; i < ids.length; i++) {
+        id = ids[i];
+        cards = spectatorHands[id] || [];
+        total += cards.length;
+        html += '<div class="spectator-group' + (id === view.currentPlayerId ? " current" : "") + '">';
+        html +=
+          '<div class="spectator-head"><span class="spectator-name">' +
+          escapeHtml(playerName(view, id)) +
+          '</span><span class="spectator-count">' +
+          plural(cards.length, "card") +
+          "</span></div>";
+        html += '<div class="spectator-grid">';
+        for (j = 0; j < cards.length; j++) html += cardHtml(cards[j], true, "");
+        if (cards.length === 0) html += '<div class="waiting-copy">No cards.</div>';
+        html += "</div></div>";
+      }
+      html += "</div>";
+      grid.innerHTML = html;
+      document.getElementById("hand-title").textContent = "Spectator Hands";
+      document.getElementById("hand-count").textContent = plural(total, "card");
+      bindHandActions();
+      return;
+    }
+    for (i = 0; i < hand.length; i++) {
+      card = hand[i];
+      key = card && card.id ? card.id : String(i);
+      direct = groups.playByCard[key] || [];
+      give = groups.giveByCard[key] || [];
+      pair = (card && card.type ? groups.pairByType[card.type] : null) || groups.pairByCard[key] || [];
+      triple = (card && card.type ? groups.tripleByType[card.type] : null) || groups.tripleByCard[key] || [];
+      attrs =
+        ' data-hand-card="' +
+        i +
+        '" data-card-id="' +
+        escapeHtml(key) +
+        '" data-card-type="' +
+        escapeHtml(card && card.type ? card.type : "") +
+        '"';
+      interactive = false;
+      badge = "";
+      extraClass = "";
+      if (give.length > 0) {
+        attrs += ' data-submit-idx="' + give[0].index + '"';
+        interactive = true;
+        badge = "Give";
+        extraClass = "playable";
+      } else if (direct.length === 1 && !direct[0].action.targetId) {
+        attrs += ' data-submit-idx="' + direct[0].index + '"';
+        interactive = true;
+        badge = "Play";
+        extraClass = "playable" + (focusMatches("card", key) ? " selected" : "");
+      } else if (direct.length > 0) {
+        attrs += ' data-focus-kind="card" data-focus-key="' + escapeHtml(key) + '"';
+        interactive = true;
+        badge = "Choose";
+        extraClass = "playable" + (focusMatches("card", key) ? " selected" : "");
+      } else if (triple.length > 0) {
+        attrs += ' data-focus-kind="triple" data-focus-key="' + escapeHtml(card.type) + '"';
+        interactive = true;
+        badge = "Triple";
+        extraClass = "combo-ready" + (focusMatches("triple", card.type) ? " selected" : "");
+      } else if (pair.length > 0) {
+        attrs += ' data-focus-kind="pair" data-focus-key="' + escapeHtml(card.type) + '"';
+        interactive = true;
+        badge = "Pair";
+        extraClass = "combo-ready" + (focusMatches("pair", card.type) ? " selected" : "");
+      }
+      html += cardHtml(card, false, attrs, interactive, badge, extraClass);
+    }
+    if (!html) html = '<div class="waiting-copy">No cards in hand.</div>';
+    grid.innerHTML = html;
+    document.getElementById("hand-title").textContent = "Your Hand";
+    document.getElementById("hand-count").textContent = plural(hand.length, "card");
+    bindHandActions();
+  }
+
+  function renderPeek(view) {
+    var peek = view.myPeek || [];
+    var panel = document.getElementById("peek-panel");
+    var list = document.getElementById("peek-list");
+    var root = document.getElementById("game");
+    var html = "";
+    var i;
+    if (peek.length === 0) {
+      panel.classList.remove("visible");
+      root.classList.remove("has-peek");
+      list.innerHTML = "";
+      return;
+    }
+    panel.classList.add("visible");
+    root.classList.add("has-peek");
+    for (i = 0; i < peek.length; i++) {
+      html +=
+        '<div class="peek-card">' +
+        '<div class="peek-order">Next ' + (i + 1) + "</div>" +
+        cardHtml(peek[i], false, ' data-peek-card="' + i + '"') +
+        "</div>";
+    }
+    list.innerHTML = html;
+  }
+
+  function renderRoster(ctx) {
+    var roster = document.getElementById("hidden-roster");
+    var players = (ctx && ctx.players) || [];
+    var html = "";
+    var i;
+    for (i = 0; i < players.length; i++) {
+      html += '<span data-player="' + escapeHtml(players[i].id) + '">' + escapeHtml(players[i].name || players[i].id) + "</span>";
+    }
+    roster.innerHTML = html;
+  }
+
+  function actionSound(action) {
+    if (!window.playgent || !playgent.sound || !action) return;
+    if (action.type === "draw") playgent.sound("card.draw");
+    else if (action.type === "play_card" || action.type === "pair" || action.type === "triple") playgent.sound("card.place");
+    else if (action.type === "give_card") playgent.sound("card.pass");
+    else if (action.type === "defuse") playgent.sound("magic.shield");
+    else if (action.type === "play_nah") playgent.sound("ui.cancel");
+    else playgent.sound("ui.confirm");
+  }
+
+  function cardTypeFromId(cardId) {
+    var parts = String(cardId || "").split("_");
+    parts.pop();
+    return parts.join("_");
+  }
+
+  function effectForCardType(type) {
+    if (type === "YARD_SHAKE") return "Shuffle the puppy pile without seeing where anything lands.";
+    if (type === "ROLL_OVER") return "End one owed turn without drawing from the puppy pile.";
+    if (type === "DOUBLE_DOG_DARE") return "Pass a two-turn dare to the next live handler. Dares stack.";
+    if (type === "NOSE_THE_FUTURE") return "Privately peek at the next three draw cards.";
+    if (type === "FETCH_FAVOR") return "The target chooses one card from their hand and gives it to you.";
+    return "Play this card face up and resolve its table effect.";
+  }
+
+  function actionDetail(action, label) {
+    if (!action || !action.type) return "Choose a legal move from the table.";
+    if (action.type === "draw") return "Take the top card to end this owed turn. Safety Squeak can save you from a Detonating Puppy.";
+    if (action.type === "play_nah") return "Flip whether the pending move resolves. A later Nah can flip it back.";
+    if (action.type === "defuse") return label || "Spend Safety Squeak and secretly tuck the Puppy back into the draw pile.";
+    if (action.type === "give_card") return "Give this exact card to the handler who played Fetch Favor.";
+    if (action.type === "pair") return "Discard a matching pair to steal one random card from the target.";
+    if (action.type === "triple") return "Discard a matching triple, name a card, and take it if the target has one.";
+    if (action.type === "play_card") return effectForCardType(cardTypeFromId(action.cardId));
+    return label || "Submit this legal move.";
+  }
+
+  function shortActionLabel(label) {
+    return String(label || "Choose action")
+      .replace("Draw from the puppy pile and end this owed turn", "Draw and end turn")
+      .replace("Play pair of ", "Pair: ")
+      .replace("Play triple of ", "Triple: ")
+      .replace(" to steal randomly from ", " / steal from ")
+      .replace(" and ask ", " / ask ")
+      .replace("Play Fetch Favor on ", "Favor: ")
+      .replace("Hide the Puppy after ", "Hide after ");
+  }
+
+  function submitText(action) {
+    if (!action || !action.type) return "Submit";
+    if (action.type === "draw") return "Draw";
+    if (action.type === "play_nah") return "Nah";
+    if (action.type === "defuse") return "Hide Puppy";
+    if (action.type === "give_card") return "Give Card";
+    if (action.type === "pair") return "Steal";
+    if (action.type === "triple") return "Ask";
+    return "Play";
+  }
+
+  function waitingCopy() {
+    if (latestGameOver) return latestGameOver.summary || "Game over.";
+    if (!latestView) return "Waiting for the table.";
+    if (latestView.phase === "gameOver") return "Game over.";
+    if (latestView.phase === "response") return "Waiting for the Nah window.";
+    if (latestView.phase === "give") return "Waiting for Fetch Favor.";
+    if (latestView.phase === "defuse") return "Waiting for Safety Squeak.";
+    return "Waiting for the table.";
+  }
+
+  function prettyType(type) {
+    return String(type || "")
+      .toLowerCase()
+      .replace(/_/g, " ")
+      .replace(/\b\w/g, function (letter) {
+        return letter.toUpperCase();
+      });
+  }
+
+  function focusHasRecords(groups) {
+    if (!focusedAction) return false;
+    if (focusedAction.kind === "card") return !!(groups.playByCard[focusedAction.key] && groups.playByCard[focusedAction.key].length);
+    if (focusedAction.kind === "pair") return hasComboRecords(groups.pairByType, focusedAction.key);
+    if (focusedAction.kind === "triple") return hasComboRecords(groups.tripleByType, focusedAction.key);
+    return false;
+  }
+
+  function hasComboRecords(map, type) {
+    var records = map[type] || [];
+    var i;
+    for (i = 0; i < records.length; i++) {
+      if (records[i].action && records[i].action.cardType === type) return true;
+    }
+    return false;
+  }
+
+  function comboRecords(map, type) {
+    var records = map[type] || [];
+    var out = [];
+    var i;
+    for (i = 0; i < records.length; i++) {
+      if (records[i].action && records[i].action.cardType === type) out.push(records[i]);
+    }
+    return out;
+  }
+
+  function targetNameFromAction(action) {
+    return action && action.targetId ? playerName(latestView || {}, action.targetId) : "Target";
+  }
+
+  function focusedControlsHtml(groups) {
+    var records, html, i, record, selected;
+    if (!focusedAction) return "";
+    if (focusedAction.kind === "card") {
+      records = groups.playByCard[focusedAction.key] || [];
+      if (!records.length) return "";
+      html =
+        '<div class="action-preview">' +
+        '<div class="action-eyebrow">Card move</div>' +
+        '<div class="action-name">' +
+        escapeHtml(prettyType(cardTypeFromId(focusedAction.key))) +
+        "</div>" +
+        '<div class="action-detail">' +
+        escapeHtml(actionDetail(records[0].action, records[0].label)) +
+        "</div></div>";
+      html += '<div class="action-row"><span class="action-label">Target</span>';
+      for (i = 0; i < records.length; i++) {
+        record = records[i];
+        html +=
+          '<button class="target-chip primary-target" type="button" data-submit-idx="' +
+          record.index +
+          '">' +
+          escapeHtml(record.action.targetId ? targetNameFromAction(record.action) : submitText(record.action)) +
+          "</button>";
+      }
+      html += "</div>";
+      return html;
+    }
+    if (focusedAction.kind === "pair") {
+      records = comboRecords(groups.pairByType, focusedAction.key);
+      if (!records.length) return "";
+      html =
+        '<div class="action-preview">' +
+        '<div class="action-eyebrow">Pair combo</div>' +
+        '<div class="action-name">Pair of ' +
+        escapeHtml(prettyType(focusedAction.key)) +
+        "</div>" +
+        '<div class="action-detail">Steal one random card from a live handler.</div></div>';
+      html += '<div class="action-row"><span class="action-label">Target</span>';
+      for (i = 0; i < records.length; i++) {
+        record = records[i];
+        html +=
+          '<button class="target-chip primary-target" type="button" data-submit-idx="' +
+          record.index +
+          '">' +
+          escapeHtml(targetNameFromAction(record.action)) +
+          "</button>";
+      }
+      html += "</div>";
+      return html;
+    }
+    if (focusedAction.kind === "triple") {
+      records = comboRecords(groups.tripleByType, focusedAction.key);
+      if (!records.length) return "";
+      html =
+        '<div class="action-preview">' +
+        '<div class="action-eyebrow">Triple combo</div>' +
+        '<div class="action-name">Triple of ' +
+        escapeHtml(prettyType(focusedAction.key)) +
+        "</div>" +
+        '<div class="action-detail">Name a card type and take it if the target has one.</div></div>';
+      html += '<div class="combo-picker"><select class="combo-select" id="combo-select" aria-label="Triple combo">';
+      for (i = 0; i < records.length; i++) {
+        record = records[i];
+        selected = i === 0 ? " selected" : "";
+        html += '<option value="' + record.index + '"' + selected + ">" + escapeHtml(shortActionLabel(record.label)) + "</option>";
+      }
+      html += '</select><button class="primary" id="combo-submit" type="button">Ask</button></div>';
+      return html;
+    }
+    return "";
+  }
+
+  function playActionChipsHtml(groups, records) {
+    var html = "";
+    var seen = {};
+    var i, record, action, type, key;
+    html += '<div class="action-chip-row">';
+    if (groups.draw) {
+      html +=
+        '<button class="primary" id="draw-action" type="button" data-submit-idx="' +
+        groups.draw.index +
+        '">Draw</button>';
+    }
+    for (i = 0; i < records.length; i++) {
+      record = records[i];
+      action = record.action || {};
+      if (action.type === "draw" || action.type === "defuse" || action.type === "give_card" || action.type === "play_nah") continue;
+      if (action.type === "play_card") {
+        key = "card:" + action.cardId;
+        if (seen[key]) continue;
+        seen[key] = true;
+        if (groups.playByCard[action.cardId] && groups.playByCard[action.cardId].length === 1 && !action.targetId) {
+          html +=
+            '<button class="chip" type="button" data-submit-idx="' +
+            record.index +
+            '">Play ' +
+            escapeHtml(prettyType(cardTypeFromId(action.cardId))) +
+            "</button>";
+        } else {
+          html +=
+            '<button class="chip' +
+            (focusMatches("card", action.cardId) ? " selected" : "") +
+            '" type="button" data-focus-kind="card" data-focus-key="' +
+            escapeHtml(action.cardId) +
+            '">Play ' +
+            escapeHtml(prettyType(cardTypeFromId(action.cardId))) +
+            "</button>";
+        }
+      } else if (action.type === "pair") {
+        type = action.cardType;
+        key = "pair:" + type;
+        if (seen[key]) continue;
+        seen[key] = true;
+        html +=
+          '<button class="chip' +
+          (focusMatches("pair", type) ? " selected" : "") +
+          '" type="button" data-focus-kind="pair" data-focus-key="' +
+          escapeHtml(type) +
+          '">Pair ' +
+          escapeHtml(prettyType(type)) +
+          "</button>";
+      } else if (action.type === "triple") {
+        type = action.cardType;
+        key = "triple:" + type;
+        if (seen[key]) continue;
+        seen[key] = true;
+        html +=
+          '<button class="chip' +
+          (focusMatches("triple", type) ? " selected" : "") +
+          '" type="button" data-focus-kind="triple" data-focus-key="' +
+          escapeHtml(type) +
+          '">Triple ' +
+          escapeHtml(prettyType(type)) +
+          "</button>";
+      }
+    }
+    html += "</div>";
+    return html;
+  }
+
+  function giveActionsHtml() {
+    return '<div class="action-tray"><div class="tray-note">Pick a glowing hand card to hand it over.</div></div>';
+  }
+
+  function updateDefusePreview() {
+    var range = document.getElementById("defuse-range");
+    var label = document.getElementById("defuse-label");
+    var button = document.getElementById("defuse-submit");
+    var idx = range ? Number(range.value || 0) : 0;
+    var record = latestDefuseRecords[idx];
+    if (label && record) label.textContent = record.label;
+    if (button && record) button.setAttribute("data-submit-idx", String(record.index));
+  }
+
+  function defuseActionsHtml(groups) {
+    var records = groups.defuses || [];
+    var first = records[0];
+    if (!records.length) return "";
+    return (
+      '<div class="defuse-control">' +
+      '<div class="defuse-topline"><span>Hide the Puppy</span><span id="defuse-label">' +
+      escapeHtml(first.label) +
+      "</span></div>" +
+      '<input class="defuse-slider" id="defuse-range" type="range" min="0" max="' +
+      (records.length - 1) +
+      '" value="0" step="1">' +
+      '<button class="primary" id="defuse-submit" type="button" data-submit-idx="' +
+      first.index +
+      '">Hide Puppy</button>' +
+      "</div>"
+    );
+  }
+
+  function bindActionbar(bar) {
+    var range = document.getElementById("defuse-range");
+    if (range) range.oninput = updateDefusePreview;
+    bar.onclick = function (event) {
+      var target = event.target && event.target.closest ? event.target.closest("[data-submit-idx], [data-focus-kind], #combo-submit") : null;
+      var idx, kind, key, select;
+      if (!target) return;
+      if (target.id === "combo-submit") {
+        select = document.getElementById("combo-select");
+        idx = select ? Number(select.value || 0) : 0;
+        submitRecord(latestRecords[idx]);
+        return;
+      }
+      idx = target.getAttribute("data-submit-idx");
+      if (idx !== null) {
+        submitRecord(latestRecords[Number(idx)]);
+        return;
+      }
+      kind = target.getAttribute("data-focus-kind");
+      key = target.getAttribute("data-focus-key");
+      if (kind && key) {
+        focusedAction = { kind: kind, key: key };
+        renderActions(latestActions || []);
+        renderHand(latestView || {});
+      }
+    };
+  }
+
+  function renderActions(legalActions) {
+    var bar = document.getElementById("actionbar");
+    latestActions = legalActions || [];
+    latestRecords = actionRecords(latestActions);
+    var groups = buildActionGroups(latestRecords);
+    var html;
+    latestDefuseRecords = [];
+    if (focusedAction && !focusHasRecords(groups)) focusedAction = null;
+    if (!latestActions.length) {
+      bar.className = "actionbar waiting";
+      bar.innerHTML = '<div class="waiting-copy" id="waiting-copy">' + escapeHtml(waitingCopy()) + "</div>";
+      bar.onclick = null;
+      return;
+    }
+    if (groups.defuses.length) {
+      latestDefuseRecords = groups.defuses;
+      bar.className = "actionbar defuse-mode";
+      bar.innerHTML = defuseActionsHtml(groups);
+      bindActionbar(bar);
+      updateDefusePreview();
+      return;
+    }
+    if (groups.nah) {
+      bar.className = "actionbar contextual";
+      bar.innerHTML =
+        '<div class="action-preview"><div class="action-eyebrow">Nah window</div><div class="action-name">Nah the pending move</div><div class="action-detail">' +
+        escapeHtml(actionDetail(groups.nah.action, groups.nah.label)) +
+        '</div></div><button class="primary" id="phase-action" type="button" data-submit-idx="' +
+        groups.nah.index +
+        '">Nah</button>';
+      bindActionbar(bar);
+      return;
+    }
+    if (latestView && latestView.phase === "give") {
+      bar.className = "actionbar";
+      bar.innerHTML = giveActionsHtml();
+      bindActionbar(bar);
+      return;
+    }
+    bar.className = "actionbar contextual";
+    html = '<div class="action-tray">';
+    html += playActionChipsHtml(groups, latestRecords);
+    html += focusedControlsHtml(groups);
+    html += "</div>";
+    bar.innerHTML = html;
+    bindActionbar(bar);
+  }
+
+  function situationText(view, gameOver) {
+    if (gameOver) return gameOver.summary || view.lastEvent || "Game over.";
+    if (view.phase === "response" && view.pending) {
+      return (
+        view.pending.actorName +
+        " has " +
+        (view.pending.noped ? "a blocked " : "an active ") +
+        (view.pending.cardTitle || view.pending.kind) +
+        " on the table."
+      );
+    }
+    if (view.phase === "give" && view.pendingGive) {
+      return view.pendingGive.targetName + " must give one card to " + view.pendingGive.requesterName + ".";
+    }
+    if (view.phase === "defuse") {
+      return view.currentPlayerName + " hit a Detonating Puppy and can spend Safety Squeak.";
+    }
+    if (view.phase === "play") {
+      return view.currentPlayerName + " may play cards, then draw to end the owed turn.";
+    }
+    return view.lastEvent || "Table state updated.";
+  }
+
+  function situationMeta(view, gameOver) {
+    if (gameOver) return plural(view.drawCount || 0, "card") + " left in the draw pile.";
+    return (
+      plural(view.turnsRemaining || 1, "owed turn") +
+      " / " +
+      plural(view.drawCount || 0, "draw card") +
+      " / " +
+      ((view.eliminated && view.eliminated.length) || 0) +
+      " out"
+    );
+  }
+
+  function renderPendingBadge(view, gameOver) {
+    var badge = document.getElementById("pending-badge");
+    if (!badge) return;
+    badge.className = "pending-badge hidden";
+    badge.textContent = "";
+    if (gameOver) {
+      badge.className = "pending-badge";
+      badge.textContent = "Winner";
+      return;
+    }
+    if (view.phase === "response" && view.pending) {
+      badge.className = "pending-badge" + (view.pending.noped ? " blocked" : "");
+      badge.textContent = view.pending.noped ? "Blocked by Nah" : "Nah can answer";
+      return;
+    }
+    if (view.attackChain || (view.turnsRemaining || 1) > 1) {
+      badge.className = "pending-badge";
+      badge.textContent = plural(view.turnsRemaining || 1, "turn") + " owed";
+      return;
+    }
+    if (view.phase === "give") {
+      badge.className = "pending-badge";
+      badge.textContent = "Favor";
+      return;
+    }
+    if (view.phase === "defuse") {
+      badge.className = "pending-badge blocked";
+      badge.textContent = "Boom";
+    }
+  }
+
+  function renderEventLog(view) {
+    var log = document.getElementById("event-log");
+    var events = view.eventLog || [];
+    var start = Math.max(0, events.length - 5);
+    var html = "";
+    var i, event;
+    for (i = start; i < events.length; i++) {
+      event = events[i] || {};
+      html +=
+        '<div class="event-entry ' +
+        escapeHtml(event.tone || "table") +
+        '"><span class="event-dot"></span><span>' +
+        escapeHtml(event.text || "") +
+        "</span></div>";
+    }
+    log.innerHTML = html;
+  }
+
+  function renderStatus(view, legalActions, ctx) {
+    var root = document.getElementById("game");
+    var gameOver = (ctx && ctx.gameOver) || view.phase === "gameOver";
+    var status = gameOver ? "game-over" : ((legalActions || []).length ? "your-turn" : "waiting");
+    root.setAttribute("data-phase", view.phase || "play");
+    root.setAttribute("data-status", status);
+    root.setAttribute("data-player", ctx && ctx.myId ? ctx.myId : "spectator");
+    root.setAttribute("data-current-player", view.currentPlayerId || "");
+    document.getElementById("current-pill").textContent = gameOver ? "Game Over" : playerName(view, view.currentPlayerId);
+    document.getElementById("turns-label").textContent =
+      gameOver && ctx && ctx.gameOver && ctx.gameOver.playerIds && ctx.gameOver.playerIds.length
+        ? "Winner: " + playerName(view, ctx.gameOver.playerIds[0])
+        : plural(view.drawCount || 0, "card") + " / " + plural(view.turnsRemaining || 1, "turn");
+    document.getElementById("phase-title").textContent = phaseTitle(view.phase);
+    document.getElementById("event-text").textContent = situationText(view, gameOver);
+    document.getElementById("situation-meta").textContent = situationMeta(view, gameOver);
+    renderPendingBadge(view, gameOver);
+    renderEventLog(view);
+    document.getElementById("draw-count").textContent = String(view.drawCount || 0);
+    if (status !== lastStatus && status === "your-turn" && playgent.sound) playgent.sound("turn.start");
+    if (view.phase !== lastPhase && lastPhase && playgent.sound) playgent.sound("phase.change");
+    lastPhase = view.phase || "";
+    lastStatus = status;
+  }
+
+  playgent.onStateChange(function (view, legalActions, ctx) {
+    ctx = ctx || {};
+    latestView = view || null;
+    latestGameOver = ctx.gameOver || null;
+    latestActions = legalActions || [];
+    latestRecords = actionRecords(latestActions);
+    if (focusedAction && !focusHasRecords(buildActionGroups(latestRecords))) focusedAction = null;
+    renderStatus(view, legalActions, ctx);
+    renderPlayers(view, ctx);
+    renderDiscard(view);
+    renderHand(view);
+    renderPeek(view);
+    renderRoster(ctx);
+    renderActions(latestActions);
+  });
+
+  window.__playgentCheckLayout = function () {
+    var failures = [];
+    var actionbar = document.getElementById("actionbar");
+    var handWrap = document.querySelector(".hand-wrap");
+    var peekPanel = document.getElementById("peek-panel");
+    var actionTop = actionbar ? actionbar.getBoundingClientRect().top : window.innerHeight;
+    var handRect = handWrap ? handWrap.getBoundingClientRect() : null;
+    var peekBottom = peekPanel ? peekPanel.getBoundingClientRect().bottom : actionTop;
+    var cards = document.querySelectorAll("[data-hand-card]");
+    var peeks = document.querySelectorAll("[data-peek-card]");
+    var i, rect, label;
+
+    if (handRect && handRect.bottom > actionTop - 4) {
+      failures.push({ message: "hand area hidden by action bar" });
+    }
+
+    for (i = 0; i < cards.length; i++) {
+      rect = cards[i].getBoundingClientRect();
+      if (
+        handRect &&
+        (rect.bottom > handRect.bottom + 4 ||
+          rect.top < handRect.top - 4 ||
+          rect.right < handRect.left ||
+          rect.left > handRect.right)
+      ) {
+        continue;
+      }
+      if (rect.top < -1 || rect.bottom > actionTop - 4) {
+        label = cards[i].querySelector(".card-name");
+        failures.push({
+          message:
+            "hand card hidden by viewport/action bar: " +
+            (label ? label.textContent : "card " + (i + 1)),
+        });
+      }
+    }
+
+    for (i = 0; i < peeks.length; i++) {
+      rect = peeks[i].getBoundingClientRect();
+      if (rect.top < -1 || rect.bottom > actionTop - 4 || rect.bottom > peekBottom - 4) {
+        failures.push({ message: "Nose the Future peek card is not fully visible" });
+      }
+    }
+
+    return failures;
+  };
+})();
+</script>

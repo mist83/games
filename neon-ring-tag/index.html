@@ -1,0 +1,2330 @@
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #05070d;
+  color: #f6fbff;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+#game-container {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+#action-panel {
+  position: fixed;
+  left: 50%;
+  right: auto;
+  bottom: 10px;
+  width: min(760px, calc(100vw - 24px));
+  transform: translateX(-50%);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) 112px;
+  gap: 8px;
+  align-items: stretch;
+  padding: 8px;
+  border: 1px solid rgba(138, 216, 255, 0.32);
+  border-radius: 8px;
+  background: rgba(5, 8, 17, 0.92);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.48);
+  backdrop-filter: blur(10px);
+  z-index: 5;
+}
+#action-panel[hidden] { display: none; }
+.queue-slot {
+  min-width: 0;
+  min-height: 50px;
+  border: 1px solid rgba(238, 247, 255, 0.25);
+  border-radius: 6px;
+  background: linear-gradient(180deg, rgba(18, 29, 48, 0.98), rgba(9, 14, 26, 0.98));
+  color: #f6fbff;
+  padding: 6px 9px;
+  font-size: 12px;
+  font-weight: 850;
+  cursor: pointer;
+  text-align: left;
+  transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+}
+.queue-slot:active {
+  transform: translateY(1px) scale(0.99);
+}
+.queue-slot span {
+  display: block;
+  color: #8ad8ff;
+  font-size: 10px;
+  font-weight: 950;
+  line-height: 1;
+  margin-bottom: 5px;
+}
+.queue-slot strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.queue-slot em {
+  display: block;
+  margin-top: 5px;
+  color: #c2d8e8;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 780;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#submit-action {
+  min-width: 104px;
+  min-height: 50px;
+  border: 0;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #41d7ff, #ff477f);
+  color: #05070d;
+  font-size: 13px;
+  font-weight: 950;
+  cursor: pointer;
+}
+#submit-action:disabled {
+  opacity: 0.62;
+  cursor: wait;
+}
+#attack-modal {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: end center;
+  padding: 16px;
+  background: rgba(2, 4, 10, 0.62);
+  z-index: 10;
+}
+#attack-modal[hidden] { display: none; }
+.attack-dialog {
+  width: min(560px, 100%);
+  max-height: min(76vh, 620px);
+  display: grid;
+  grid-template-rows: auto 1fr;
+  border: 1px solid rgba(138, 216, 255, 0.34);
+  border-radius: 8px;
+  background: rgba(5, 8, 17, 0.97);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.58);
+  overflow: hidden;
+}
+.attack-dialog-head {
+  display: grid;
+  grid-template-columns: 1fr 38px;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 14px 10px;
+  border-bottom: 1px solid rgba(138, 216, 255, 0.16);
+}
+.attack-dialog h2 {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.1;
+  color: #f6fbff;
+  font-weight: 950;
+  letter-spacing: 0;
+}
+.attack-dialog p {
+  margin: 5px 0 0;
+  color: #9fb3c9;
+  font-size: 12px;
+  line-height: 1.25;
+  font-weight: 780;
+}
+#attack-modal-close {
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(238, 247, 255, 0.22);
+  border-radius: 6px;
+  background: #101827;
+  color: #f6fbff;
+  font-size: 18px;
+  font-weight: 950;
+  cursor: pointer;
+}
+#attack-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+  padding: 12px;
+  overflow: auto;
+}
+.move-option {
+  min-height: 54px;
+  border: 1px solid rgba(238, 247, 255, 0.18);
+  border-radius: 7px;
+  background: #0d1423;
+  color: #f6fbff;
+  padding: 10px;
+  text-align: left;
+  cursor: pointer;
+}
+.move-option.selected {
+  border-color: rgba(255, 208, 90, 0.78);
+  background: linear-gradient(180deg, rgba(41, 35, 19, 0.98), rgba(16, 20, 35, 0.98));
+}
+.move-option strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 950;
+  margin-bottom: 4px;
+}
+.move-option span {
+  display: block;
+  color: #8ad8ff;
+  font-size: 10px;
+  line-height: 1.2;
+  font-weight: 900;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.move-option small {
+  display: none;
+}
+.move-category {
+  grid-column: 1 / -1;
+  padding: 4px 2px 0;
+  color: #8ad8ff;
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+#telemetry {
+  position: fixed;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+@media (max-width: 560px) {
+  #action-panel {
+    left: 6px;
+    right: 6px;
+    bottom: 6px;
+    width: auto;
+    transform: none;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+    padding: 6px;
+  }
+  .queue-slot {
+    min-height: 54px;
+    padding: 6px;
+    font-size: 11px;
+  }
+  .queue-slot em { display: none; }
+  .queue-slot span {
+    font-size: 9px;
+    margin-bottom: 4px;
+  }
+  #submit-action {
+    grid-column: auto;
+    min-width: 0;
+    min-height: 54px;
+    width: 100%;
+    font-size: 11px;
+  }
+  #attack-modal {
+    padding: 8px;
+    place-items: end center;
+  }
+  .attack-dialog {
+    max-height: 74vh;
+  }
+  #attack-options {
+    grid-template-columns: 1fr;
+    gap: 7px;
+    padding: 8px;
+  }
+  .move-option {
+    min-height: 54px;
+    padding: 8px;
+  }
+  .move-option small { display: none; }
+}
+</style>
+
+<div id="game-container"></div>
+<div id="action-panel" hidden>
+  <button id="attack-0" class="queue-slot" type="button"><span>ATTACK 1</span><strong>Advance</strong></button>
+  <button id="attack-1" class="queue-slot" type="button"><span>ATTACK 2</span><strong>Strike</strong></button>
+  <button id="attack-2" class="queue-slot" type="button"><span>ATTACK 3</span><strong>Elbow</strong></button>
+  <button id="submit-action" type="button">LOCK IN</button>
+</div>
+<div id="attack-modal" hidden>
+  <div class="attack-dialog" role="dialog" aria-modal="true" aria-labelledby="attack-modal-title">
+    <div class="attack-dialog-head">
+      <div>
+        <h2 id="attack-modal-title">Attack</h2>
+        <p id="attack-modal-subtitle">Current: Advance</p>
+      </div>
+      <button id="attack-modal-close" type="button" aria-label="Close">x</button>
+    </div>
+    <div id="attack-options"></div>
+  </div>
+</div>
+<div id="telemetry" data-phase="planning" data-player="viewer" data-status="waiting"></div>
+
+<script>
+(function() {
+  var E2E_GAME_SLUG = "neon-ring-tag";
+  var E2E = window.__playgentE2EState || {
+    version: 1,
+    regions: [],
+    lastPhase: "loading",
+    lastStatus: "loading",
+    lastPlayerId: "",
+    lastCurrentPlayer: "",
+    lastLegalActionCount: 0,
+    lastVisibleLegalActionCount: 0,
+    lastActions: [],
+    lastRawActions: []
+  };
+  window.__playgentE2EState = E2E;
+
+  function setE2EAttr(el, name, value) {
+    if (!el) return;
+    el.setAttribute(name, value == null ? "" : String(value));
+  }
+
+  function unwrapE2EAction(option) {
+    if (option && typeof option === "object" && option.decision !== undefined) return option.decision;
+    if (option && typeof option === "object" && option.action !== undefined) return option.action;
+    return option;
+  }
+
+  function isVisibleE2EAction(action) {
+    action = unwrapE2EAction(action);
+    if (!action || typeof action !== "object") return false;
+    if (action.type === "advance_phase" || action.type === "system" || action.type === "noop") return false;
+    return true;
+  }
+
+  function getVisibleE2EActions(actions) {
+    var out = [];
+    for (var i = 0; actions && i < actions.length; i++) {
+      if (isVisibleE2EAction(actions[i])) out.push(unwrapE2EAction(actions[i]));
+    }
+    return out;
+  }
+
+  function ensureE2ETelemetry() {
+    var el = document.getElementById("e2e-telemetry");
+    if (!el) {
+      el = document.createElement("div");
+      el.id = "e2e-telemetry";
+      if (document.body) document.body.appendChild(el);
+    }
+    el.setAttribute("aria-hidden", "true");
+    el.style.cssText = "position:fixed;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;left:0;top:0;";
+    setE2EAttr(el, "data-game", E2E_GAME_SLUG);
+    setE2EAttr(el, "data-phase", E2E.lastPhase);
+    setE2EAttr(el, "data-status", E2E.lastStatus);
+    setE2EAttr(el, "data-player", E2E.lastPlayerId || "spectator");
+    return el;
+  }
+
+  function addUnique(list, el) {
+    if (!el) return;
+    for (var i = 0; i < list.length; i++) if (list[i] === el) return;
+    list.push(el);
+  }
+
+  function getE2ERoots() {
+    var roots = [];
+    addUnique(roots, ensureE2ETelemetry());
+    addUnique(roots, document.getElementById("telemetry"));
+    addUnique(roots, document.getElementById("game"));
+    addUnique(roots, document.getElementById("game-container"));
+    addUnique(roots, document.querySelector("[data-board]"));
+    return roots;
+  }
+
+  function getCurrentPlayerE2E(view) {
+    if (!view) return "";
+    return view.currentPlayer || view.currentPlayerId || view.currentActor || view.turn || "";
+  }
+
+  function updateE2EPlayers(players) {
+    var telemetry = ensureE2ETelemetry();
+    var host = document.getElementById("e2e-players");
+    if (!host) {
+      host = document.createElement("div");
+      host.id = "e2e-players";
+      telemetry.appendChild(host);
+    }
+    host.textContent = "";
+    for (var i = 0; players && i < players.length; i++) {
+      var p = players[i] || {};
+      var span = document.createElement("span");
+      setE2EAttr(span, "data-player", p.id || "");
+      setE2EAttr(span, "data-player-name", p.name || p.id || "");
+      span.textContent = p.name || p.id || "";
+      host.appendChild(span);
+    }
+  }
+
+  function updateE2ELandmarks(view, legalActions, context) {
+    var visibleActions = getVisibleE2EActions(legalActions || []);
+    var phase = context && context.gameOver ? "game-over" : (view && (view.phase || view.mode || view.stage) ? (view.phase || view.mode || view.stage) : "playing");
+    var status = context && context.gameOver ? "game-over" : (visibleActions.length > 0 ? "your-turn" : "waiting");
+    var playerId = context && context.myId ? context.myId : "spectator";
+    var currentPlayer = getCurrentPlayerE2E(view);
+    var roots = getE2ERoots();
+    E2E.lastPhase = phase;
+    E2E.lastStatus = status;
+    E2E.lastPlayerId = playerId;
+    E2E.lastCurrentPlayer = currentPlayer;
+    E2E.lastRawActions = legalActions || [];
+    E2E.lastActions = visibleActions;
+    E2E.lastLegalActionCount = (legalActions || []).length;
+    E2E.lastVisibleLegalActionCount = visibleActions.length;
+    for (var i = 0; i < roots.length; i++) {
+      setE2EAttr(roots[i], "data-game", E2E_GAME_SLUG);
+      setE2EAttr(roots[i], "data-phase", phase);
+      setE2EAttr(roots[i], "data-status", status);
+      setE2EAttr(roots[i], "data-player", playerId);
+      setE2EAttr(roots[i], "data-current-player", currentPlayer);
+      if (view && view.round != null) setE2EAttr(roots[i], "data-round", view.round);
+      if (view && view.turnNumber != null) setE2EAttr(roots[i], "data-turn", view.turnNumber);
+    }
+    updateE2EPlayers(context && context.players ? context.players : []);
+  }
+
+  function actionTypeForIndex(idx) {
+    var raw = E2E.lastRawActions && E2E.lastRawActions[idx] ? unwrapE2EAction(E2E.lastRawActions[idx]) : null;
+    return raw && raw.type ? raw.type : "choose";
+  }
+
+  function safeLabelFromNode(node) {
+    var label = node.getAttribute("data-action-label") || node.getAttribute("aria-label") || node.title || node.textContent || node.value || "";
+    return String(label).replace(/\s+/g, " ").trim().slice(0, 100);
+  }
+
+  function decorateE2EDOMControls() {
+    var nodes = document.querySelectorAll("[data-action-idx], [data-action], button, [role='button'], input[type='button'], input[type='submit'], input:not([type='hidden']), select, textarea, [data-cell], [data-card], [data-card-id], [data-option-id], [data-brainrot], canvas");
+    for (var i = 0; i < nodes.length; i++) {
+      var node = nodes[i];
+      if (node.hasAttribute("data-action") && !node.hasAttribute("data-action-idx")) {
+        node.setAttribute("data-action-idx", node.getAttribute("data-action"));
+      }
+      if (node.hasAttribute("data-action-idx")) {
+        var idx = parseInt(node.getAttribute("data-action-idx"), 10);
+        if (!isNaN(idx) && !node.hasAttribute("data-action-type")) node.setAttribute("data-action-type", actionTypeForIndex(idx));
+        if (!node.hasAttribute("data-action-label")) node.setAttribute("data-action-label", safeLabelFromNode(node));
+      }
+      if (node.hasAttribute("data-cell") && !node.getAttribute("aria-label")) {
+        node.setAttribute("aria-label", "cell " + node.getAttribute("data-cell"));
+      }
+      if ((node.hasAttribute("data-card") || node.hasAttribute("data-card-id")) && !node.getAttribute("aria-label")) {
+        node.setAttribute("aria-label", "card " + (node.getAttribute("data-card") || node.getAttribute("data-card-id")));
+      }
+      if (node.tagName === "CANVAS" && !node.getAttribute("aria-label")) {
+        node.setAttribute("aria-label", E2E_GAME_SLUG + " canvas");
+      }
+    }
+  }
+
+  function e2eBeginFrame(view, legalActions, context) {
+    E2E.regions = [];
+    updateE2ELandmarks(view || {}, legalActions || [], context || {});
+  }
+
+  function e2eAfterRender() {
+    decorateE2EDOMControls();
+  }
+
+  function isVisibleE2ENode(node) {
+    if (!node || !node.getBoundingClientRect) return false;
+    var rect = node.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return false;
+    if (rect.right <= 0 || rect.bottom <= 0 || rect.left >= window.innerWidth || rect.top >= window.innerHeight) return false;
+    var style = window.getComputedStyle ? window.getComputedStyle(node) : null;
+    if (style && (style.display === "none" || style.visibility === "hidden" || style.opacity === "0")) return false;
+    if (node.disabled || node.getAttribute("aria-disabled") === "true") return false;
+    return true;
+  }
+
+  function regionKindForNode(node) {
+    if (node.tagName === "CANVAS") return "canvas";
+    if (node.tagName === "INPUT" || node.tagName === "SELECT" || node.tagName === "TEXTAREA") return "input";
+    if (node.hasAttribute("data-cell")) return "cell";
+    if (node.hasAttribute("data-card") || node.hasAttribute("data-card-id")) return "card";
+    return "button";
+  }
+
+  function getDOMActionRegions() {
+    decorateE2EDOMControls();
+    var nodes = document.querySelectorAll("[data-action-idx], button, [role='button'], input[type='button'], input[type='submit'], input:not([type='hidden']), select, textarea, [data-cell], [data-card], [data-card-id], [data-option-id], [data-brainrot], canvas");
+    var out = [];
+    for (var i = 0; i < nodes.length; i++) {
+      var node = nodes[i];
+      if (!isVisibleE2ENode(node)) continue;
+      var r = clipE2ERect(node.getBoundingClientRect());
+      if (!r) continue;
+      var id = node.id || node.getAttribute("data-action-idx") || node.getAttribute("data-cell") || node.getAttribute("data-card") || node.getAttribute("data-card-id") || node.getAttribute("data-option-id") || node.getAttribute("data-brainrot") || ("control-" + i);
+      out.push({
+        id: String(id),
+        kind: regionKindForNode(node),
+        label: safeLabelFromNode(node),
+        actionType: node.getAttribute("data-action-type") || "",
+        selector: node.id ? ("#" + node.id) : "",
+        rect: { x: r.left, y: r.top, width: r.width, height: r.height },
+        center: { x: r.left + r.width / 2, y: r.top + r.height / 2 }
+      });
+    }
+    return out;
+  }
+
+  function clipE2ERect(rect) {
+    if (!rect) return null;
+    var x = Number(rect.x != null ? rect.x : rect.left) || 0;
+    var y = Number(rect.y != null ? rect.y : rect.top) || 0;
+    var width = Number(rect.width) || 0;
+    var height = Number(rect.height) || 0;
+    var left = Math.max(0, x);
+    var top = Math.max(0, y);
+    var right = Math.min(window.innerWidth, x + width);
+    var bottom = Math.min(window.innerHeight, y + height);
+    if (right - left <= 0 || bottom - top <= 0) return null;
+    return { x: left, y: top, width: right - left, height: bottom - top };
+  }
+
+  function e2eRegisterRegion(region) {
+    if (!region || !region.id || !region.rect) return;
+    var r = clipE2ERect(region.rect);
+    if (!r || r.width == null || r.height == null) return;
+    var item = {
+      id: String(region.id),
+      kind: region.kind || "button",
+      label: region.label || "",
+      actionType: region.actionType || "",
+      rect: { x: Number(r.x) || 0, y: Number(r.y) || 0, width: Number(r.width) || 0, height: Number(r.height) || 0 },
+      center: region.center || { x: (Number(r.x) || 0) + (Number(r.width) || 0) / 2, y: (Number(r.y) || 0) + (Number(r.height) || 0) / 2 }
+    };
+    for (var i = 0; i < E2E.regions.length; i++) {
+      if (E2E.regions[i].id === item.id) {
+        E2E.regions[i] = item;
+        return;
+      }
+    }
+    E2E.regions.push(item);
+  }
+
+  function e2eCanvasRect(localRect, app) {
+    var canvas = app && app.canvas ? app.canvas : document.querySelector("canvas");
+    var screen = app && app.screen ? app.screen : null;
+    if (!canvas || !localRect) return null;
+    var canvasRect = canvas.getBoundingClientRect();
+    var screenW = screen && screen.width ? screen.width : canvasRect.width;
+    var screenH = screen && screen.height ? screen.height : canvasRect.height;
+    var sx = canvasRect.width / (screenW || canvasRect.width || 1);
+    var sy = canvasRect.height / (screenH || canvasRect.height || 1);
+    return {
+      x: canvasRect.left + localRect.x * sx,
+      y: canvasRect.top + localRect.y * sy,
+      width: localRect.width * sx,
+      height: localRect.height * sy
+    };
+  }
+
+  function e2ePixiBounds(displayObject, app) {
+    if (!displayObject || !displayObject.getBounds) return null;
+    var b = displayObject.getBounds();
+    return e2eCanvasRect({ x: b.x, y: b.y, width: b.width, height: b.height }, app);
+  }
+
+  function getE2ECanvasInfo() {
+    var canvas = document.querySelector("canvas");
+    if (!canvas) return null;
+    var rect = canvas.getBoundingClientRect();
+    return { selector: "canvas", width: rect.width, height: rect.height };
+  }
+
+  function getAllE2ERegions() {
+    var out = E2E.regions.slice();
+    var dom = getDOMActionRegions();
+    var seen = {};
+    var merged = [];
+    for (var i = 0; i < out.length; i++) { seen[out[i].id] = true; merged.push(out[i]); }
+    for (var j = 0; j < dom.length; j++) {
+      if (!seen[dom[j].id]) merged.push(dom[j]);
+    }
+    return merged;
+  }
+
+  function runE2ELayoutChecks() {
+    var failures = [];
+    var regions = getAllE2ERegions();
+    var canvas = getE2ECanvasInfo();
+    if (E2E.lastVisibleLegalActionCount > 0 && regions.length === 0) {
+      failures.push({ severity: "error", message: "active legal actions did not create visible controls" });
+    }
+    if (canvas && (canvas.width <= 0 || canvas.height <= 0)) {
+      failures.push({ severity: "error", message: "canvas has empty bounds" });
+    }
+    for (var i = 0; i < regions.length; i++) {
+      var region = regions[i];
+      var r = region.rect;
+      if (!r) {
+        failures.push({ severity: "error", message: region.id + " has no rect" });
+        continue;
+      }
+      if (r.width <= 0 || r.height <= 0) failures.push({ severity: "error", message: region.id + " has empty bounds" });
+      if (r.x < -1 || r.y < -1 || r.x + r.width > window.innerWidth + 1 || r.y + r.height > window.innerHeight + 1) {
+        failures.push({ severity: "error", message: region.id + " is offscreen" });
+      }
+      if (region.kind !== "canvas" && (r.width < 36 || r.height < 36)) {
+        failures.push({ severity: "warning", message: region.id + " is a small touch target" });
+      }
+    }
+    return failures;
+  }
+
+  window.__playgentE2EBegin = e2eBeginFrame;
+  window.__playgentE2EAfterRender = e2eAfterRender;
+  window.__playgentE2ERegisterRegion = e2eRegisterRegion;
+  window.__playgentE2ECanvasRect = e2eCanvasRect;
+  window.__playgentE2EPixiBounds = e2ePixiBounds;
+  window.__playgentE2ERunLayoutChecks = runE2ELayoutChecks;
+  window.__playgentE2E = {
+    version: 1,
+    getSnapshot: function() {
+      return {
+        phase: E2E.lastPhase,
+        status: E2E.lastStatus,
+        playerId: E2E.lastPlayerId,
+        currentPlayer: E2E.lastCurrentPlayer,
+        legalActionCount: E2E.lastVisibleLegalActionCount,
+        regionCount: getAllE2ERegions().length,
+        canvas: getE2ECanvasInfo()
+      };
+    },
+    getInteractiveRegions: function() { return getAllE2ERegions(); },
+    checkLayout: function() { return runE2ELayoutChecks(); }
+  };
+
+  if (typeof window.__playgentCheckLayout !== "function") {
+    window.__playgentCheckLayout = function() { return runE2ELayoutChecks(); };
+  }
+
+  function patchPlaygentE2E() {
+    if (!window.playgent || !window.playgent.onStateChange || window.playgent.__e2ePatched) return false;
+    var original = window.playgent.onStateChange;
+    window.playgent.onStateChange = function(cb) {
+      return original.call(window.playgent, function(view, legalActions, context) {
+        e2eBeginFrame(view, legalActions, context || {});
+        var result = cb.apply(this, arguments);
+        e2eAfterRender();
+        return result;
+      });
+    };
+    window.playgent.__e2ePatched = true;
+    return true;
+  }
+
+  ensureE2ETelemetry();
+  decorateE2EDOMControls();
+  if (!patchPlaygentE2E()) {
+    var tries = 0;
+    var timer = setInterval(function() {
+      tries++;
+      if (patchPlaygentE2E() || tries > 80) clearInterval(timer);
+    }, 50);
+  }
+}());
+</script>
+
+<script>
+function unwrap(option) {
+  if (option && typeof option === "object" && option.decision !== undefined) return option.decision;
+  return option;
+}
+
+function planFromAction(action) {
+  if (!action || typeof action !== "object") return null;
+  if (Array.isArray(action.plan)) return action.plan.slice(0, 3);
+  if (typeof action.attack1 === "string" || typeof action.attack2 === "string" || typeof action.attack3 === "string") {
+    return [action.attack1, action.attack2, action.attack3];
+  }
+  return null;
+}
+
+var Ui = {
+  view: null,
+  actions: [],
+  context: {},
+  queue: ["jab", "cross", "advance"],
+  actionNames: [],
+  activeAttackIndex: 0,
+  previousExchangeNumber: 0,
+  submitLocked: false,
+  submitUnlockTimer: null,
+
+  init: function() {
+    var button = document.getElementById("submit-action");
+    var modal = document.getElementById("attack-modal");
+    var close = document.getElementById("attack-modal-close");
+    var i;
+    for (i = 0; i < 3; i++) {
+      (function(index) {
+        var slot = document.getElementById("attack-" + index);
+        if (!slot) return;
+        slot.onclick = function() {
+          Ui.openAttackModal(index);
+        };
+      }(i));
+    }
+    if (close) close.onclick = function() { Ui.closeAttackModal(); };
+    if (modal) {
+      modal.onclick = function(event) {
+        if (event.target === modal) Ui.closeAttackModal();
+      };
+    }
+    document.addEventListener("keydown", function(event) {
+      if (event.key === "Escape") Ui.closeAttackModal();
+    });
+    button.onclick = function() {
+      if (!Ui.actions.length || Ui.submitLocked) return;
+      var decision = Ui.buildDecision();
+      Ui.submitDecision(decision, "ui.click");
+    };
+  },
+
+  onState: function(view, legalActions, context) {
+    this.view = view || {};
+    this.actions = legalActions || [];
+    this.context = context || {};
+    this.clearSubmitLock();
+    this.syncQueue();
+    this.updateTelemetry();
+    this.renderControls();
+    if (view && view.lastExchange && view.lastExchange.number !== this.previousExchangeNumber) {
+      this.previousExchangeNumber = view.lastExchange.number;
+      this.playExchangeSound(view.lastExchange);
+    }
+    Renderer.onState(this.view, this.context);
+    Fallback.render(this.view);
+  },
+
+  syncQueue: function() {
+    var available = this.availableActionNames();
+    var fallback = this.firstSuggestedPlan();
+    var action = this.firstSuggestedAction();
+    var i;
+    this.actionNames = available;
+    if (!available.length) return;
+    if (!this.queue || this.queue.length !== 3) this.queue = fallback || ["jab", "cross", "advance"];
+    for (i = 0; i < 3; i++) {
+      if (available.indexOf(this.queue[i]) === -1) {
+        this.queue[i] = (fallback && fallback[i] && available.indexOf(fallback[i]) !== -1) ? fallback[i] : available[Math.min(i, available.length - 1)];
+      }
+    }
+  },
+
+  availableActionNames: function() {
+    if (this.view && Array.isArray(this.view.availableActions) && this.view.availableActions.length) return this.view.availableActions.slice();
+    var map = {};
+    var names = [];
+    var i, action, plan, p;
+    for (i = 0; i < this.actions.length; i++) {
+      action = unwrap(this.actions[i]);
+      plan = planFromAction(action);
+      if (plan) {
+        for (p = 0; p < plan.length; p++) {
+          if (plan[p] && !map[plan[p]]) {
+            map[plan[p]] = true;
+            names.push(plan[p]);
+          }
+        }
+      }
+    }
+    return names.length ? names : ["advance", "retreat", "roll", "teep", "flying_knee", "jab", "cross", "elbow", "knee"];
+  },
+
+  firstSuggestedPlan: function() {
+    var action = this.firstSuggestedAction();
+    var plan = planFromAction(action);
+    return plan ? plan.slice(0, 3) : null;
+  },
+
+  firstSuggestedAction: function() {
+    var action = this.actions.length ? unwrap(this.actions[0]) : null;
+    return action;
+  },
+
+  moveLabel: function(name) {
+    var catalog = this.view && this.view.moveCatalog ? this.view.moveCatalog : {};
+    return (catalog[name] && catalog[name].name) || name.replace(/_/g, " ").replace(/\b\w/g, function(c) { return c.toUpperCase(); });
+  },
+
+  moveText: function(name) {
+    return this.moveTags(name);
+  },
+
+  moveTags: function(name) {
+    var catalog = this.view && this.view.moveCatalog ? this.view.moveCatalog : {};
+    var tags = catalog[name] && catalog[name].tags ? catalog[name].tags : [];
+    return tags.slice(0, 3).join(" / ").replace(/_/g, " ");
+  },
+
+  moveCategory: function(name) {
+    var catalog = this.view && this.view.moveCatalog ? this.view.moveCatalog : {};
+    var move = catalog[name] || {};
+    if (move.kind === "movement" || name === "advance" || name === "retreat" || name === "roll") return "Movement";
+    if (move.range === 2) return "Distance Attacks";
+    if (move.range === 1) return "Pocket Attacks";
+    if (move.range === 0) return "Clinch Attacks";
+    return "Attacks";
+  },
+
+  openAttackModal: function(index) {
+    var modal = document.getElementById("attack-modal");
+    var title = document.getElementById("attack-modal-title");
+    var subtitle = document.getElementById("attack-modal-subtitle");
+    var options = document.getElementById("attack-options");
+    var available = this.actionNames.length ? this.actionNames : this.availableActionNames();
+    var i, button, name, selected, currentCategory, category;
+    if (!modal || !options || !available.length) return;
+    this.activeAttackIndex = index;
+    if (title) title.textContent = "ATTACK " + (index + 1);
+    if (subtitle) subtitle.textContent = "Current: " + this.moveLabel(this.queue[index]);
+    options.innerHTML = "";
+    for (i = 0; i < available.length; i++) {
+      name = available[i];
+      category = this.moveCategory(name);
+      if (category !== currentCategory) {
+        currentCategory = category;
+        button = document.createElement("div");
+        button.className = "move-category";
+        button.textContent = category;
+        options.appendChild(button);
+      }
+      selected = name === this.queue[index];
+      button = document.createElement("button");
+      button.type = "button";
+      button.className = selected ? "move-option selected" : "move-option";
+      button.setAttribute("data-action-label", "Attack " + (index + 1) + " " + this.moveLabel(name));
+      button.innerHTML = "<strong>" + this.moveLabel(name) + "</strong><span>" + this.moveTags(name) + "</span>";
+      button.onclick = (function(actionName) {
+        return function() {
+          Ui.chooseSlot(Ui.activeAttackIndex, actionName);
+        };
+      }(name));
+      options.appendChild(button);
+    }
+    modal.hidden = false;
+  },
+
+  closeAttackModal: function() {
+    var modal = document.getElementById("attack-modal");
+    if (modal) modal.hidden = true;
+  },
+
+  chooseSlot: function(index, actionName) {
+    var available = this.actionNames.length ? this.actionNames : this.availableActionNames();
+    if (!available.length) return;
+    if (available.indexOf(actionName) === -1) return;
+    this.queue[index] = actionName;
+    this.renderQueueButtons();
+    this.updateDetail();
+    this.closeAttackModal();
+    if (typeof playgent !== "undefined" && playgent.sound) playgent.sound("ui.select");
+  },
+
+  buildDecision: function() {
+    var action;
+    action = this.firstSuggestedAction() || {};
+    return {
+      type: "queue",
+      attack1: this.queue[0],
+      attack2: this.queue[1],
+      attack3: this.queue[2],
+      intent: "Execute " + this.queue.join(" into ") + ".",
+      risk: action.risk || "Movement can make attacks miss, and bad movement can walk into knees or kicks.",
+      trash_talk: action.trash_talk || ""
+    };
+  },
+
+  submitDecision: function(decision, soundId) {
+    var self = this;
+    if (this.submitLocked) return;
+    this.submitLocked = true;
+    this.updateSubmitButton();
+    if (typeof playgent !== "undefined") {
+      if (playgent.sound && soundId) playgent.sound(soundId);
+      playgent.submitAction(decision);
+    }
+    if (this.submitUnlockTimer) clearTimeout(this.submitUnlockTimer);
+    this.submitUnlockTimer = setTimeout(function() {
+      self.submitLocked = false;
+      self.updateSubmitButton();
+    }, 1500);
+  },
+
+  clearSubmitLock: function() {
+    this.submitLocked = false;
+    if (this.submitUnlockTimer) {
+      clearTimeout(this.submitUnlockTimer);
+      this.submitUnlockTimer = null;
+    }
+    this.updateSubmitButton();
+  },
+
+  updateSubmitButton: function() {
+    var button = document.getElementById("submit-action");
+    if (!button) return;
+    button.disabled = !!this.submitLocked;
+    button.textContent = this.submitLocked ? "LOCKING..." : "LOCK IN";
+  },
+
+  updateTelemetry: function() {
+    var el = document.getElementById("telemetry");
+    var status = "waiting";
+    if (!el) return;
+    if (this.view && this.view.phase === "gameOver") status = "game-over";
+    else if (this.actions.length > 0) status = "your-turn";
+    else if (this.view && this.view.yourPlan) status = "locked";
+    el.setAttribute("data-phase", (this.view && this.view.phase) || "planning");
+    el.setAttribute("data-player", (this.context && this.context.myId) || "viewer");
+    el.setAttribute("data-status", status);
+  },
+
+  renderControls: function() {
+    var panel = document.getElementById("action-panel");
+    if (!panel) return;
+    if (!this.actions.length || (this.view && (this.view.phase === "gameOver" || this.view.phase === "fighting"))) {
+      panel.hidden = true;
+      this.closeAttackModal();
+      return;
+    }
+    panel.hidden = false;
+    this.renderQueueButtons();
+    this.updateDetail();
+  },
+
+  renderQueueButtons: function() {
+    var i, slot;
+    document.getElementById("submit-action").hidden = false;
+    this.updateSubmitButton();
+    for (i = 0; i < 3; i++) {
+      slot = document.getElementById("attack-" + i);
+      if (!slot) continue;
+      slot.hidden = false;
+      slot.className = "queue-slot";
+      slot.innerHTML = "<span>ATTACK " + (i + 1) + "</span><strong>" + this.moveLabel(this.queue[i]) + "</strong><em>" + this.moveTags(this.queue[i]) + "</em>";
+      slot.onclick = (function(index) {
+        return function() { Ui.openAttackModal(index); };
+      }(i));
+    }
+  },
+
+  updateDetail: function() {
+    return;
+  },
+
+  playExchangeSound: function(exchange) {
+    var hit = false;
+    var heavy = false;
+    var i, e, events;
+    if (typeof playgent === "undefined" || !playgent.sound) return;
+    for (i = 0; i < (exchange.attacks || []).length; i++) {
+      events = exchange.attacks[i].events || [];
+      for (e = 0; e < events.length; e++) {
+        if (events[e].type === "hit") hit = true;
+        if (events[e].type === "ko" || (events[e].type === "hit" && events[e].amount > 3)) heavy = true;
+      }
+    }
+    if (heavy) playgent.sound("combat.heavy");
+    else if (hit) playgent.sound("combat.hit");
+    else playgent.sound("ui.select");
+  }
+};
+
+var Fallback = {
+  active: false,
+  render: function(view) {
+    var el, p1, p2;
+    if (!this.active || !view) return;
+    el = document.getElementById("game-container");
+    if (!el) return;
+    p1 = view.players && view.players.p1 ? view.players.p1 : {};
+    p2 = view.players && view.players.p2 ? view.players.p2 : {};
+    el.innerHTML = '<div style="padding:24px;font:14px system-ui;background:#05070d;color:#f6fbff;height:100%">' +
+      '<h1 style="margin:0 0 12px;font-size:24px">Muay ThAI</h1>' +
+      '<p>Range ' + view.range + ' ' + view.rangeName + '</p>' +
+      '<p>P1 ' + p1.characterName + ' HP ' + p1.hp + ' Stored ' + (p1.storedDmg || 0) + '</p>' +
+      '<p>P2 ' + p2.characterName + ' HP ' + p2.hp + ' Stored ' + (p2.storedDmg || 0) + '</p>' +
+      '</div>';
+  }
+};
+
+var Renderer = {
+  app: null,
+  root: null,
+  bgLayer: null,
+  laneLayer: null,
+  fightLayer: null,
+  fxLayer: null,
+  hudLayer: null,
+  fighters: null,
+  view: null,
+  context: {},
+  animation: null,
+  ready: false,
+  time: 0,
+  textPool: null,
+  textFrameId: 0,
+  textFrameSerial: 0,
+  colors: {
+    bg: 0x05070d,
+    floor: 0x111827,
+    grid: 0x25415e,
+    p1: 0x4fdcff,
+    p1Far: 0x6fe4ff,
+    p2: 0xff4f87,
+    p2Far: 0xff6f9c,
+    gold: 0xffd05a,
+    green: 0x9df29a,
+    text: 0xf6fbff,
+    muted: 0x9fb3c9
+  },
+
+  init: function() {
+    if (typeof PIXI === "undefined") return Promise.reject(new Error("PIXI missing"));
+    var self = this;
+    this.app = new PIXI.Application();
+    return this.app.init({
+      resizeTo: window,
+      backgroundAlpha: 0,
+      antialias: true,
+      resolution: Math.min(2, window.devicePixelRatio || 1),
+      autoDensity: true
+    }).then(function() {
+      document.getElementById("game-container").appendChild(self.app.canvas);
+      self.root = new PIXI.Container();
+      self.bgLayer = new PIXI.Container();
+      self.laneLayer = new PIXI.Container();
+      self.fightLayer = new PIXI.Container();
+      self.fightLayer.sortableChildren = true;
+      self.fxLayer = new PIXI.Container();
+      self.hudLayer = new PIXI.Container();
+      self.root.addChild(self.bgLayer, self.laneLayer, self.fightLayer, self.fxLayer, self.hudLayer);
+      self.app.stage.addChild(self.root);
+      self.fighters = {};
+      self.textPool = {};
+      self.app.ticker.maxFPS = 60;
+      self.app.ticker.add(function(ticker) {
+        self.tick(ticker.deltaMS || 16);
+      });
+      self.ready = true;
+      self.render();
+    });
+  },
+
+  clearLayer: function(layer) {
+    var child;
+    if (!layer) return;
+    while (layer.children.length) {
+      child = layer.removeChildAt(0);
+      if (child && child._pooledText) {
+        child.visible = false;
+        continue;
+      }
+      child.destroy({ children: true });
+    }
+  },
+
+  onState: function(view, context) {
+    var animationKey, timing;
+    this.view = view || {};
+    this.context = context || {};
+    if (!this.ready) return;
+    if (view && view.phase === "fighting" && view.lastExchange) {
+      animationKey = view.lastExchange.number + ":" + ((view.lastExchange.attacks || []).length) + ":" + (view.phase || "");
+    }
+    if (view && view.phase === "fighting" && view.lastExchange && (!this.animation || this.animation.key !== animationKey)) {
+      timing = view.animationTiming || {};
+      this.animation = {
+        key: animationKey,
+        number: view.lastExchange.number,
+        exchange: view.lastExchange,
+        started: performance.now(),
+        attackMs: timing.attackMs || 1750,
+        holdMs: timing.holdMs || 900
+      };
+    } else if (view && view.phase !== "fighting" && this.animation) {
+      this.animation = null;
+    }
+    this.render();
+  },
+
+  tick: function(deltaMS) {
+    var total;
+    this.time += Math.min(50, deltaMS);
+    if (!this.ready) return;
+    if (this.animation) {
+      total = (this.animation.exchange.attacks || []).length * this.animation.attackMs + this.animation.holdMs;
+      if (performance.now() - this.animation.started > total) this.animation = null;
+    }
+    this.render();
+  },
+
+  beginTextFrame: function() {
+    this.textFrameId = 0;
+    this.textFrameSerial += 1;
+    if (!this.textPool) this.textPool = {};
+  },
+
+  endTextFrame: function() {
+    var key, text;
+    for (key in this.textPool) {
+      text = this.textPool[key];
+      if (!text || text._lastTextFrame >= this.textFrameSerial - 90) continue;
+      if (text.parent) text.parent.removeChild(text);
+      text.destroy();
+      delete this.textPool[key];
+    }
+  },
+
+  makeText: function(value, style) {
+    var key, styleKey, text;
+    value = value || "";
+    if (!this.textPool) this.textPool = {};
+    key = "text:" + this.textFrameId;
+    this.textFrameId += 1;
+    styleKey = JSON.stringify(style);
+    text = this.textPool[key];
+    if (!text || text._styleKey !== styleKey) {
+      if (text) {
+        if (text.parent) text.parent.removeChild(text);
+        text.destroy();
+      }
+      text = new PIXI.Text({
+        text: value,
+        style: style
+      });
+      text._pooledText = true;
+      text._styleKey = styleKey;
+      text.roundPixels = true;
+      this.textPool[key] = text;
+    } else if (text.text !== value) {
+      text.text = value;
+    }
+    text.visible = true;
+    text.alpha = 1;
+    text.scale.set(1);
+    text.rotation = 0;
+    text._lastTextFrame = this.textFrameSerial;
+    return text;
+  },
+
+  setTextPosition: function(text, x, y) {
+    text.position.set(Math.round(x), Math.round(y));
+  },
+
+  text: function(value, size, color, weight) {
+    return this.makeText(value, {
+      fontFamily: "Inter, Arial, sans-serif",
+      fontSize: size,
+      fontWeight: weight || "800",
+      fill: color || this.colors.text,
+      lineHeight: Math.round(size * 1.08),
+      letterSpacing: 0,
+      align: "center"
+    });
+  },
+
+  arcadeText: function(value, size, color, strokeColor) {
+    return this.makeText(value, {
+      fontFamily: "Impact, Arial Black, Inter, Arial, sans-serif",
+      fontSize: size,
+      fontWeight: "950",
+      fill: color || this.colors.text,
+      stroke: { color: strokeColor || 0x05070d, width: Math.max(3, Math.round(size * 0.16)) },
+      dropShadow: { color: 0x000000, blur: 2, distance: 3, alpha: 0.6 },
+      lineHeight: Math.round(size * 0.92),
+      letterSpacing: 0,
+      align: "center"
+    });
+  },
+
+  panelText: function(value, size, color, weight) {
+    return this.makeText(value, {
+      fontFamily: "Inter, Arial, sans-serif",
+      fontSize: size,
+      fontWeight: weight || "800",
+      fill: color || this.colors.text,
+      lineHeight: Math.round(size * 1.18),
+      letterSpacing: 0,
+      align: "left"
+    });
+  },
+
+  moveLabel: function(name) {
+    var catalog = this.view && this.view.moveCatalog ? this.view.moveCatalog : {};
+    if (catalog[name] && catalog[name].name) return catalog[name].name;
+    return String(name || "idle").replace(/_/g, " ").replace(/\b\w/g, function(c) { return c.toUpperCase(); });
+  },
+
+  shortName: function(key) {
+    return key === "p1" ? "Blue" : "Red";
+  },
+
+  fitLine: function(value, maxChars) {
+    value = String(value || "");
+    if (value.length <= maxChars) return value;
+    return value.slice(0, Math.max(0, maxChars - 3)) + "...";
+  },
+
+  arena: function() {
+    var w = this.app.renderer.width;
+    var h = this.app.renderer.height;
+    var narrow = w < 560;
+    var bottomReserve = narrow ? 350 : (h < 620 ? 190 : 166);
+    var y = Math.max(narrow ? 430 : 320, h - bottomReserve);
+    return {
+      w: w,
+      h: h,
+      center: w / 2,
+      y: y,
+      top: 100,
+      floorH: h - y
+    };
+  },
+
+  fighterScale: function(arena) {
+    return Math.max(0.86, Math.min(1.38, Math.min(arena.w / 860, arena.h / 590)));
+  },
+
+  fighterLayerZ: function(key, frontKey) {
+    var front = key === frontKey;
+    var sideNudge = key === "p1" ? 0 : 1;
+    return {
+      shadow: 0 + sideNudge,
+      farLeg: (front ? 34 : 8) + sideNudge,
+      farArm: (front ? 36 : 10) + sideNudge,
+      torso: (front ? 48 : 38) + sideNudge,
+      core: (front ? 49 : 39) + sideNudge,
+      joints: (front ? 50 : 40) + sideNudge,
+      nearLeg: (front ? 88 : 68) + sideNudge,
+      nearArm: (front ? 90 : 70) + sideNudge,
+      fx: (front ? 92 : 72) + sideNudge
+    };
+  },
+
+  render: function() {
+    var arena, frame;
+    if (!this.ready || !this.view) return;
+    arena = this.arena();
+    this.beginTextFrame();
+    this.clearLayer(this.bgLayer);
+    this.clearLayer(this.laneLayer);
+    this.clearLayer(this.fxLayer);
+    this.clearLayer(this.hudLayer);
+    frame = this.currentFrame();
+    this.drawBackground(arena);
+    this.drawNumberLine(arena, frame);
+    this.drawFighters(arena, frame);
+    this.drawHud(arena, frame);
+    this.endTextFrame();
+  },
+
+  currentFrame: function() {
+    var view = this.view || {};
+    var frame = {
+      range: typeof view.range === "number" ? view.range : 2,
+      startRange: typeof view.range === "number" ? view.range : 2,
+      endRange: typeof view.range === "number" ? view.range : 2,
+      progress: 0,
+      attackNumber: 0,
+      p1Action: "idle",
+      p2Action: "idle",
+      p1ActionProgress: 0,
+      p2ActionProgress: 0,
+      p1CurrentAction: "idle",
+      p2CurrentAction: "idle",
+      p1Hit: false,
+      p2Hit: false,
+      events: [],
+      primaryEvent: null,
+      attackActor: null,
+      hitTarget: null,
+      damageEvents: [],
+      storedEvents: [],
+      p1HitAction: "",
+      p2HitAction: "",
+      p1HitReact: 0,
+      p2HitReact: 0,
+      p1HighGuard: 0,
+      p2HighGuard: 0,
+      p1Stored: view.players && view.players.p1 ? (view.players.p1.storedDmg || 0) : 0,
+      p2Stored: view.players && view.players.p2 ? (view.players.p2.storedDmg || 0) : 0,
+      p1Foot: view.footLine && typeof view.footLine.p1 === "number" ? view.footLine.p1 : -1,
+      p2Foot: view.footLine && typeof view.footLine.p2 === "number" ? view.footLine.p2 : 1,
+      startFeet: {
+        p1: view.footLine && typeof view.footLine.p1 === "number" ? view.footLine.p1 : -1,
+        p2: view.footLine && typeof view.footLine.p2 === "number" ? view.footLine.p2 : 1
+      },
+      endFeet: {
+        p1: view.footLine && typeof view.footLine.p1 === "number" ? view.footLine.p1 : -1,
+        p2: view.footLine && typeof view.footLine.p2 === "number" ? view.footLine.p2 : 1
+      },
+      executeProgress: 0,
+      impactProgress: 0,
+      recoveryProgress: 0,
+      neutralBlend: 0,
+      p1RetreatAtMax: false,
+      p2RetreatAtMax: false,
+      eventText: "Plan 3 attacks."
+    };
+    var attacks, elapsed, index, attackStep, local, rangeEase, footEase, startRange, endRange, event, events, priority, i, order, flyingKneeRepositions, evt, guardAmount;
+    if (!this.animation) {
+      if (view.lastExchange && view.lastExchange.summary) frame.eventText = view.lastExchange.summary.slice(0, 116);
+      return frame;
+    }
+    attacks = this.animation.exchange.attacks || [];
+    if (!attacks.length) return frame;
+    elapsed = performance.now() - this.animation.started;
+    index = Math.min(attacks.length - 1, Math.floor(elapsed / this.animation.attackMs));
+    local = Math.max(0, Math.min(1, (elapsed - index * this.animation.attackMs) / this.animation.attackMs));
+    attackStep = attacks[index];
+    startRange = attackStep.start ? attackStep.start.range : frame.range;
+    endRange = attackStep.end ? attackStep.end.range : frame.range;
+    frame.startRange = startRange;
+    frame.endRange = endRange;
+    rangeEase = this.phaseProgress(local, 0.02, 0.24);
+    footEase = this.phaseProgress(local, 0.02, 0.34);
+    frame.range = startRange + (endRange - startRange) * rangeEase;
+    frame.startFeet = attackStep.start && attackStep.start.feet ? attackStep.start.feet : frame.startFeet;
+    frame.endFeet = attackStep.end && attackStep.end.feet ? attackStep.end.feet : frame.endFeet;
+    frame.p1Foot = frame.startFeet.p1 + (frame.endFeet.p1 - frame.startFeet.p1) * footEase;
+    frame.p2Foot = frame.startFeet.p2 + (frame.endFeet.p2 - frame.startFeet.p2) * footEase;
+    if (attackStep.start && attackStep.start.fighters && attackStep.end && attackStep.end.fighters) {
+      frame.p1Stored = local < 0.58 ? (attackStep.start.fighters.p1.storedDmg || 0) : (attackStep.end.fighters.p1.storedDmg || 0);
+      frame.p2Stored = local < 0.58 ? (attackStep.start.fighters.p2.storedDmg || 0) : (attackStep.end.fighters.p2.storedDmg || 0);
+    }
+    frame.p1RetreatAtMax = !!(attackStep.movement && attackStep.movement.retreatedAtMax && attackStep.movement.retreatedAtMax.p1);
+    frame.p2RetreatAtMax = !!(attackStep.movement && attackStep.movement.retreatedAtMax && attackStep.movement.retreatedAtMax.p2);
+    frame.progress = local;
+    frame.executeProgress = this.phaseProgress(local, 0.02, 0.22);
+    frame.impactProgress = this.phasePulse(local, 0.12, 0.36);
+    frame.recoveryProgress = this.phaseProgress(local, 0.30, 0.58);
+    frame.neutralBlend = Math.max(1 - this.phaseProgress(local, 0.02, 0.11), this.phaseProgress(local, 0.44, 0.72) * 0.9);
+    frame.attackNumber = attackStep.number || index + 1;
+    frame.p1Action = attackStep.p1 ? attackStep.p1.action : "idle";
+    frame.p2Action = attackStep.p2 ? attackStep.p2.action : "idle";
+    order = this.actionTimeline(attackStep);
+    frame.p1ActionStart = order.p1.start;
+    frame.p1ActionEnd = order.p1.end;
+    frame.p2ActionStart = order.p2.start;
+    frame.p2ActionEnd = order.p2.end;
+    frame.p1ActionProgress = this.actorTimelineProgress(local, order.p1.start, order.p1.end);
+    frame.p2ActionProgress = this.actorTimelineProgress(local, order.p2.start, order.p2.end);
+    frame.p1CurrentAction = frame.p1Action;
+    frame.p2CurrentAction = frame.p2Action;
+    events = attackStep.events || [];
+    frame.events = events;
+    priority = ["ko", "hit", "clash", "stored", "dodge", "whiff", "pressure", "movement", "backpedal", "position"];
+    for (i = 0; i < priority.length && !event; i++) {
+      event = events.find(function(evt) { return evt.type === priority[i]; });
+    }
+    if (!event) event = events[0];
+    frame.primaryEvent = event || null;
+    if (event) frame.eventText = "Attack " + frame.attackNumber + ": " + event.text;
+    frame.attackActor = event && event.type === "hit" ? event.actor : null;
+    frame.hitTarget = event && event.target ? event.target : null;
+    frame.damageEvents = events.filter(function(evt) {
+      return evt && evt.target && evt.amount > 0 && evt.type === "hit";
+    });
+    frame.storedEvents = events.filter(function(evt) {
+      return evt && evt.actor && evt.amount > 0 && evt.type === "stored";
+    });
+    for (i = 0; i < events.length; i++) {
+      evt = events[i];
+      if (!this.isDistanceWhiffEvent(evt)) continue;
+      guardAmount = this.highGuardAmountFor(
+        local,
+        order[evt.actor] ? order[evt.actor].start : 0.02,
+        order[evt.actor] ? order[evt.actor].end : 0.48
+      );
+      if (evt.target === "p1")
+        frame.p1HighGuard = Math.max(frame.p1HighGuard, guardAmount);
+      if (evt.target === "p2")
+        frame.p2HighGuard = Math.max(frame.p2HighGuard, guardAmount);
+    }
+    for (i = 0; i < frame.damageEvents.length; i++) {
+      if (frame.damageEvents[i].target === "p1") frame.p1HitAction = frame.damageEvents[i].action || (frame.damageEvents[i].actor === "p2" ? frame.p2CurrentAction : frame.p1CurrentAction);
+      if (frame.damageEvents[i].target === "p2") frame.p2HitAction = frame.damageEvents[i].action || (frame.damageEvents[i].actor === "p1" ? frame.p1CurrentAction : frame.p2CurrentAction);
+    }
+    flyingKneeRepositions = frame.damageEvents.some(function(evt) { return evt.action === "flying_knee"; });
+    if (flyingKneeRepositions) {
+      footEase = this.phaseProgress(local, 0.38, 0.68);
+      frame.p1Foot = frame.startFeet.p1 + (frame.endFeet.p1 - frame.startFeet.p1) * footEase;
+      frame.p2Foot = frame.startFeet.p2 + (frame.endFeet.p2 - frame.startFeet.p2) * footEase;
+    }
+    frame.p1Hit = events.some(function(evt) { return evt.target === "p1" && evt.type === "hit"; });
+    frame.p2Hit = events.some(function(evt) { return evt.target === "p2" && evt.type === "hit"; });
+    frame.p1HitReact = frame.p1Hit ? this.targetHitReactAmount(frame, "p1") : 0;
+    frame.p2HitReact = frame.p2Hit ? this.targetHitReactAmount(frame, "p2") : 0;
+    return frame;
+  },
+
+  actorTimelineProgress: function(progress, start, end) {
+    if (progress <= start) return 0;
+    if (progress >= end) return 1;
+    return (progress - start) / Math.max(0.001, end - start);
+  },
+
+  actionTimeline: function(attackStep) {
+    var p1Action = attackStep && attackStep.p1 ? attackStep.p1.action : "idle";
+    var p2Action = attackStep && attackStep.p2 ? attackStep.p2.action : "idle";
+    var p1Move = this.isMovementAction(p1Action);
+    var p2Move = this.isMovementAction(p2Action);
+    var p1Flying = p1Action === "flying_knee";
+    var p2Flying = p2Action === "flying_knee";
+    var first = "p2";
+    var second = "p1";
+    if (this.isMovementWhiffOverlap(attackStep, p1Move, p2Move)) {
+      return {
+        p1: { start: 0.02, end: 0.72 },
+        p2: { start: 0.02, end: 0.72 },
+        first: "simultaneous",
+        second: "simultaneous"
+      };
+    }
+    if (p1Move && !p2Move) {
+      first = "p1";
+      second = "p2";
+    } else if (p2Move && !p1Move) {
+      first = "p2";
+      second = "p1";
+    } else if (p1Flying && !p2Flying) {
+      first = "p2";
+      second = "p1";
+    } else if (p2Flying && !p1Flying) {
+      first = "p1";
+      second = "p2";
+    }
+    return {
+      p1: first === "p1" ? { start: 0.02, end: 0.48 } : { start: 0.50, end: 0.96 },
+      p2: first === "p2" ? { start: 0.02, end: 0.48 } : { start: 0.50, end: 0.96 },
+      first: first,
+      second: second
+    };
+  },
+
+  isMovementWhiffOverlap: function(attackStep, p1Move, p2Move) {
+    var events = attackStep && attackStep.events ? attackStep.events : [];
+    var i, evt;
+    for (i = 0; i < events.length; i++) {
+      evt = events[i];
+      if (
+        evt &&
+        evt.type === "whiff" &&
+        evt.text &&
+        evt.text.indexOf("movement") >= 0 &&
+        ((evt.actor === "p1" && p2Move && !p1Move) ||
+          (evt.actor === "p2" && p1Move && !p2Move))
+      ) {
+        return true;
+      }
+    }
+    return false;
+  },
+
+  phaseProgress: function(value, start, end) {
+    var t = Math.max(0, Math.min(1, (value - start) / Math.max(0.001, end - start)));
+    return t * t * (3 - 2 * t);
+  },
+
+  phasePulse: function(value, start, end) {
+    var t = Math.max(0, Math.min(1, (value - start) / Math.max(0.001, end - start)));
+    return Math.sin(t * Math.PI);
+  },
+
+  neutralBlendFor: function(action, progress) {
+    var loadBlend = 1 - this.phaseProgress(progress, 0.02, 0.12);
+    var recoverStart = action === "knee" ? 0.72 : action === "flying_knee" ? 0.56 : action === "teep" ? 0.70 : 0.58;
+    var recoverEnd = action === "knee" ? 0.98 : action === "flying_knee" ? 0.84 : action === "teep" ? 0.98 : 0.86;
+    var recoverBlend = this.phaseProgress(progress, recoverStart, recoverEnd);
+    if (action !== "knee" && action !== "flying_knee" && action !== "teep") recoverBlend *= 0.9;
+    return Math.max(loadBlend, recoverBlend);
+  },
+
+  isMeleeAction: function(action) {
+    return action === "teep" || action === "flying_knee" || action === "jab" || action === "cross" || action === "elbow" || action === "knee";
+  },
+
+  isMovementAction: function(action) {
+    return action === "advance" || action === "retreat" || action === "roll";
+  },
+
+  actionProgressFor: function(frame, key) {
+    return key === "p1" ? frame.p1ActionProgress : frame.p2ActionProgress;
+  },
+
+  impactPulse: function(progress) {
+    return this.phasePulse(progress, 0.18, 0.42);
+  },
+
+  hitReactAmount: function(action, progress) {
+    var pulse = this.phasePulse(progress, 0.20, 0.56);
+    if (action === "cross") return this.phasePulse(progress, 0.34, 0.68);
+    if (action === "knee") return this.phasePulse(progress, 0.44, 0.78);
+    if (action === "flying_knee") return this.phasePulse(progress, 0.34, 0.64);
+    return pulse * 0.86;
+  },
+
+  targetHitReactAmount: function(frame, target) {
+    var events = frame.damageEvents || [];
+    var best = 0;
+    var i, evt, progress, amount;
+    for (i = 0; i < events.length; i++) {
+      evt = events[i];
+      if (!evt || evt.target !== target) continue;
+      progress = this.actionProgressFor(frame, evt.actor);
+      amount = this.hitReactAmount(evt.action || (evt.actor === "p1" ? frame.p1Action : frame.p2Action), progress);
+      if (amount > best) best = amount;
+    }
+    return best;
+  },
+
+  isDistanceWhiffEvent: function(evt) {
+    var reason = evt && typeof evt.reason === "string" ? evt.reason : "";
+    var text = evt && typeof evt.text === "string" ? evt.text : "";
+    if (!evt || evt.type !== "whiff" || !evt.target) return false;
+    return (
+      reason === "wrong range" ||
+      reason === "movement changed the range first" ||
+      text.indexOf("(wrong range)") >= 0 ||
+      text.indexOf("(movement changed the range first)") >= 0
+    );
+  },
+
+  highGuardAmountFor: function(progress, attackStart, attackEnd) {
+    var raiseStart = Math.max(0, attackStart - 0.1);
+    var raiseEnd = attackStart + 0.08;
+    var releaseStart = attackEnd + 0.02;
+    var releaseEnd = Math.min(1, attackEnd + 0.2);
+    return (
+      this.phaseProgress(progress, raiseStart, raiseEnd) *
+      (1 - this.phaseProgress(progress, releaseStart, releaseEnd))
+    );
+  },
+
+  impactYForAction: function(action, arena, scale) {
+    return this.fighterGroundY(arena) - 123 * scale;
+  },
+
+  actionReach: function(action, progress, connected) {
+    var pulse = this.phasePulse(progress, 0.12, 0.40);
+    var base = 0;
+    if (!this.isMeleeAction(action)) return 0;
+    if (action === "jab") base = 4;
+    else if (action === "cross") base = 7;
+    else if (action === "elbow") base = 3;
+    else if (action === "knee") base = 5;
+    else if (action === "teep") base = 8;
+    else if (action === "flying_knee") base = 10;
+    if (action === "cross" || action === "jab") return base * pulse;
+    return base * pulse * (connected ? 1 : 0.45);
+  },
+
+  footworkMotion: function(action, progress, key, scale, forwardDir, retreatAtMax) {
+    var out = { x: 0, y: 0, rotation: 0 };
+    var isAdvance = action === "advance";
+    var isRetreat = action === "retreat";
+    var dir, hop, travel, settle, hopBack, hopForward, firstStep, secondStep, travelPulse;
+    if (action === "roll") {
+      dir = forwardDir || (key === "p1" ? 1 : -1);
+      firstStep = this.phasePulse(progress, 0.06, 0.36);
+      secondStep = this.phasePulse(progress, 0.34, 0.76);
+      travel = this.phaseProgress(progress, 0.08, 0.80);
+      settle = this.phasePulse(progress, 0.72, 0.96);
+      out.x = dir * (24 * travel + 7 * firstStep + 5 * secondStep - 4 * settle) * scale;
+      out.y = (4 * firstStep + 7 * secondStep - 2 * settle) * scale;
+      out.rotation = dir * -0.07 * Math.max(firstStep, secondStep);
+      return out;
+    }
+    if (!isAdvance && !isRetreat) return out;
+    dir = forwardDir || (key === "p1" ? 1 : -1);
+    if (isRetreat) dir *= -1;
+    if (retreatAtMax) {
+      hopBack = this.phasePulse(progress, 0.02, 0.38);
+      hopForward = this.phasePulse(progress, 0.36, 0.66);
+      out.x = dir * (34 * hopBack - 10 * hopForward) * scale;
+      out.y = (-10 * hopBack - 5 * hopForward) * scale;
+      out.rotation = dir * -0.02 * hopBack;
+      return out;
+    }
+    hop = this.phasePulse(progress, 0.03, 0.30);
+    travelPulse = this.phasePulse(progress, 0.03, 0.34);
+    settle = this.phasePulse(progress, 0.30, 0.52);
+    out.x = dir * (12 * travelPulse + 5 * hop - 3 * settle) * scale;
+    out.y = (-9 * hop + 2 * settle) * scale;
+    out.rotation = dir * 0.018 * hop;
+    return out;
+  },
+
+  drawBackground: function(arena) {
+    var g = new PIXI.Graphics();
+    var i, x, y, groundY;
+    groundY = this.fighterGroundY(arena);
+    g.rect(0, 0, arena.w, arena.h).fill(this.colors.bg);
+    g.rect(0, groundY, arena.w, arena.h - groundY).fill({ color: this.colors.floor, alpha: 0.95 });
+    g.moveTo(0, groundY).lineTo(arena.w, groundY).stroke({ color: 0x7edcff, width: 2, alpha: 0.42 });
+    for (i = 0; i < 14; i++) {
+      y = arena.top + i * 28;
+      g.moveTo(0, y).lineTo(arena.w, y).stroke({ color: this.colors.grid, width: 1, alpha: 0.13 });
+    }
+    for (i = 0; i < 22; i++) {
+      x = (i / 21) * arena.w;
+      g.moveTo(x, groundY + 74).lineTo(arena.center + (x - arena.center) * 0.18, 112).stroke({ color: this.colors.grid, width: 1, alpha: 0.12 });
+    }
+    g.moveTo(arena.w * 0.12, 80).lineTo(arena.w * 0.32, groundY).lineTo(arena.w * 0.02, groundY).closePath().fill({ color: this.colors.p1, alpha: 0.04 });
+    g.moveTo(arena.w * 0.88, 80).lineTo(arena.w * 0.98, groundY).lineTo(arena.w * 0.68, groundY).closePath().fill({ color: this.colors.p2, alpha: 0.04 });
+    this.bgLayer.addChild(g);
+  },
+
+  numberStep: function(arena) {
+    // One number is the visual step from clinch overlap to pocket toe-to-toe.
+    return Math.max(30, Math.min(38, this.fighterScale(arena) * 31));
+  },
+
+  numberLineY: function(arena) {
+    var actionReserve = arena.w < 560 ? 140 : 126;
+    var lowerTarget = arena.h - actionReserve;
+    return Math.max(arena.y + 24, Math.min(arena.h - 92, lowerTarget));
+  },
+
+  fighterGroundY: function(arena) {
+    return this.numberLineY(arena) - 24;
+  },
+
+  footCamera: function(frame) {
+    return ((frame.p1Foot == null ? -1 : frame.p1Foot) + (frame.p2Foot == null ? 1 : frame.p2Foot)) / 2;
+  },
+
+  xForFoot: function(foot, arena, frame) {
+    return arena.center + (foot - this.footCamera(frame)) * this.numberStep(arena);
+  },
+
+  headXForFrontFoot: function(frontFootX, facing, scale) {
+    return frontFootX + (facing === "left" ? 21 : -21) * scale;
+  },
+
+  targetHeadLocal: function(sourceFootX, sourceGroundY, targetFootX, targetGroundY, targetFacing, forwardDir, scale) {
+    var targetHeadX = this.headXForFrontFoot(targetFootX, targetFacing, scale);
+    var targetHeadY = targetGroundY - 123 * scale;
+    var signedScale = (forwardDir || 1) * Math.max(0.001, scale);
+    return {
+      x: 51 + (targetHeadX - sourceFootX) / signedScale,
+      y: (targetHeadY - sourceGroundY) / Math.max(0.001, scale)
+    };
+  },
+
+  anchorJointForAction: function(action) {
+    return "nearFoot";
+  },
+
+  anchorUsesLivePose: function(action) {
+    return false;
+  },
+
+  anchorHorizontalOnly: function(action) {
+    return false;
+  },
+
+  attackMotion: function(action, progress, dir, scale, rangeHint) {
+    var out = { x: 0, y: 0, rotation: 0 };
+    var pulse = this.phasePulse(progress, 0.08, 0.42);
+    var launch = this.phasePulse(progress, 0.04, 0.48);
+    var step = this.phasePulse(progress, 0.10, 0.36);
+    var travel;
+    if (!this.isMeleeAction(action)) return out;
+    if (action === "knee") {
+      return out;
+    }
+    if (action === "flying_knee") {
+      rangeHint = Math.max(0, Math.min(2, Math.round(rangeHint == null ? 2 : rangeHint)));
+      travel = rangeHint === 0 ? 5 : (rangeHint === 1 ? 18 : 32);
+      out.x = dir * travel * scale * launch;
+      out.y = -(rangeHint === 0 ? 6 : (rangeHint === 1 ? 12 : 18)) * scale * launch;
+      out.rotation = -dir * 0.026 * launch;
+    } else if (action === "teep") {
+      out.x = dir * 5 * scale * step;
+      out.y = -5 * scale * step;
+      out.rotation = -dir * 0.018 * pulse;
+    } else if (action === "jab") {
+      out.rotation = dir * 0.012 * pulse;
+    } else if (action === "elbow") {
+      out.x = dir * 5 * scale * this.phasePulse(progress, 0.06, 0.46);
+      out.rotation = dir * 0.022 * pulse;
+    } else if (action === "cross") {
+      out.rotation = dir * 0.018 * pulse;
+    }
+    return out;
+  },
+
+  drawNumberLine: function(arena, frame) {
+    var step = this.numberStep(arena);
+    var camera = this.footCamera(frame);
+    var y = this.numberLineY(arena);
+    var topY = this.fighterGroundY(arena);
+    var minValue = Math.floor(camera - arena.w / step / 2) - 1;
+    var maxValue = Math.ceil(camera + arena.w / step / 2) + 1;
+    var g = new PIXI.Graphics();
+    var i, x, label, isFoot;
+    g.rect(0, topY, arena.w, y + 36 - topY).fill({ color: 0x0b1728, alpha: 0.72 });
+    g.moveTo(0, topY).lineTo(arena.w, topY).stroke({ color: 0x8ad8ff, width: 2, alpha: 0.52 });
+    g.moveTo(0, y).lineTo(arena.w, y).stroke({ color: 0x8ad8ff, width: 2, alpha: 0.20 });
+    for (i = minValue; i <= maxValue; i++) {
+      x = arena.center + (i - camera) * step;
+      isFoot = Math.abs(i - frame.p1Foot) < 0.05 || Math.abs(i - frame.p2Foot) < 0.05;
+      g.moveTo(x, topY).lineTo(x, y + (isFoot ? 12 : 7))
+        .stroke({ color: isFoot ? 0xffffff : 0x456681, width: isFoot ? 2 : 1, alpha: isFoot ? 0.56 : 0.32 });
+    }
+    this.laneLayer.addChild(g);
+    for (i = minValue; i <= maxValue; i++) {
+      x = arena.center + (i - camera) * step;
+      if (i === 0 || i % 2 === 0 || Math.round(frame.p1Foot) === i || Math.round(frame.p2Foot) === i) {
+        label = this.arcadeText(String(i), 11, this.colors.muted, 0x05070d);
+        label.anchor.set(0.5);
+        this.setTextPosition(label, x, topY + 14);
+        this.laneLayer.addChild(label);
+      }
+    }
+    this.drawFootMarker(arena, frame, "p1", frame.p1Foot, this.colors.p1, topY, y);
+    this.drawFootMarker(arena, frame, "p2", frame.p2Foot, this.colors.p2, topY, y);
+    this.drawRangeLabels(arena, frame, y);
+  },
+
+  drawFootMarker: function(arena, frame, key, foot, color, topY, axisY) {
+    var x = this.xForFoot(foot, arena, frame);
+    var g = new PIXI.Graphics();
+    var label = this.arcadeText(key.toUpperCase(), 9, color, 0x05070d);
+    g.circle(x, topY + 7, 5).fill({ color: color, alpha: 0.86 }).stroke({ color: 0xffffff, width: 1, alpha: 0.64 });
+    this.hudLayer.addChild(g);
+    label.anchor.set(0.5);
+    this.setTextPosition(label, x, axisY + 13);
+    this.laneLayer.addChild(label);
+  },
+
+  drawRangeLabels: function(arena, frame, lineY) {
+    var labels = [
+      { text: "Distance", icon: "< >", range: 2 },
+      { text: "Pocket", icon: "><", range: 1 },
+      { text: "Clinch", icon: "||", range: 0 }
+    ];
+    var active = Math.max(0, Math.min(2, Math.round(frame.range || 0)));
+    var compact = arena.w < 560;
+    var chipW = compact ? 82 : 104;
+    var chipH = compact ? 18 : 20;
+    var gap = compact ? 86 : 112;
+    var y = lineY + (compact ? 24 : 25);
+    var startX = arena.center - gap;
+    var g = new PIXI.Graphics();
+    var i, item, x, isActive, color, label;
+    for (i = 0; i < labels.length; i++) {
+      item = labels[i];
+      x = startX + i * gap;
+      isActive = item.range === active;
+      color = isActive ? this.colors.gold : 0x8ad8ff;
+      g.roundRect(x - chipW / 2, y - chipH / 2, chipW, chipH, 5)
+        .fill({ color: isActive ? 0x241d0b : 0x071323, alpha: isActive ? 0.84 : 0.56 })
+        .stroke({ color: color, width: isActive ? 1.5 : 1, alpha: isActive ? 0.78 : 0.24 });
+    }
+    this.laneLayer.addChild(g);
+    for (i = 0; i < labels.length; i++) {
+      item = labels[i];
+      x = startX + i * gap;
+      isActive = item.range === active;
+      color = isActive ? this.colors.gold : this.colors.muted;
+      label = this.arcadeText(item.icon + " " + item.text, compact ? 8 : 9, color, 0x05070d);
+      label.anchor.set(0.5);
+      label.alpha = isActive ? 1 : 0.72;
+      this.setTextPosition(label, x, y);
+      this.hudLayer.addChild(label);
+    }
+  },
+
+  drawFighters: function(arena, frame) {
+    var scale = this.fighterScale(arena);
+    var p1 = this.view.players && this.view.players.p1 ? this.view.players.p1 : {};
+    var p2 = this.view.players && this.view.players.p2 ? this.view.players.p2 : {};
+    var p1Progress = frame.p1ActionProgress == null ? frame.progress : frame.p1ActionProgress;
+    var p2Progress = frame.p2ActionProgress == null ? frame.progress : frame.p2ActionProgress;
+    var p1Connected = frame.damageEvents.some(function(evt) { return evt.actor === "p1"; });
+    var p2Connected = frame.damageEvents.some(function(evt) { return evt.actor === "p2"; });
+    var p1Reach = this.actionReach(frame.p1Action, p1Progress, p1Connected);
+    var p2Reach = this.actionReach(frame.p2Action, p2Progress, p2Connected);
+    var p1DrawX = this.xForFoot(frame.p1Foot, arena, frame);
+    var p2DrawX = this.xForFoot(frame.p2Foot, arena, frame);
+    var p1Dir = p1DrawX <= p2DrawX ? 1 : -1;
+    var p2Dir = -p1Dir;
+    var p1Facing = p1Dir === 1 ? "right" : "left";
+    var p2Facing = p2Dir === 1 ? "right" : "left";
+    var rangeHint = Math.max(0, Math.min(2, Math.round(frame.startRange == null ? frame.range : frame.startRange)));
+    var p1Step = this.footworkMotion(frame.p1Action, p1Progress, "p1", scale, p1Dir, frame.p1RetreatAtMax);
+    var p2Step = this.footworkMotion(frame.p2Action, p2Progress, "p2", scale, p2Dir, frame.p2RetreatAtMax);
+    var p1BaseX = p1DrawX + (frame.p1RetreatAtMax ? p1Step.x : 0);
+    var p2BaseX = p2DrawX + (frame.p2RetreatAtMax ? p2Step.x : 0);
+    var groundY = this.fighterGroundY(arena);
+    var p1BaseY = groundY + p1Step.y;
+    var p2BaseY = groundY + p2Step.y;
+    var p1Attack = this.attackMotion(frame.p1Action, p1Progress, p1Dir, scale, rangeHint);
+    var p2Attack = this.attackMotion(frame.p2Action, p2Progress, p2Dir, scale, rangeHint);
+    var p1RootX = p1BaseX + p1Attack.x;
+    var p2RootX = p2BaseX + p2Attack.x;
+    var p1DrawY = p1BaseY + p1Attack.y;
+    var p2DrawY = p2BaseY + p2Attack.y;
+    var centerLine = (p1DrawX + p2DrawX) / 2;
+    if (p1Dir === 1) {
+      if (p1RootX > centerLine) p1RootX = centerLine;
+      if (p2RootX < centerLine) p2RootX = centerLine;
+    } else {
+      if (p1RootX < centerLine) p1RootX = centerLine;
+      if (p2RootX > centerLine) p2RootX = centerLine;
+    }
+    var p1TargetHeadLocal = this.targetHeadLocal(p1RootX, p1DrawY, p2RootX, p2DrawY, p2Facing, p1Dir, scale);
+    var p2TargetHeadLocal = this.targetHeadLocal(p2RootX, p2DrawY, p1RootX, p1DrawY, p1Facing, p2Dir, scale);
+    var frontFighter = p1DrawX <= p2DrawX ? "p1" : "p2";
+    var p1IsLeft = p1DrawX <= p2DrawX;
+    var plateSpread = Math.max(0, 150 * scale - Math.abs(p2DrawX - p1DrawX)) * 0.56;
+    var p1PlateX = p1DrawX + (p1IsLeft ? -plateSpread : plateSpread);
+    var p2PlateX = p2DrawX + (p1IsLeft ? plateSpread : -plateSpread);
+    var plateStagger = plateSpread > 36 * scale ? 18 * scale : 0;
+    WireframeFighterRenderer.drawFlat(this.fightLayer, "p1", {
+      x: p1RootX,
+      y: p1DrawY,
+      action: frame.p1Action || "idle",
+      progress: p1Progress,
+      connected: p1Connected,
+      targetHeadLocal: p1TargetHeadLocal,
+      time: this.time,
+      facing: p1Facing,
+      scale: scale,
+      rotation: p1Step.rotation + p1Attack.rotation,
+      reach: p1Reach,
+      anchorFrontFoot: true,
+      anchorJoint: this.anchorJointForAction(frame.p1Action),
+      anchorLivePose: this.anchorUsesLivePose(frame.p1Action),
+      anchorHorizontalOnly: this.anchorHorizontalOnly(frame.p1Action),
+      groundY: groundY,
+      retreatAtMax: frame.p1RetreatAtMax,
+      neutralBlend: this.neutralBlendFor(frame.p1Action, p1Progress),
+      hitReact: frame.p1HitReact,
+      hitAction: frame.p1HitAction,
+      highGuard: frame.p1HighGuard,
+      color: this.colors.p1,
+      farColor: this.colors.p1Far,
+      fillColor: this.colors.p1,
+      layerZ: this.fighterLayerZ("p1", frontFighter)
+    });
+    WireframeFighterRenderer.drawFlat(this.fightLayer, "p2", {
+      x: p2RootX,
+      y: p2DrawY,
+      action: frame.p2Action || "idle",
+      progress: p2Progress,
+      connected: p2Connected,
+      targetHeadLocal: p2TargetHeadLocal,
+      time: this.time + 140,
+      facing: p2Facing,
+      scale: scale,
+      rotation: p2Step.rotation + p2Attack.rotation,
+      reach: p2Reach,
+      anchorFrontFoot: true,
+      anchorJoint: this.anchorJointForAction(frame.p2Action),
+      anchorLivePose: this.anchorUsesLivePose(frame.p2Action),
+      anchorHorizontalOnly: this.anchorHorizontalOnly(frame.p2Action),
+      groundY: groundY,
+      retreatAtMax: frame.p2RetreatAtMax,
+      neutralBlend: this.neutralBlendFor(frame.p2Action, p2Progress),
+      hitReact: frame.p2HitReact,
+      hitAction: frame.p2HitAction,
+      highGuard: frame.p2HighGuard,
+      color: this.colors.p2,
+      farColor: this.colors.p2Far,
+      fillColor: this.colors.p2,
+      layerZ: this.fighterLayerZ("p2", frontFighter)
+    });
+    var p1PlateY = this.nameplateY(arena, frame.p1Action, groundY, scale);
+    var p2PlateY = this.nameplateY(arena, frame.p2Action, groundY, scale) + plateStagger;
+    this.drawCombatFx(arena, frame, p1RootX, p2RootX, scale, p1Dir, p2Dir);
+    this.drawDamageNumbers(frame, {
+      p1: { x: p1PlateX, y: p1PlateY },
+      p2: { x: p2PlateX, y: p2PlateY }
+    }, scale);
+    this.drawFighterOverhead(p1PlateX, p1PlateY, p1, this.colors.p1, frame.p1Stored, scale);
+    this.drawFighterOverhead(p2PlateX, p2PlateY, p2, this.colors.p2, frame.p2Stored, scale);
+  },
+
+  nameplateY: function(arena, action, rootY, scale) {
+    return rootY - 206 * scale;
+  },
+
+  drawCombatFx: function(arena, frame, p1X, p2X, scale, p1Dir, p2Dir) {
+    var g = new PIXI.Graphics();
+    g.blendMode = "add";
+    var self = this;
+    var groundY = this.fighterGroundY(arena);
+
+    function drawFootwork(actor, action, x, forwardDir, progress) {
+      var isAdvance = action === "advance";
+      var isRetreat = action === "retreat";
+      var isRoll = action === "roll";
+      var dir, hop, travel, color, y;
+      if (!isAdvance && !isRetreat && !isRoll) return;
+      dir = forwardDir;
+      if (isRetreat) dir *= -1;
+      hop = self.phasePulse(progress, 0.03, 0.30);
+      travel = self.phaseProgress(progress, 0.03, 0.34);
+      color = actor === "p1" ? self.colors.p1 : self.colors.p2;
+      y = groundY + 4 * scale;
+      g.ellipse(x - dir * (26 - travel * 16) * scale, y, (14 + hop * 9) * scale, 4 * scale)
+        .fill({ color: color, alpha: hop * 0.20 });
+      g.ellipse(x + dir * (8 + travel * 16) * scale, y + 1 * scale, (12 + hop * 7) * scale, 4 * scale)
+        .fill({ color: 0xffffff, alpha: hop * 0.12 });
+      if (isRoll) {
+        g.ellipse(x + dir * 18 * travel * scale, groundY - 50 * scale, (15 + hop * 5) * scale, 4 * scale)
+          .fill({ color: color, alpha: hop * 0.14 });
+      }
+    }
+
+    function drawBlood(evt, action, impactX, impactY, away, progress) {
+      var age = self.phaseProgress(progress, 0.20, 0.88);
+      var burst = self.phasePulse(progress, 0.18, 0.44);
+      var count = action === "flying_knee" || action === "knee" || action === "cross" ? 76 : 54;
+      var i, k, seed, vx, vy, gravity, px, py, size, alpha, color;
+      if (age <= 0 || age >= 1 || burst <= 0.01) return;
+      gravity = 96;
+      for (i = 0; i < count; i++) {
+        k = i / Math.max(1, count - 1);
+        seed = Math.sin((i + 1) * 12.989 + (evt.amount || 0) * 7.17);
+        vx = away * (32 + k * 124 + seed * 22) * scale;
+        vy = (-(14 + (1 - k) * 64) + seed * 25) * scale;
+        px = impactX + vx * age;
+        py = impactY + vy * age + gravity * age * age * scale;
+        size = (1.0 + (i % 5) * 0.2) * scale;
+        alpha = (1 - age) * (0.50 + (i % 3) * 0.12) * burst;
+        color = i % 4 === 0 ? 0xff6b6b : (i % 3 === 0 ? 0x8a001d : 0xd9143d);
+        g.circle(px, py, size).fill({ color: color, alpha: alpha });
+      }
+    }
+
+    function drawImpact(evt) {
+      var action, actorColor, targetX, targetFacing, impactX, impactY, away, strong, i, k, px, py, dot, burst, progress;
+      if (!evt || !evt.target || evt.amount <= 0) return;
+      progress = self.actionProgressFor(frame, evt.actor);
+      burst = self.impactPulse(progress);
+      if (burst <= 0.02) return;
+      action = evt.action || (evt.actor === "p1" ? frame.p1CurrentAction : frame.p2CurrentAction);
+      actorColor = evt.actor === "p1" ? self.colors.p1 : self.colors.p2;
+      targetX = evt.target === "p1" ? p1X : p2X;
+      targetFacing = evt.target === "p1" ? (p1Dir === 1 ? "right" : "left") : (p2Dir === 1 ? "right" : "left");
+      away = evt.target === "p1" ? -1 : 1;
+      impactX = self.headXForFrontFoot(targetX, targetFacing, scale);
+      impactY = self.impactYForAction(action, arena, scale);
+      strong = evt.amount > 3;
+      drawBlood(evt, action, impactX, impactY, away, progress);
+      for (i = 0; i < 12; i++) {
+        k = i / 11;
+        px = impactX + away * (5 + k * 24) * burst * scale;
+        py = impactY + (Math.sin(i * 1.7) * 6 - (1 - k) * 10 * burst) * scale;
+        dot = (0.8 + (i % 3) * 0.22) * scale;
+        g.circle(px, py, dot).fill({ color: strong ? 0xffd05a : actorColor, alpha: (0.32 - k * 0.14) * burst });
+      }
+    }
+
+    drawFootwork("p1", frame.p1CurrentAction, p1X, p1Dir || 1, frame.p1ActionProgress);
+    drawFootwork("p2", frame.p2CurrentAction, p2X, p2Dir || -1, frame.p2ActionProgress);
+    for (var i = 0; i < frame.damageEvents.length; i++) drawImpact(frame.damageEvents[i]);
+    this.fxLayer.addChild(g);
+  },
+
+  drawDamageNumbers: function(frame, plates, scale) {
+    var damageTotals = { p1: 0, p2: 0 };
+    var comboTotals = { p1: 0, p2: 0 };
+    var storedTotals = { p1: 0, p2: 0 };
+    var comboStoredTotals = { p1: 0, p2: 0 };
+    var lanes = { p1: 0, p2: 0 };
+    var i, evt, actor, target, key, value, label;
+    var self = this;
+
+    function addTo(bucket, owner, amount) {
+      if (!bucket[owner]) bucket[owner] = 0;
+      bucket[owner] += amount || 0;
+    }
+
+    function nextLane(key) {
+      var lane = lanes[key] || 0;
+      lanes[key] = lane + 1;
+      return lane;
+    }
+
+    function drawFloat(key, label, size, delay, lane, color, strokeColor, timingKey) {
+      var plate = plates[key];
+      var clockKey = timingKey || key;
+      var actionStart = clockKey === "p1" ? (frame.p1ActionStart || 0.02) : (frame.p2ActionStart || 0.02);
+      var actionEnd = clockKey === "p1" ? (frame.p1ActionEnd || 0.96) : (frame.p2ActionEnd || 0.96);
+      var actionSpan = Math.max(0.12, actionEnd - actionStart);
+      var showAt = actionStart + delay * actionSpan;
+      var holdUntil = Math.min(0.99, showAt + 1.15);
+      var fadeStart = Math.min(0.94, showAt + 0.95);
+      var progress = frame.progress || 0;
+      var alpha, climb, pop, x, y, text, startY, drift, maxWidth;
+      if (!plate || !label) return;
+      alpha = Math.max(0, Math.min(1, self.phaseProgress(progress, showAt, showAt + 0.08) * (1 - self.phaseProgress(progress, fadeStart, holdUntil))));
+      if (alpha <= 0.01) return;
+      climb = self.phaseProgress(progress, showAt, holdUntil);
+      pop = self.phasePulse(progress, showAt, Math.min(holdUntil, showAt + 0.18));
+      x = plate.x;
+      startY = plate.y - (24 + lane * 22) * scale;
+      drift = (12 + Math.min(2, lane) * 2) * scale;
+      y = Math.max(28 + lane * 13 * scale, startY - drift * climb);
+      text = self.arcadeText(label, size, color || self.colors.green, strokeColor || 0x05220b);
+      text.anchor.set(0.5);
+      self.setTextPosition(text, x, y);
+      text.scale.set(1 + pop * 0.12);
+      text.alpha = alpha;
+      maxWidth = Math.max(122 * scale, Math.min(210 * scale, self.app.renderer.width * 0.36));
+      if (text.width > maxWidth) text.scale.set(text.scale.x * maxWidth / text.width);
+      self.fxLayer.addChild(text);
+    }
+
+    for (i = 0; i < frame.damageEvents.length; i++) {
+      evt = frame.damageEvents[i];
+      actor = evt.actor;
+      target = evt.target;
+      addTo(damageTotals, target, evt.amount);
+      addTo(comboTotals, actor, evt.comboDmg);
+    }
+    for (i = 0; i < frame.storedEvents.length; i++) {
+      evt = frame.storedEvents[i];
+      actor = evt.actor;
+      if (evt.source === "combo_dodge") {
+        addTo(comboStoredTotals, actor, evt.amount);
+      } else {
+        addTo(storedTotals, actor, evt.amount);
+      }
+    }
+    for (i = 0; i < frame.events.length; i++) {
+      evt = frame.events[i];
+      if (!evt || !evt.actor) continue;
+      if (evt.type === "whiff") {
+        label = evt.text && evt.text.indexOf("stuffed") >= 0 ? "STUFFED" : "MISS";
+        drawFloat(evt.actor, label, 20, 0.28, nextLane(evt.actor), this.colors.muted, 0x07111d, evt.actor);
+      } else if (evt.type === "dodge") {
+        drawFloat(evt.actor, "DODGE", 21, 0.30, nextLane(evt.actor), this.colors.gold, 0x241a05, evt.actor);
+      }
+    }
+    for (key in damageTotals) {
+      value = damageTotals[key];
+      if (!value) continue;
+      drawFloat(key, "-" + value + " HP", value > 3 ? 29 : 25, 0.22, nextLane(key), this.colors.gold, 0x2a1603, key === "p1" ? "p2" : "p1");
+    }
+    for (key in comboTotals) {
+      value = comboTotals[key];
+      if (!value) continue;
+      drawFloat(key, "+" + value + " COMBO", 18, 0.38, nextLane(key), this.colors.gold, 0x241a05, key);
+    }
+    for (key in storedTotals) {
+      value = storedTotals[key];
+      if (!value) continue;
+      drawFloat(key, "+" + value + " STORED", 18, 0.48, nextLane(key), this.colors.green, 0x05220b, key);
+    }
+    for (key in comboStoredTotals) {
+      value = comboStoredTotals[key];
+      if (!value) continue;
+      drawFloat(key, "+" + value + " DODGE COMBO", 17, 0.58, nextLane(key), this.colors.green, 0x05220b, key);
+    }
+    for (i = 0; i < frame.events.length; i++) {
+      evt = frame.events[i];
+      if (evt && evt.type === "ko" && evt.target) {
+        drawFloat(evt.target, "KO", 34, 0.42, nextLane(evt.target), 0xffffff, 0x380716, evt.actor || evt.target);
+      }
+    }
+  },
+
+  drawFighterOverhead: function(x, y, fighter, color, storedValue, scale) {
+    var name = (fighter.name || fighter.characterName || "Fighter").toUpperCase();
+    var stored = storedValue == null ? (fighter.storedDmg || 0) : storedValue;
+    var hp = fighter.hp == null ? 0 : fighter.hp;
+    var maxHp = fighter.maxHp || 30;
+    var pct = Math.max(0, Math.min(1, hp / maxHp));
+    var w = Math.max(132, Math.min(178, 144 * scale));
+    var h = 42 * scale;
+    var barW = w - 16 * scale;
+    var g = new PIXI.Graphics();
+    var label = this.text(name, Math.max(9, Math.round(10 * scale)), color, "950");
+    var storedText = this.text("STORED DMG: " + stored, Math.max(8, Math.round(8 * scale)), this.colors.text, "900");
+    y = Math.max(76, y);
+    var textY = y + 7 * scale;
+    g.roundRect(x - w / 2, y, w, h, 6)
+      .fill({ color: 0x070d18, alpha: 0.82 })
+      .stroke({ color: color, width: 1.5, alpha: 0.62 });
+    g.roundRect(x - barW / 2, y + h - 11 * scale, barW, 5 * scale, 2.5 * scale)
+      .fill({ color: 0x141d2d, alpha: 0.96 });
+    g.roundRect(x - barW / 2, y + h - 11 * scale, Math.max(5 * scale, barW * pct), 5 * scale, 2.5 * scale)
+      .fill({ color: color, alpha: 0.95 });
+    this.hudLayer.addChild(g);
+    label.anchor.set(0.5, 0);
+    this.setTextPosition(label, x, textY);
+    storedText.anchor.set(0.5, 0);
+    this.setTextPosition(storedText, x, y + 21 * scale);
+    this.hudLayer.addChild(label, storedText);
+  },
+
+  drawHud: function(arena, frame) {
+    var compact = arena.w < 720;
+    this.drawRulesPanel(arena, compact);
+    this.drawHistoryPanel(arena, frame, compact);
+    if (this.view.phase === "gameOver") this.drawGameOver(arena);
+  },
+
+  compactHudPanelWidth: function(arena) {
+    return Math.floor((arena.w - 24) / 2);
+  },
+
+  drawPanel: function(x, y, width, title, rows, colors) {
+    var compactPanel = width < 210;
+    var rowFontSize = compactPanel ? 9 : 10;
+    var rowH = compactPanel ? 13 : 14;
+    var height = 25 + rows.length * rowH;
+    var g = new PIXI.Graphics();
+    var titleText = this.panelText(title, 10, this.colors.text, "950");
+    var maxChars = Math.max(18, Math.floor((width - 18) / (rowFontSize * 0.54)));
+    var i, row, line, text;
+    g.roundRect(x, y, width, height, 6)
+      .fill({ color: 0x050914, alpha: 0.78 })
+      .stroke({ color: 0x8ad8ff, width: 1, alpha: 0.22 });
+    this.hudLayer.addChild(g);
+    this.setTextPosition(titleText, x + 9, y + 7);
+    this.hudLayer.addChild(titleText);
+    for (i = 0; i < rows.length; i++) {
+      row = rows[i];
+      text = this.fitLine(row.text || row, maxChars);
+      line = this.panelText(text, rowFontSize, row.color || (colors && colors[i]) || this.colors.muted, "820");
+      this.setTextPosition(line, x + 9, y + 23 + i * rowH);
+      this.hudLayer.addChild(line);
+    }
+  },
+
+  drawRulesPanel: function(arena, compact) {
+    var rows = [
+      { text: "Light > Move: +1 Stored" },
+      { text: "Move > Heavy: +2 Stored" },
+      { text: "Heavy > Light: +1 Stored" },
+      { text: "Advance > Retreat: +1 Stored" },
+      { text: "2-hit combo: +2 Dmg" },
+      { text: "3-hit combo: +4 Dmg" },
+      { text: "2-dodge combo: +4 Stored" }
+    ];
+    this.drawPanel(
+      compact ? 8 : 12,
+      compact ? 8 : 12,
+      compact ? this.compactHudPanelWidth(arena) : 226,
+      "RULES",
+      rows,
+    );
+  },
+
+  storedGainFor: function(events, key, source) {
+    var i, total;
+    total = 0;
+    for (i = 0; i < events.length; i++) {
+      if (events[i].type === "stored" && events[i].actor === key && events[i].amount > 0 && (!source || events[i].source === source)) {
+        total += events[i].amount || 0;
+      }
+    }
+    return total;
+  },
+
+  firstEventFor: function(events, type, field, key) {
+    var i;
+    for (i = 0; i < events.length; i++) {
+      if (events[i].type === type && events[i][field] === key) return events[i];
+    }
+    return null;
+  },
+
+  damageText: function(evt) {
+    return (evt.amount || evt.baseAmount || 0) + " Dmg";
+  },
+
+  historyLineFor: function(attack, key) {
+    var events = attack.events || [];
+    var action = attack.actions && attack.actions[key] ? attack.actions[key] : "idle";
+    var hit = this.firstEventFor(events, "hit", "actor", key);
+    var whiff = this.firstEventFor(events, "whiff", "actor", key);
+    var gotHit = this.firstEventFor(events, "hit", "target", key);
+    var dodge = this.firstEventFor(events, "dodge", "actor", key);
+    var stored = this.storedGainFor(events, key);
+    var comboStored = this.storedGainFor(events, key, "combo_dodge");
+    var baseStored = stored - comboStored;
+    var result = "";
+    if (hit) {
+      result = this.damageText(hit);
+      if (baseStored) result += ", +" + baseStored + " Stored";
+      if (comboStored) result += ", +" + comboStored + " Combo Stored";
+      if (hit.comboDmg) result += ", +" + hit.comboDmg + " Combo";
+    } else if (whiff) {
+      result = "Miss";
+    } else if (dodge) {
+      result = "Dodged " + this.moveLabel(dodge.dodgedAction);
+      if (baseStored) result += ", +" + baseStored + " Stored";
+      if (comboStored) result += ", +" + comboStored + " Combo Stored";
+    } else if (stored) {
+      result = "+" + stored + " Stored";
+    } else if (gotHit) {
+      result = "Hit";
+    } else if (action === "advance" || action === "retreat" || action === "roll") {
+      result = "";
+    } else {
+      result = "Throw";
+    }
+    return {
+      text: this.fitLine(this.shortName(key) + " " + this.moveLabel(action) + (result ? " - " + result : ""), 72),
+      color: key === "p1" ? this.colors.p1 : this.colors.p2
+    };
+  },
+
+  historyRows: function(frame) {
+    var exchange = this.animation && this.animation.exchange ? this.animation.exchange : this.view.lastExchange;
+    var attacks = exchange && exchange.attacks ? exchange.attacks : [];
+    var limit = this.animation ? Math.max(1, frame.attackNumber || 1) : attacks.length;
+    var rows = [];
+    var start, i;
+    limit = Math.min(limit, attacks.length);
+    start = Math.max(0, limit - 3);
+    for (i = start; i < limit; i++) {
+      rows.push(this.historyLineFor(attacks[i], "p1"));
+      rows.push(this.historyLineFor(attacks[i], "p2"));
+    }
+    if (!rows.length) rows.push({ text: "No attacks yet", color: this.colors.muted });
+    return rows.slice(Math.max(0, rows.length - 6));
+  },
+
+  drawHistoryPanel: function(arena, frame, compact) {
+    var width = compact ? this.compactHudPanelWidth(arena) : Math.min(380, Math.max(320, arena.w * 0.32));
+    var x = compact ? arena.w - width - 8 : arena.w - width - 12;
+    var y = compact ? 8 : 12;
+    var rows = this.historyRows(frame);
+    this.drawPanel(x, y, width, "HISTORY", rows);
+  },
+
+  drawTitle: function(arena, compact) {
+    var title = this.text("Muay ThAI", compact ? 17 : 22, this.colors.text, "950");
+    var sub = this.text("3-distance Muay Thai", 11, this.colors.muted, "850");
+    title.anchor.set(0.5, 0);
+    sub.anchor.set(0.5, 0);
+    this.setTextPosition(title, arena.center, compact ? 12 : 18);
+    this.setTextPosition(sub, arena.center, compact ? 36 : 47);
+    this.hudLayer.addChild(title, sub);
+  },
+
+  drawEventBanner: function(arena, frame, y) {
+    var maxW = Math.min(680, arena.w - 36);
+    var maxChars = arena.w < 560 ? Math.max(28, Math.floor(maxW / 11.5)) : Math.max(36, Math.floor(maxW / 8.2));
+    var bannerText = frame.eventText || "";
+    if (bannerText.length > maxChars) bannerText = bannerText.slice(0, Math.max(0, maxChars - 3)) + "...";
+    var box = new PIXI.Graphics().roundRect(arena.center - maxW / 2, y, maxW, 56, 7)
+      .fill({ color: 0x080d18, alpha: 0.76 })
+      .stroke({ color: this.colors.p1, width: 1, alpha: 0.28 });
+    var line = this.text(bannerText, arena.w < 560 ? 11 : 13, this.colors.text, "950");
+    this.hudLayer.addChild(box);
+    line.anchor.set(0.5);
+    this.setTextPosition(line, arena.center, y + 28);
+    this.hudLayer.addChild(line);
+  },
+
+  drawPlanStrip: function(arena, y) {
+    var exchange = this.view.lastExchange;
+    var p1Plan = this.view.yourKey === "p1" && this.view.yourPlan ? this.view.yourPlan.plan : null;
+    var p2Plan = this.view.yourKey === "p2" && this.view.yourPlan ? this.view.yourPlan.plan : null;
+    var text = "";
+    if (exchange && exchange.plans) {
+      text = "P1 " + exchange.plans.p1.plan.join(" / ") + "    P2 " + exchange.plans.p2.plan.join(" / ");
+    } else if (p1Plan || p2Plan) {
+      text = "Locked: " + (p1Plan || p2Plan).join(" / ");
+    } else {
+      text = "Waiting for both players to lock in.";
+    }
+    var strip = this.text(text.slice(0, 118), 11, this.colors.muted, "850");
+    strip.anchor.set(0.5, 0);
+    this.setTextPosition(strip, arena.center, y);
+    this.hudLayer.addChild(strip);
+  },
+
+  drawGameOver: function(arena) {
+    var g = new PIXI.Graphics().rect(0, 0, arena.w, arena.h).fill({ color: 0x02030a, alpha: 0.38 });
+    var label = this.view.draw ? "DRAW" : ((this.view.winnerName || "WINNER") + " WINS");
+    var text = this.text(label.toUpperCase(), 34, this.view.draw ? this.colors.gold : this.colors.text, "950");
+    this.hudLayer.addChild(g);
+    text.anchor.set(0.5);
+    this.setTextPosition(text, arena.center, arena.h * 0.38);
+    this.hudLayer.addChild(text);
+  }
+};
+
+(function() {
+  Ui.init();
+  var pending = null;
+  function accept(view, actions, context) {
+    pending = { view: view, actions: actions, context: context };
+    Ui.onState(view, actions, context);
+  }
+  if (typeof playgent !== "undefined" && playgent.onStateChange) {
+    playgent.onStateChange(accept);
+  } else {
+    var wait = setInterval(function() {
+      if (typeof playgent !== "undefined" && playgent.onStateChange) {
+        clearInterval(wait);
+        playgent.onStateChange(accept);
+      }
+    }, 50);
+  }
+  var started = Date.now();
+  function boot() {
+    if (typeof PIXI === "undefined" || typeof WireframeFighterRenderer === "undefined") {
+      if (Date.now() - started > 1800) {
+        Fallback.active = true;
+        if (pending) Fallback.render(pending.view);
+        return;
+      }
+      setTimeout(boot, 50);
+      return;
+    }
+    Renderer.init().then(function() {
+      if (pending) Renderer.onState(pending.view, pending.context);
+    }).catch(function() {
+      Fallback.active = true;
+      if (pending) Fallback.render(pending.view);
+    });
+  }
+  boot();
+}());
+
+window.__playgentCheckLayout = function() {
+  var failures = window.__playgentE2E ? window.__playgentE2E.checkLayout() : [];
+  var panel = document.getElementById("action-panel");
+  if (panel && !panel.hidden) {
+    var rect = panel.getBoundingClientRect();
+    if (rect.left < 0 || rect.right > window.innerWidth || rect.bottom > window.innerHeight) failures.push("action panel outside viewport");
+    if (rect.height > Math.max(150, window.innerHeight * 0.38)) failures.push("action panel too tall");
+  }
+  return failures;
+};
+</script>

@@ -1,0 +1,13 @@
+{
+  "slug": "euchre",
+  "name": "Euchre",
+  "description": "Four-player team Euchre with neon table drama, slot-machine popups, and explosive trick celebrations.",
+  "minPlayers": 4,
+  "maxPlayers": 4,
+  "version": "1.0.0",
+  "tags": ["classic", "cards", "teams", "trick-taking", "arcade"],
+  "thumbnail": "thumbnail.svg",
+  "libraries": ["pixi"],
+  "privateFields": ["hands", "kitty", "buried", "rng"],
+  "rules": "OVERVIEW\nFour-player Euchre. Seats 0/2 are Team A, 1/3 Team B. Deck is 9 through A. First team to 10 points wins.\n\nHAND FLOW\nOrder-up round: players may pass or order the upcard suit as trump; dealer discards if ordered. Call round: players may pass or call any non-turned-down suit; stuck dealer must call. Play: five tricks, following effective suit when possible.\n\nCARD RULES\nIn trump, the trump jack is right bower; the same-color jack is left bower and counts as trump. Highest card of led suit wins unless trump is played.\n\nSCORING\nMaker team scores 1 for 3-4 tricks, 2 for all 5, 4 for a lone sweep. Defenders score 2 for euchre."
+}

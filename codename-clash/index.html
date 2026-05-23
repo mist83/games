@@ -1,0 +1,1794 @@
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #101411;
+    --ink: #15110c;
+    --paper: #f3dfb4;
+    --paper-2: #dcc28c;
+    --cream: #fff1cf;
+    --red: #e73f4d;
+    --red-dark: #6f1721;
+    --blue: #23bfd2;
+    --blue-dark: #104a57;
+    --neutral: #b98f52;
+    --assassin: #070707;
+    --green: #62d68a;
+    --amber: #f8b94b;
+    --muted: #9a8e77;
+    --panel: rgba(24, 28, 22, 0.9);
+    --line: rgba(255, 231, 179, 0.2);
+  }
+
+  body {
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    background:
+      linear-gradient(135deg, rgba(231, 63, 77, 0.16), transparent 28%),
+      linear-gradient(315deg, rgba(35, 191, 210, 0.15), transparent 30%),
+      repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 42px),
+      repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.018) 0 1px, transparent 1px 42px),
+      var(--bg);
+    color: var(--cream);
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+
+  button, input {
+    font: inherit;
+  }
+
+  button {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  #app {
+    position: relative;
+    isolation: isolate;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    overflow: hidden;
+  }
+
+  #app::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    background:
+      linear-gradient(180deg, rgba(255, 238, 194, 0.05), transparent 18%, rgba(0, 0, 0, 0.26)),
+      repeating-linear-gradient(115deg, transparent 0 26px, rgba(255, 238, 194, 0.035) 26px 27px);
+  }
+
+  #app::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.45;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.045), transparent);
+    animation: scanSweep 6s linear infinite;
+  }
+
+  @keyframes scanSweep {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+
+  .topbar {
+    min-height: 88px;
+    display: grid;
+    grid-template-columns: minmax(220px, 1fr) auto minmax(220px, 1fr);
+    align-items: center;
+    gap: 14px;
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--line);
+    background: rgba(10, 13, 10, 0.82);
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.36);
+  }
+
+  .brand {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .crest {
+    width: 52px;
+    height: 52px;
+    flex: 0 0 auto;
+    filter: drop-shadow(0 0 16px rgba(248, 185, 75, 0.28));
+  }
+
+  .title {
+    font-size: 19px;
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: 0;
+    color: var(--cream);
+  }
+
+  .phase-line {
+    margin-top: 7px;
+    min-height: 18px;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .score-strip {
+    display: grid;
+    grid-template-columns: 128px 42px 128px;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .team-score {
+    min-width: 0;
+    height: 58px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    display: grid;
+    grid-template-columns: 8px minmax(0, 1fr);
+    overflow: hidden;
+    background: rgba(255, 241, 207, 0.08);
+    box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.22);
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  }
+
+  .team-score.active {
+    border-color: rgba(255, 241, 207, 0.58);
+    box-shadow: 0 0 22px rgba(255, 241, 207, 0.12), inset 0 0 24px rgba(0, 0, 0, 0.24);
+    transform: translateY(-1px);
+  }
+
+  .team-score .stripe { width: 8px; }
+  .team-score.red .stripe { background: linear-gradient(180deg, var(--red), var(--red-dark)); }
+  .team-score.blue .stripe { background: linear-gradient(180deg, var(--blue), var(--blue-dark)); }
+
+  .team-score .score-inner {
+    min-width: 0;
+    padding: 8px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .team-name {
+    font-size: 11px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .team-score.red .team-name { color: #ff9aa1; }
+  .team-score.blue .team-name { color: #9fefff; }
+
+  .remaining {
+    font-size: 25px;
+    font-weight: 950;
+    line-height: 1;
+    color: var(--cream);
+    text-shadow: 0 0 18px rgba(255, 241, 207, 0.18);
+  }
+
+  .vs {
+    height: 42px;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--amber);
+    font-size: 12px;
+    font-weight: 950;
+    background: rgba(0, 0, 0, 0.35);
+  }
+
+  .identity {
+    justify-self: end;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+
+  .identity-pill {
+    min-width: 0;
+    max-width: 260px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 9px 12px;
+    background: rgba(255, 241, 207, 0.08);
+  }
+
+  .identity-name {
+    font-size: 13px;
+    font-weight: 900;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .identity-role {
+    margin-top: 2px;
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    font-weight: 800;
+  }
+
+  .table {
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(210px, 250px) minmax(0, 1fr) minmax(230px, 280px);
+    gap: 14px;
+    padding: 14px;
+    overflow: hidden;
+  }
+
+  .panel {
+    min-width: 0;
+    min-height: 0;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--panel);
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    overflow: hidden;
+  }
+
+  .intel-panel,
+  .action-panel {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .panel-head {
+    flex: 0 0 auto;
+    padding: 12px 13px 9px;
+    border-bottom: 1px solid var(--line);
+    font-size: 11px;
+    font-weight: 950;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--amber);
+  }
+
+  .panel-body {
+    min-height: 0;
+    padding: 12px;
+    overflow: hidden;
+  }
+
+  .clue-display {
+    border: 1px solid rgba(248, 185, 75, 0.35);
+    border-radius: 8px;
+    padding: 12px;
+    background:
+      linear-gradient(135deg, rgba(248, 185, 75, 0.12), rgba(255, 241, 207, 0.04)),
+      rgba(0, 0, 0, 0.18);
+  }
+
+  .clue-label {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 900;
+  }
+
+  .clue-word {
+    margin-top: 5px;
+    font-size: 28px;
+    font-weight: 950;
+    line-height: 1;
+    color: var(--cream);
+    overflow-wrap: anywhere;
+  }
+
+  .clue-count {
+    margin-top: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    min-height: 32px;
+    border-radius: 6px;
+    background: var(--amber);
+    color: var(--ink);
+    font-size: 18px;
+    font-weight: 950;
+  }
+
+  .roster {
+    display: grid;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .roster-team {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+    background: rgba(255, 241, 207, 0.055);
+  }
+
+  .roster-title {
+    padding: 7px 9px;
+    font-size: 10px;
+    font-weight: 950;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .roster-title.red { color: #ff9aa1; border-bottom: 1px solid rgba(231, 63, 77, 0.28); }
+  .roster-title.blue { color: #9fefff; border-bottom: 1px solid rgba(35, 191, 210, 0.28); }
+
+  .agent-list {
+    display: grid;
+    gap: 5px;
+    padding: 8px;
+  }
+
+  .agent {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: 26px minmax(0, 1fr);
+    gap: 7px;
+    align-items: center;
+  }
+
+  .avatar {
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 950;
+    color: white;
+  }
+
+  .avatar.red { background: linear-gradient(135deg, var(--red), var(--red-dark)); }
+  .avatar.blue { background: linear-gradient(135deg, var(--blue), var(--blue-dark)); color: #06262d; }
+
+  .agent-name {
+    min-width: 0;
+    font-size: 12px;
+    font-weight: 850;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .agent-role {
+    font-size: 9px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 850;
+  }
+
+  .board-panel {
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+    background:
+      linear-gradient(135deg, rgba(255, 241, 207, 0.08), rgba(0, 0, 0, 0.16)),
+      rgba(13, 17, 13, 0.82);
+  }
+
+  .board-wrap {
+    width: min(100%, 640px);
+    height: auto;
+    aspect-ratio: 1 / 1;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-rows: repeat(5, minmax(0, 1fr));
+    gap: 8px;
+    padding: 10px;
+    border-radius: 8px;
+    background:
+      linear-gradient(135deg, rgba(255, 241, 207, 0.2), rgba(255, 241, 207, 0.06)),
+      #181611;
+    border: 1px solid rgba(255, 241, 207, 0.24);
+    box-shadow: 0 26px 90px rgba(0, 0, 0, 0.36), inset 0 0 0 1px rgba(0, 0, 0, 0.35);
+  }
+
+  .word-card {
+    position: relative;
+    min-width: 0;
+    min-height: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    border-radius: 8px;
+    color: var(--ink);
+    background:
+      linear-gradient(135deg, rgba(255, 255, 255, 0.33), rgba(255, 255, 255, 0.02)),
+      linear-gradient(180deg, var(--paper), var(--paper-2));
+    box-shadow:
+      0 9px 0 rgba(70, 48, 20, 0.7),
+      0 17px 24px rgba(0, 0, 0, 0.28),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.38);
+    cursor: default;
+    overflow: hidden;
+    transform: translateZ(0);
+    transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease;
+  }
+
+  .word-card::before {
+    content: "";
+    position: absolute;
+    inset: 5px;
+    border: 1px solid rgba(41, 25, 12, 0.18);
+    border-radius: 6px;
+    pointer-events: none;
+  }
+
+  .word-card.can-guess {
+    cursor: pointer;
+    animation: cardReady 1.6s ease-in-out infinite;
+  }
+
+  .word-card.can-guess:hover,
+  .word-card.can-guess:focus-visible {
+    transform: translateY(-5px) scale(1.02);
+    box-shadow:
+      0 14px 0 rgba(70, 48, 20, 0.72),
+      0 24px 34px rgba(0, 0, 0, 0.34),
+      0 0 28px rgba(248, 185, 75, 0.28),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.48);
+    outline: none;
+  }
+
+  @keyframes cardReady {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.09); }
+  }
+
+  .word-card.revealed {
+    color: white;
+    box-shadow: 0 8px 0 rgba(0, 0, 0, 0.46), 0 16px 28px rgba(0, 0, 0, 0.34);
+  }
+
+  .word-card.team-red { background: linear-gradient(150deg, #ff7580, var(--red) 48%, var(--red-dark)); }
+  .word-card.team-blue { background: linear-gradient(150deg, #71efff, var(--blue) 45%, var(--blue-dark)); color: #061e24; }
+  .word-card.team-neutral { background: linear-gradient(150deg, #e7c58c, var(--neutral) 48%, #5b4225); }
+  .word-card.team-assassin { background: linear-gradient(145deg, #333, #050505 48%, #000); color: #f4ede2; }
+
+  .word-card.key-red { box-shadow: 0 9px 0 rgba(70, 48, 20, 0.7), 0 0 0 3px rgba(231, 63, 77, 0.75), 0 17px 24px rgba(0, 0, 0, 0.28); }
+  .word-card.key-blue { box-shadow: 0 9px 0 rgba(70, 48, 20, 0.7), 0 0 0 3px rgba(35, 191, 210, 0.78), 0 17px 24px rgba(0, 0, 0, 0.28); }
+  .word-card.key-neutral { box-shadow: 0 9px 0 rgba(70, 48, 20, 0.7), 0 0 0 3px rgba(185, 143, 82, 0.74), 0 17px 24px rgba(0, 0, 0, 0.28); }
+  .word-card.key-assassin { box-shadow: 0 9px 0 rgba(70, 48, 20, 0.7), 0 0 0 3px rgba(0, 0, 0, 0.9), 0 0 32px rgba(255, 255, 255, 0.14), 0 17px 24px rgba(0, 0, 0, 0.28); }
+
+  .word-index {
+    position: absolute;
+    top: 7px;
+    left: 8px;
+    font-size: 10px;
+    font-weight: 950;
+    opacity: 0.56;
+  }
+
+  .word-text {
+    position: absolute;
+    inset: 20px 8px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 15px;
+    line-height: 1.05;
+    font-weight: 950;
+    letter-spacing: 0;
+    overflow-wrap: anywhere;
+    text-transform: uppercase;
+  }
+
+  .key-chip {
+    position: absolute;
+    right: 7px;
+    bottom: 7px;
+    min-width: 26px;
+    height: 22px;
+    padding: 0 6px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.72);
+    color: white;
+    font-size: 10px;
+    font-weight: 950;
+    letter-spacing: 0.4px;
+  }
+
+  .word-card.team-blue .key-chip { color: #061e24; background: rgba(255, 255, 255, 0.72); }
+
+  .action-form {
+    display: grid;
+    gap: 10px;
+  }
+
+  .clue-input {
+    width: 100%;
+    min-height: 46px;
+    border: 1px solid rgba(255, 241, 207, 0.26);
+    border-radius: 8px;
+    padding: 10px 12px;
+    background: rgba(255, 241, 207, 0.12);
+    color: var(--cream);
+    outline: none;
+    font-size: 15px;
+    font-weight: 850;
+  }
+
+  .clue-input:focus {
+    border-color: var(--amber);
+    box-shadow: 0 0 0 3px rgba(248, 185, 75, 0.14);
+  }
+
+  .clue-input::placeholder { color: rgba(255, 241, 207, 0.44); }
+
+  .count-row {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 7px;
+  }
+
+  .count-btn,
+  .primary-btn,
+  .pass-btn {
+    min-height: 44px;
+    border: 1px solid rgba(255, 241, 207, 0.22);
+    border-radius: 8px;
+    color: var(--cream);
+    background: rgba(255, 241, 207, 0.1);
+    cursor: pointer;
+    font-weight: 950;
+    transition: transform 0.12s ease, background 0.12s ease, box-shadow 0.12s ease;
+  }
+
+  .count-btn.active {
+    background: var(--amber);
+    color: var(--ink);
+    box-shadow: 0 0 24px rgba(248, 185, 75, 0.26);
+  }
+
+  .primary-btn {
+    background: linear-gradient(135deg, var(--amber), #ffdf74);
+    color: var(--ink);
+    box-shadow: 0 10px 28px rgba(248, 185, 75, 0.22);
+  }
+
+  .pass-btn {
+    width: 100%;
+    background: linear-gradient(135deg, rgba(255, 241, 207, 0.16), rgba(255, 241, 207, 0.08));
+  }
+
+  .count-btn:active,
+  .primary-btn:active,
+  .pass-btn:active {
+    transform: scale(0.98);
+  }
+
+  .status-card {
+    border-radius: 8px;
+    padding: 13px;
+    border: 1px solid var(--line);
+    background: rgba(255, 241, 207, 0.07);
+  }
+
+  .status-kicker {
+    font-size: 10px;
+    font-weight: 950;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+
+  .status-main {
+    margin-top: 6px;
+    font-size: 18px;
+    font-weight: 950;
+    line-height: 1.12;
+    color: var(--cream);
+    overflow-wrap: anywhere;
+  }
+
+  .log-list {
+    display: grid;
+    gap: 7px;
+    margin-top: 10px;
+  }
+
+  .log-item {
+    font-size: 11px;
+    line-height: 1.25;
+    color: rgba(255, 241, 207, 0.76);
+    border-left: 2px solid rgba(248, 185, 75, 0.42);
+    padding-left: 8px;
+  }
+
+  .effect-layer {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 20;
+  }
+
+  .flash {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 18;
+    animation: flashOut 650ms ease-out forwards;
+  }
+
+  .flash.good { background: radial-gradient(circle at center, rgba(98, 214, 138, 0.34), transparent 52%); }
+  .flash.bad { background: radial-gradient(circle at center, rgba(248, 185, 75, 0.3), rgba(231, 63, 77, 0.15), transparent 58%); }
+  .flash.fatal { background: radial-gradient(circle at center, rgba(255, 255, 255, 0.22), rgba(231, 63, 77, 0.36), rgba(0, 0, 0, 0.74)); }
+
+  @keyframes flashOut {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+
+  .burst {
+    position: fixed;
+    width: 10px;
+    height: 10px;
+    left: var(--x);
+    top: var(--y);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--c);
+    box-shadow: 0 0 18px var(--c);
+    animation: burstFly 900ms cubic-bezier(.2,.7,.2,1) forwards;
+  }
+
+  @keyframes burstFly {
+    0% { opacity: 1; transform: translate(-50%, -50%) scale(0.6); }
+    100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0.15); }
+  }
+
+  .banner {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    z-index: 22;
+    transform: translate(-50%, -50%);
+    min-width: 260px;
+    max-width: min(86vw, 620px);
+    border-radius: 8px;
+    padding: 18px 22px;
+    text-align: center;
+    border: 1px solid rgba(255, 241, 207, 0.38);
+    background: rgba(10, 12, 10, 0.92);
+    box-shadow: 0 28px 110px rgba(0, 0, 0, 0.58);
+    animation: bannerPop 1500ms ease-out forwards;
+  }
+
+  .banner.good { color: var(--green); }
+  .banner.bad { color: var(--amber); }
+  .banner.fatal { color: #ff6572; }
+
+  .banner-title {
+    font-size: 30px;
+    font-weight: 950;
+    line-height: 1;
+    text-transform: uppercase;
+  }
+
+  .banner-sub {
+    margin-top: 8px;
+    color: var(--cream);
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  @keyframes bannerPop {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.82); }
+    15% { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
+    75% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -58%) scale(0.96); }
+  }
+
+  .confetti {
+    position: fixed;
+    top: -14px;
+    left: var(--x);
+    width: 9px;
+    height: 13px;
+    border-radius: 2px;
+    background: var(--c);
+    animation: confettiDrop var(--dur) linear forwards;
+  }
+
+  @keyframes confettiDrop {
+    0% { opacity: 1; transform: translateY(-20px) rotate(0deg); }
+    100% { opacity: 0; transform: translateY(110vh) rotate(740deg); }
+  }
+
+  .shake {
+    animation: screenShake 460ms ease-in-out;
+  }
+
+  @keyframes screenShake {
+    0%, 100% { filter: none; }
+    15% { filter: contrast(1.18) brightness(1.08) saturate(1.15); }
+    30% { filter: contrast(0.94) brightness(0.95) saturate(1.3); }
+    45% { filter: contrast(1.22) brightness(1.05) saturate(0.9); }
+    60% { filter: contrast(0.96) brightness(1.12) saturate(1.25); }
+    75% { filter: contrast(1.12) brightness(0.98) saturate(1.08); }
+  }
+
+  @media (max-width: 920px) {
+    .topbar {
+      min-height: 98px;
+      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-areas:
+        "brand identity"
+        "score score";
+      gap: 8px 10px;
+      padding: 10px 12px;
+    }
+
+    .brand { grid-area: brand; }
+    .identity { grid-area: identity; }
+    .score-strip {
+      grid-area: score;
+      width: 100%;
+      grid-template-columns: 1fr 38px 1fr;
+    }
+
+    .crest { width: 42px; height: 42px; }
+    .title { font-size: 17px; }
+    .phase-line { font-size: 10px; }
+    .team-score { height: 42px; }
+    .team-score .score-inner { padding: 6px 8px; }
+    .remaining { font-size: 20px; }
+    .identity-pill { max-width: 122px; padding: 7px 8px; }
+    .identity-name { font-size: 12px; }
+    .identity-role { font-size: 9px; }
+
+    .table {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      gap: 8px;
+      padding: 8px;
+    }
+
+    .panel-head {
+      display: none;
+    }
+
+    .intel-panel {
+      max-height: 88px;
+    }
+
+    .intel-panel .panel-body {
+      padding: 8px;
+      display: grid;
+      grid-template-columns: minmax(120px, 0.7fr) minmax(0, 1fr);
+      gap: 8px;
+    }
+
+    .clue-display {
+      padding: 8px;
+    }
+
+    .clue-word {
+      font-size: 19px;
+    }
+
+    .clue-count {
+      min-width: 30px;
+      min-height: 24px;
+      font-size: 14px;
+      margin-top: 4px;
+    }
+
+    .roster {
+      margin-top: 0;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .roster-title {
+      padding: 5px 7px;
+      font-size: 9px;
+    }
+
+    .agent-list {
+      padding: 5px;
+      gap: 3px;
+    }
+
+    .agent {
+      grid-template-columns: 20px minmax(0, 1fr);
+      gap: 5px;
+    }
+
+    .avatar {
+      width: 20px;
+      height: 20px;
+      border-radius: 5px;
+      font-size: 9px;
+    }
+
+    .agent-name { font-size: 10px; }
+    .agent-role { display: none; }
+
+    .board-panel {
+      padding: 8px;
+    }
+
+    .board-wrap {
+      width: min(100%, 520px);
+      height: auto;
+      gap: 6px;
+      padding: 7px;
+    }
+
+    .word-text {
+      inset: 17px 5px 15px;
+      font-size: 11px;
+      line-height: 1;
+    }
+
+    .word-index {
+      top: 5px;
+      left: 6px;
+      font-size: 8px;
+    }
+
+    .key-chip {
+      right: 5px;
+      bottom: 5px;
+      min-width: 20px;
+      height: 18px;
+      font-size: 8px;
+      border-radius: 4px;
+    }
+
+    .action-panel {
+      max-height: 134px;
+    }
+
+    .action-panel .panel-body {
+      padding: 8px;
+    }
+
+    .action-form {
+      grid-template-columns: minmax(120px, 1fr) minmax(0, 160px);
+      align-items: center;
+      gap: 8px;
+    }
+
+    .clue-input {
+      min-height: 44px;
+      font-size: 14px;
+    }
+
+    .count-row {
+      grid-template-columns: repeat(5, minmax(36px, 1fr));
+      grid-column: 1 / 3;
+    }
+
+    .primary-btn {
+      min-height: 44px;
+    }
+
+    .status-card {
+      padding: 10px;
+    }
+
+    .status-main {
+      font-size: 15px;
+    }
+
+    .log-list {
+      display: none;
+    }
+  }
+
+  @media (max-width: 430px) {
+    .topbar { min-height: 104px; }
+    .brand { gap: 8px; }
+    .crest { width: 38px; height: 38px; }
+    .title { font-size: 15px; }
+    .phase-line { max-width: 172px; }
+    .team-name { font-size: 9px; }
+    .vs { width: 34px; height: 34px; font-size: 10px; }
+    .board-wrap { gap: 5px; padding: 6px; }
+    .word-text { font-size: 10px; }
+    .intel-panel { max-height: 82px; }
+    .action-panel { max-height: 128px; }
+    .banner-title { font-size: 24px; }
+  }
+</style>
+
+<div id="app" data-phase="" data-status="">
+  <div class="topbar">
+    <div class="brand">
+      <svg class="crest" viewBox="0 0 64 64" aria-hidden="true">
+        <defs>
+          <linearGradient id="crestGold" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#fff1cf"></stop>
+            <stop offset="0.48" stop-color="#f8b94b"></stop>
+            <stop offset="1" stop-color="#8d5d1e"></stop>
+          </linearGradient>
+        </defs>
+        <path d="M32 4 56 14v18c0 14-9 23-24 28C17 55 8 46 8 32V14L32 4Z" fill="rgba(0,0,0,.42)" stroke="url(#crestGold)" stroke-width="3"></path>
+        <path d="M20 35c6-10 18-10 24 0-4 5-20 5-24 0Z" fill="none" stroke="url(#crestGold)" stroke-width="3" stroke-linejoin="round"></path>
+        <circle cx="32" cy="33" r="5" fill="url(#crestGold)"></circle>
+        <path d="M32 12v9M18 22l7 5M46 22l-7 5" stroke="url(#crestGold)" stroke-width="3" stroke-linecap="round"></path>
+      </svg>
+      <div>
+        <div class="title">Codename Clash</div>
+        <div class="phase-line" id="phase-line">Initializing dossier</div>
+      </div>
+    </div>
+
+    <div class="score-strip">
+      <div class="team-score red" id="red-score">
+        <div class="stripe"></div>
+        <div class="score-inner">
+          <div class="team-name">Red</div>
+          <div class="remaining" id="red-remaining">9</div>
+        </div>
+      </div>
+      <div class="vs">VS</div>
+      <div class="team-score blue" id="blue-score">
+        <div class="stripe"></div>
+        <div class="score-inner">
+          <div class="team-name">Blue</div>
+          <div class="remaining" id="blue-remaining">8</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="identity">
+      <div class="identity-pill" id="identity-pill">
+        <div class="identity-name" id="identity-name">Spectator</div>
+        <div class="identity-role" id="identity-role">Observer</div>
+      </div>
+    </div>
+  </div>
+
+  <main class="table">
+    <section class="panel intel-panel">
+      <div class="panel-head">Field Intel</div>
+      <div class="panel-body">
+        <div id="clue-box" class="clue-display"></div>
+        <div id="roster" class="roster"></div>
+      </div>
+    </section>
+
+    <section class="panel board-panel">
+      <div class="board-wrap" id="board"></div>
+    </section>
+
+    <section class="panel action-panel">
+      <div class="panel-head">Operations</div>
+      <div class="panel-body" id="action-body"></div>
+    </section>
+  </main>
+
+  <div class="effect-layer" id="effect-layer"></div>
+</div>
+<div id="player-container" style="display:none"></div>
+
+<script>
+(function() {
+  var E2E_GAME_SLUG = "codename-clash";
+  var E2E = window.__playgentE2EState || {
+    version: 1,
+    regions: [],
+    lastPhase: "loading",
+    lastStatus: "loading",
+    lastPlayerId: "",
+    lastCurrentPlayer: "",
+    lastLegalActionCount: 0,
+    lastVisibleLegalActionCount: 0,
+    lastActions: [],
+    lastRawActions: []
+  };
+  window.__playgentE2EState = E2E;
+
+  function setE2EAttr(el, name, value) {
+    if (!el) return;
+    el.setAttribute(name, value == null ? "" : String(value));
+  }
+
+  function unwrapE2EAction(option) {
+    if (option && typeof option === "object" && option.decision !== undefined) return option.decision;
+    if (option && typeof option === "object" && option.action !== undefined) return option.action;
+    return option;
+  }
+
+  function isVisibleE2EAction(action) {
+    action = unwrapE2EAction(action);
+    if (!action || typeof action !== "object") return false;
+    if (action.type === "advance_phase" || action.type === "system" || action.type === "noop") return false;
+    return true;
+  }
+
+  function getVisibleE2EActions(actions) {
+    var out = [];
+    for (var i = 0; actions && i < actions.length; i++) {
+      if (isVisibleE2EAction(actions[i])) out.push(unwrapE2EAction(actions[i]));
+    }
+    return out;
+  }
+
+  function ensureE2ETelemetry() {
+    var el = document.getElementById("e2e-telemetry");
+    if (!el) {
+      el = document.createElement("div");
+      el.id = "e2e-telemetry";
+      if (document.body) document.body.appendChild(el);
+    }
+    el.setAttribute("aria-hidden", "true");
+    el.style.cssText = "position:fixed;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;left:0;top:0;";
+    setE2EAttr(el, "data-game", E2E_GAME_SLUG);
+    setE2EAttr(el, "data-phase", E2E.lastPhase);
+    setE2EAttr(el, "data-status", E2E.lastStatus);
+    setE2EAttr(el, "data-player", E2E.lastPlayerId || "spectator");
+    return el;
+  }
+
+  function addUnique(list, el) {
+    if (!el) return;
+    for (var i = 0; i < list.length; i++) if (list[i] === el) return;
+    list.push(el);
+  }
+
+  function getE2ERoots() {
+    var roots = [];
+    addUnique(roots, ensureE2ETelemetry());
+    addUnique(roots, document.getElementById("telemetry"));
+    addUnique(roots, document.getElementById("game"));
+    addUnique(roots, document.getElementById("game-container"));
+    addUnique(roots, document.querySelector("[data-board]"));
+    return roots;
+  }
+
+  function getCurrentPlayerE2E(view) {
+    if (!view) return "";
+    return view.currentPlayer || view.currentPlayerId || view.currentActor || view.turn || "";
+  }
+
+  function updateE2EPlayers(players) {
+    var telemetry = ensureE2ETelemetry();
+    var host = document.getElementById("e2e-players");
+    if (!host) {
+      host = document.createElement("div");
+      host.id = "e2e-players";
+      telemetry.appendChild(host);
+    }
+    host.textContent = "";
+    for (var i = 0; players && i < players.length; i++) {
+      var p = players[i] || {};
+      var span = document.createElement("span");
+      setE2EAttr(span, "data-player", p.id || "");
+      setE2EAttr(span, "data-player-name", p.name || p.id || "");
+      span.textContent = p.name || p.id || "";
+      host.appendChild(span);
+    }
+  }
+
+  function updateE2ELandmarks(view, legalActions, context) {
+    var visibleActions = getVisibleE2EActions(legalActions || []);
+    var phase = context && context.gameOver ? "game-over" : (view && (view.phase || view.mode || view.stage) ? (view.phase || view.mode || view.stage) : "playing");
+    var status = context && context.gameOver ? "game-over" : (visibleActions.length > 0 ? "your-turn" : "waiting");
+    var playerId = context && context.myId ? context.myId : "spectator";
+    var currentPlayer = getCurrentPlayerE2E(view);
+    var roots = getE2ERoots();
+    E2E.lastPhase = phase;
+    E2E.lastStatus = status;
+    E2E.lastPlayerId = playerId;
+    E2E.lastCurrentPlayer = currentPlayer;
+    E2E.lastRawActions = legalActions || [];
+    E2E.lastActions = visibleActions;
+    E2E.lastLegalActionCount = (legalActions || []).length;
+    E2E.lastVisibleLegalActionCount = visibleActions.length;
+    for (var i = 0; i < roots.length; i++) {
+      setE2EAttr(roots[i], "data-game", E2E_GAME_SLUG);
+      setE2EAttr(roots[i], "data-phase", phase);
+      setE2EAttr(roots[i], "data-status", status);
+      setE2EAttr(roots[i], "data-player", playerId);
+      setE2EAttr(roots[i], "data-current-player", currentPlayer);
+      if (view && view.round != null) setE2EAttr(roots[i], "data-round", view.round);
+      if (view && view.turnNumber != null) setE2EAttr(roots[i], "data-turn", view.turnNumber);
+    }
+    updateE2EPlayers(context && context.players ? context.players : []);
+  }
+
+  function actionTypeForIndex(idx) {
+    var raw = E2E.lastRawActions && E2E.lastRawActions[idx] ? unwrapE2EAction(E2E.lastRawActions[idx]) : null;
+    return raw && raw.type ? raw.type : "choose";
+  }
+
+  function safeLabelFromNode(node) {
+    var label = node.getAttribute("data-action-label") || node.getAttribute("aria-label") || node.title || node.textContent || node.value || "";
+    return String(label).replace(/\s+/g, " ").trim().slice(0, 100);
+  }
+
+  function decorateE2EDOMControls() {
+    var nodes = document.querySelectorAll("[data-action-idx], [data-action], button, [role='button'], input[type='button'], input[type='submit'], input:not([type='hidden']), select, textarea, [data-cell], [data-card], [data-card-id], [data-option-id], [data-brainrot], canvas");
+    for (var i = 0; i < nodes.length; i++) {
+      var node = nodes[i];
+      if (node.hasAttribute("data-action") && !node.hasAttribute("data-action-idx")) {
+        node.setAttribute("data-action-idx", node.getAttribute("data-action"));
+      }
+      if (node.hasAttribute("data-action-idx")) {
+        var idx = parseInt(node.getAttribute("data-action-idx"), 10);
+        if (!isNaN(idx) && !node.hasAttribute("data-action-type")) node.setAttribute("data-action-type", actionTypeForIndex(idx));
+        if (!node.hasAttribute("data-action-label")) node.setAttribute("data-action-label", safeLabelFromNode(node));
+      }
+      if (node.hasAttribute("data-cell") && !node.getAttribute("aria-label")) {
+        node.setAttribute("aria-label", "cell " + node.getAttribute("data-cell"));
+      }
+      if ((node.hasAttribute("data-card") || node.hasAttribute("data-card-id")) && !node.getAttribute("aria-label")) {
+        node.setAttribute("aria-label", "card " + (node.getAttribute("data-card") || node.getAttribute("data-card-id")));
+      }
+      if (node.tagName === "CANVAS" && !node.getAttribute("aria-label")) {
+        node.setAttribute("aria-label", E2E_GAME_SLUG + " canvas");
+      }
+    }
+  }
+
+  function e2eBeginFrame(view, legalActions, context) {
+    E2E.regions = [];
+    updateE2ELandmarks(view || {}, legalActions || [], context || {});
+  }
+
+  function e2eAfterRender() {
+    decorateE2EDOMControls();
+  }
+
+  function isVisibleE2ENode(node) {
+    if (!node || !node.getBoundingClientRect) return false;
+    var rect = node.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return false;
+    if (rect.right <= 0 || rect.bottom <= 0 || rect.left >= window.innerWidth || rect.top >= window.innerHeight) return false;
+    var style = window.getComputedStyle ? window.getComputedStyle(node) : null;
+    if (style && (style.display === "none" || style.visibility === "hidden" || style.opacity === "0")) return false;
+    if (node.disabled || node.getAttribute("aria-disabled") === "true") return false;
+    return true;
+  }
+
+  function regionKindForNode(node) {
+    if (node.tagName === "CANVAS") return "canvas";
+    if (node.tagName === "INPUT" || node.tagName === "SELECT" || node.tagName === "TEXTAREA") return "input";
+    if (node.hasAttribute("data-cell")) return "cell";
+    if (node.hasAttribute("data-card") || node.hasAttribute("data-card-id")) return "card";
+    return "button";
+  }
+
+  function getDOMActionRegions() {
+    decorateE2EDOMControls();
+    var nodes = document.querySelectorAll("[data-action-idx], button, [role='button'], input[type='button'], input[type='submit'], input:not([type='hidden']), select, textarea, [data-cell], [data-card], [data-card-id], [data-option-id], [data-brainrot], canvas");
+    var out = [];
+    for (var i = 0; i < nodes.length; i++) {
+      var node = nodes[i];
+      if (!isVisibleE2ENode(node)) continue;
+      var r = clipE2ERect(node.getBoundingClientRect());
+      if (!r) continue;
+      var id = node.id || node.getAttribute("data-action-idx") || node.getAttribute("data-cell") || node.getAttribute("data-card") || node.getAttribute("data-card-id") || node.getAttribute("data-option-id") || node.getAttribute("data-brainrot") || ("control-" + i);
+      out.push({
+        id: String(id),
+        kind: regionKindForNode(node),
+        label: safeLabelFromNode(node),
+        actionType: node.getAttribute("data-action-type") || "",
+        selector: node.id ? ("#" + node.id) : "",
+        rect: { x: r.left, y: r.top, width: r.width, height: r.height },
+        center: { x: r.left + r.width / 2, y: r.top + r.height / 2 }
+      });
+    }
+    return out;
+  }
+
+  function clipE2ERect(rect) {
+    if (!rect) return null;
+    var x = Number(rect.x != null ? rect.x : rect.left) || 0;
+    var y = Number(rect.y != null ? rect.y : rect.top) || 0;
+    var width = Number(rect.width) || 0;
+    var height = Number(rect.height) || 0;
+    var left = Math.max(0, x);
+    var top = Math.max(0, y);
+    var right = Math.min(window.innerWidth, x + width);
+    var bottom = Math.min(window.innerHeight, y + height);
+    if (right - left <= 0 || bottom - top <= 0) return null;
+    return { x: left, y: top, width: right - left, height: bottom - top };
+  }
+
+  function e2eRegisterRegion(region) {
+    if (!region || !region.id || !region.rect) return;
+    var r = clipE2ERect(region.rect);
+    if (!r || r.width == null || r.height == null) return;
+    var item = {
+      id: String(region.id),
+      kind: region.kind || "button",
+      label: region.label || "",
+      actionType: region.actionType || "",
+      rect: { x: Number(r.x) || 0, y: Number(r.y) || 0, width: Number(r.width) || 0, height: Number(r.height) || 0 },
+      center: region.center || { x: (Number(r.x) || 0) + (Number(r.width) || 0) / 2, y: (Number(r.y) || 0) + (Number(r.height) || 0) / 2 }
+    };
+    for (var i = 0; i < E2E.regions.length; i++) {
+      if (E2E.regions[i].id === item.id) {
+        E2E.regions[i] = item;
+        return;
+      }
+    }
+    E2E.regions.push(item);
+  }
+
+  function e2eCanvasRect(localRect, app) {
+    var canvas = app && app.canvas ? app.canvas : document.querySelector("canvas");
+    var screen = app && app.screen ? app.screen : null;
+    if (!canvas || !localRect) return null;
+    var canvasRect = canvas.getBoundingClientRect();
+    var screenW = screen && screen.width ? screen.width : canvasRect.width;
+    var screenH = screen && screen.height ? screen.height : canvasRect.height;
+    var sx = canvasRect.width / (screenW || canvasRect.width || 1);
+    var sy = canvasRect.height / (screenH || canvasRect.height || 1);
+    return {
+      x: canvasRect.left + localRect.x * sx,
+      y: canvasRect.top + localRect.y * sy,
+      width: localRect.width * sx,
+      height: localRect.height * sy
+    };
+  }
+
+  function e2ePixiBounds(displayObject, app) {
+    if (!displayObject || !displayObject.getBounds) return null;
+    var b = displayObject.getBounds();
+    return e2eCanvasRect({ x: b.x, y: b.y, width: b.width, height: b.height }, app);
+  }
+
+  function getE2ECanvasInfo() {
+    var canvas = document.querySelector("canvas");
+    if (!canvas) return null;
+    var rect = canvas.getBoundingClientRect();
+    return { selector: "canvas", width: rect.width, height: rect.height };
+  }
+
+  function getAllE2ERegions() {
+    var out = E2E.regions.slice();
+    var dom = getDOMActionRegions();
+    var seen = {};
+    var merged = [];
+    for (var i = 0; i < out.length; i++) { seen[out[i].id] = true; merged.push(out[i]); }
+    for (var j = 0; j < dom.length; j++) {
+      if (!seen[dom[j].id]) merged.push(dom[j]);
+    }
+    return merged;
+  }
+
+  function runE2ELayoutChecks() {
+    var failures = [];
+    var regions = getAllE2ERegions();
+    var canvas = getE2ECanvasInfo();
+    if (E2E.lastVisibleLegalActionCount > 0 && regions.length === 0) {
+      failures.push({ severity: "error", message: "active legal actions did not create visible controls" });
+    }
+    if (canvas && (canvas.width <= 0 || canvas.height <= 0)) {
+      failures.push({ severity: "error", message: "canvas has empty bounds" });
+    }
+    for (var i = 0; i < regions.length; i++) {
+      var region = regions[i];
+      var r = region.rect;
+      if (!r) {
+        failures.push({ severity: "error", message: region.id + " has no rect" });
+        continue;
+      }
+      if (r.width <= 0 || r.height <= 0) failures.push({ severity: "error", message: region.id + " has empty bounds" });
+      if (r.x < -1 || r.y < -1 || r.x + r.width > window.innerWidth + 1 || r.y + r.height > window.innerHeight + 1) {
+        failures.push({ severity: "error", message: region.id + " is offscreen" });
+      }
+      if (region.kind !== "canvas" && (r.width < 36 || r.height < 36)) {
+        failures.push({ severity: "warning", message: region.id + " is a small touch target" });
+      }
+    }
+    return failures;
+  }
+
+  window.__playgentE2EBegin = e2eBeginFrame;
+  window.__playgentE2EAfterRender = e2eAfterRender;
+  window.__playgentE2ERegisterRegion = e2eRegisterRegion;
+  window.__playgentE2ECanvasRect = e2eCanvasRect;
+  window.__playgentE2EPixiBounds = e2ePixiBounds;
+  window.__playgentE2ERunLayoutChecks = runE2ELayoutChecks;
+  window.__playgentE2E = {
+    version: 1,
+    getSnapshot: function() {
+      return {
+        phase: E2E.lastPhase,
+        status: E2E.lastStatus,
+        playerId: E2E.lastPlayerId,
+        currentPlayer: E2E.lastCurrentPlayer,
+        legalActionCount: E2E.lastVisibleLegalActionCount,
+        regionCount: getAllE2ERegions().length,
+        canvas: getE2ECanvasInfo()
+      };
+    },
+    getInteractiveRegions: function() { return getAllE2ERegions(); },
+    checkLayout: function() { return runE2ELayoutChecks(); }
+  };
+
+  if (typeof window.__playgentCheckLayout !== "function") {
+    window.__playgentCheckLayout = function() { return runE2ELayoutChecks(); };
+  }
+
+  function patchPlaygentE2E() {
+    if (!window.playgent || !window.playgent.onStateChange || window.playgent.__e2ePatched) return false;
+    var original = window.playgent.onStateChange;
+    window.playgent.onStateChange = function(cb) {
+      return original.call(window.playgent, function(view, legalActions, context) {
+        e2eBeginFrame(view, legalActions, context || {});
+        var result = cb.apply(this, arguments);
+        e2eAfterRender();
+        return result;
+      });
+    };
+    window.playgent.__e2ePatched = true;
+    return true;
+  }
+
+  ensureE2ETelemetry();
+  decorateE2EDOMControls();
+  if (!patchPlaygentE2E()) {
+    var tries = 0;
+    var timer = setInterval(function() {
+      tries++;
+      if (patchPlaygentE2E() || tries > 80) clearInterval(timer);
+    }, 50);
+  }
+}());
+</script>
+
+<script>
+(function() {
+  var selectedCount = 1;
+  var lastRevealSeq = null;
+  var lastFinaleKey = null;
+  var uiSeed = 98431;
+
+  function uiRand() {
+    uiSeed = (uiSeed * 48271) % 2147483647;
+    return uiSeed / 2147483647;
+  }
+
+  function escapeHtml(value) {
+    return String(value == null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function playerName(id, players) {
+    if (!id) return "Spectator";
+    for (var i = 0; i < (players || []).length; i++) {
+      if (players[i].id === id) return players[i].name || id;
+    }
+    return id;
+  }
+
+  function initial(name) {
+    return String(name || "?").charAt(0).toUpperCase();
+  }
+
+  function metaFor(view, id) {
+    var info = view.playerInfo || [];
+    for (var i = 0; i < info.length; i++) {
+      if (info[i].id === id) return info[i];
+    }
+    return { id: id, team: "red", role: "operative" };
+  }
+
+  function teamLabel(team) {
+    return team === "red" ? "Red" : team === "blue" ? "Blue" : "Neutral";
+  }
+
+  function keyLabel(team) {
+    if (team === "red") return "R";
+    if (team === "blue") return "B";
+    if (team === "neutral") return "N";
+    if (team === "assassin") return "X";
+    return "";
+  }
+
+  function revealTitle(reveal) {
+    if (!reveal) return "";
+    if (reveal.kind === "assassin") return "Blackout";
+    if (reveal.kind === reveal.guessingTeam) return "Direct Hit";
+    if (reveal.kind === "neutral") return "Bystander";
+    return "Compromised";
+  }
+
+  function revealSubtitle(reveal) {
+    if (!reveal) return "";
+    if (reveal.kind === "assassin") return reveal.word + " was the assassin";
+    if (reveal.kind === reveal.guessingTeam) return reveal.word + " was a " + teamLabel(reveal.kind) + " agent";
+    if (reveal.kind === "neutral") return reveal.word + " was neutral";
+    return reveal.word + " belonged to " + teamLabel(reveal.kind);
+  }
+
+  function actionTypeSet(actions) {
+    var out = {};
+    for (var i = 0; i < actions.length; i++) out[actions[i].type] = true;
+    return out;
+  }
+
+  function unwrapAction(option) {
+    if (option && typeof option === "object" && option.decision !== undefined) return option.decision;
+    if (option && typeof option === "object" && option.action !== undefined) return option.action;
+    return option;
+  }
+
+  function normalizeActions(actions) {
+    var out = [];
+    for (var i = 0; actions && i < actions.length; i++) out.push(unwrapAction(actions[i]));
+    return out;
+  }
+
+  function legalGuessMap(actions) {
+    var out = {};
+    for (var i = 0; i < actions.length; i++) {
+      if (actions[i].type === "guess") out[actions[i].index] = true;
+    }
+    return out;
+  }
+
+  function renderHeader(view, actions, ctx) {
+    var app = document.getElementById("app");
+    var status = ctx.gameOver ? "game-over" : actions.length > 0 ? "your-turn" : "waiting";
+    app.setAttribute("data-phase", view.phase || "");
+    app.setAttribute("data-status", status);
+    app.setAttribute("data-current-player", view.currentPlayerId || "");
+
+    document.getElementById("red-remaining").textContent = view.remaining ? view.remaining.red : 9;
+    document.getElementById("blue-remaining").textContent = view.remaining ? view.remaining.blue : 8;
+    document.getElementById("red-score").classList.toggle("active", view.currentTeam === "red");
+    document.getElementById("blue-score").classList.toggle("active", view.currentTeam === "blue");
+
+    var phaseLine = document.getElementById("phase-line");
+    var actor = playerName(view.currentPlayerId, ctx.players);
+    if (view.phase === "clue") {
+      phaseLine.textContent = teamLabel(view.currentTeam) + " spymaster: " + actor;
+    } else if (view.phase === "guess") {
+      phaseLine.textContent = teamLabel(view.currentTeam) + " operative: " + playerName(view.activeGuesser, ctx.players);
+    } else if (view.phase === "gameOverDisplay" || view.phase === "gameOver") {
+      phaseLine.textContent = teamLabel(view.winnerTeam) + " team secured the field";
+    } else {
+      phaseLine.textContent = "Dossier active";
+    }
+
+    var myName = ctx.myId ? playerName(ctx.myId, ctx.players) : "Spectator";
+    var role = view.myRole || "spectator";
+    var team = view.myTeam ? teamLabel(view.myTeam) + " " : "";
+    document.getElementById("identity-name").textContent = myName;
+    document.getElementById("identity-role").textContent = team + role;
+  }
+
+  function renderClue(view) {
+    var box = document.getElementById("clue-box");
+    if (view.clue) {
+      box.innerHTML =
+        '<div class="clue-label">' + escapeHtml(teamLabel(view.clue.team)) + ' clue</div>' +
+        '<div class="clue-word">' + escapeHtml(view.clue.word) + '</div>' +
+        '<div class="clue-count">' + escapeHtml(view.clue.count) + '</div>';
+    } else if (view.phase === "gameOverDisplay" || view.phase === "gameOver") {
+      box.innerHTML =
+        '<div class="clue-label">Result</div>' +
+        '<div class="clue-word">' + escapeHtml(teamLabel(view.winnerTeam)) + '</div>' +
+        '<div class="clue-count">WIN</div>';
+    } else {
+      box.innerHTML =
+        '<div class="clue-label">Awaiting clue</div>' +
+        '<div class="clue-word">' + escapeHtml(teamLabel(view.currentTeam)) + '</div>' +
+        '<div class="clue-count">--</div>';
+    }
+  }
+
+  function renderRoster(view, ctx) {
+    var roster = document.getElementById("roster");
+    var html = "";
+    var teams = ["red", "blue"];
+    for (var t = 0; t < teams.length; t++) {
+      var team = teams[t];
+      var ids = view.teams && view.teams[team] ? view.teams[team] : [];
+      html += '<div class="roster-team">';
+      html += '<div class="roster-title ' + team + '"><span>' + teamLabel(team) + '</span><span>' + ids.length + '</span></div>';
+      html += '<div class="agent-list">';
+      for (var i = 0; i < ids.length; i++) {
+        var id = ids[i];
+        var meta = metaFor(view, id);
+        var name = playerName(id, ctx.players);
+        html += '<div class="agent" data-player="' + escapeHtml(id) + '">';
+        html += '<div class="avatar ' + team + '">' + escapeHtml(initial(name)) + '</div>';
+        html += '<div><div class="agent-name">' + escapeHtml(name) + '</div><div class="agent-role">' + escapeHtml(meta.role) + '</div></div>';
+        html += '</div>';
+      }
+      html += '</div></div>';
+    }
+    roster.innerHTML = html;
+  }
+
+  function renderBoard(view, actions) {
+    var board = document.getElementById("board");
+    var legal = legalGuessMap(actions);
+    var canGuess = actionTypeSet(actions).guess;
+    board.innerHTML = "";
+
+    for (var i = 0; i < (view.cards || []).length; i++) {
+      var card = view.cards[i];
+      var btn = document.createElement("button");
+      var visibleTeam = card.team || "unknown";
+      var cls = "word-card";
+      if (card.revealed) cls += " revealed team-" + visibleTeam;
+      if (view.keyVisible && !card.revealed) cls += " key-" + visibleTeam;
+      if (canGuess && legal[card.index]) cls += " can-guess";
+      btn.className = cls;
+      btn.type = "button";
+      btn.setAttribute("data-card", String(card.index));
+      btn.setAttribute("data-index", String(card.index));
+      btn.disabled = !(canGuess && legal[card.index]);
+
+      btn.innerHTML =
+        '<span class="word-index">' + card.index + '</span>' +
+        '<span class="word-text">' + escapeHtml(card.word) + '</span>' +
+        ((view.keyVisible || card.revealed) && visibleTeam !== "unknown"
+          ? '<span class="key-chip">' + escapeHtml(keyLabel(visibleTeam)) + '</span>'
+          : "");
+
+      if (canGuess && legal[card.index]) {
+        (function(idx) {
+          btn.addEventListener("click", function() {
+            if (playgent.sound) playgent.sound("ui.select");
+            playgent.submitAction({ type: "guess", index: idx });
+          });
+        })(card.index);
+      }
+
+      board.appendChild(btn);
+    }
+  }
+
+  function renderActions(view, actions) {
+    var body = document.getElementById("action-body");
+    var types = actionTypeSet(actions);
+    body.setAttribute("data-submission-status", actions.length > 0 ? "pending" : "submitted");
+
+    if (types.clue) {
+      var max = Math.max(1, Math.min(5, view.remaining ? view.remaining[view.currentTeam] : 5));
+      if (selectedCount > max) selectedCount = max;
+      var html = '<div class="action-form">';
+      html += '<input class="clue-input" id="clue-input" maxlength="24" autocomplete="off" placeholder="Clue word" value="' + escapeHtml(actions[0].word || "") + '">';
+      html += '<button class="primary-btn" id="send-clue" type="button">Give Clue</button>';
+      html += '<div class="count-row">';
+      for (var i = 1; i <= 5; i++) {
+        html += '<button class="count-btn' + (i === selectedCount ? ' active' : '') + '" type="button" data-count="' + i + '"' + (i > max ? ' disabled' : '') + '>' + i + '</button>';
+      }
+      html += '</div></div>';
+      body.innerHTML = html;
+
+      var input = document.getElementById("clue-input");
+      var send = document.getElementById("send-clue");
+      var countButtons = body.querySelectorAll(".count-btn");
+      for (var c = 0; c < countButtons.length; c++) {
+        countButtons[c].addEventListener("click", function() {
+          selectedCount = Number(this.getAttribute("data-count")) || 1;
+          if (playgent.sound) playgent.sound("ui.select");
+          renderActions(view, actions);
+        });
+      }
+      send.addEventListener("click", function() {
+        var word = input.value.trim() || actions[0].word || "signal";
+        if (playgent.sound) playgent.sound("ui.confirm");
+        playgent.submitAction({ type: "clue", word: word, count: selectedCount });
+        send.disabled = true;
+      });
+      input.addEventListener("keydown", function(e) {
+        if (e.key === "Enter") {
+          send.click();
+        }
+      });
+      return;
+    }
+
+    if (view.phase === "guess" && (types.guess || types.pass)) {
+      var activeName = view.activeGuesser ? view.activeGuesser : "";
+      var guessHtml = '<div class="status-card">';
+      guessHtml += '<div class="status-kicker">' + escapeHtml(teamLabel(view.currentTeam)) + ' field guess</div>';
+      guessHtml += '<div class="status-main">' + escapeHtml((view.guessesMade || 0) + " / " + (view.maxGuesses || 0)) + '</div>';
+      guessHtml += '</div>';
+      if (types.pass) guessHtml += '<button class="pass-btn" id="pass-btn" type="button">Pass</button>';
+      body.innerHTML = guessHtml;
+      var passBtn = document.getElementById("pass-btn");
+      if (passBtn) {
+        passBtn.addEventListener("click", function() {
+          if (playgent.sound) playgent.sound("ui.cancel");
+          playgent.submitAction({ type: "pass" });
+          passBtn.disabled = true;
+        });
+      }
+      return;
+    }
+
+    var label = "Standing by";
+    if (view.phase === "clue") label = teamLabel(view.currentTeam) + " spymaster";
+    if (view.phase === "guess") label = teamLabel(view.currentTeam) + " operative";
+    if (view.phase === "gameOverDisplay" || view.phase === "gameOver") label = teamLabel(view.winnerTeam) + " victory";
+    var html2 = '<div class="status-card"><div class="status-kicker">Status</div><div class="status-main">' + escapeHtml(label) + '</div></div>';
+    html2 += '<div class="log-list">';
+    var log = view.log || [];
+    for (var l = Math.max(0, log.length - 4); l < log.length; l++) {
+      html2 += '<div class="log-item">' + escapeHtml(log[l]) + '</div>';
+    }
+    html2 += '</div>';
+    body.innerHTML = html2;
+  }
+
+  function updatePlayerContainer(ctx) {
+    var pc = document.getElementById("player-container");
+    pc.innerHTML = "";
+    var players = ctx.players || [];
+    for (var i = 0; i < players.length; i++) {
+      var span = document.createElement("span");
+      span.setAttribute("data-player", players[i].id);
+      span.textContent = players[i].name || players[i].id;
+      pc.appendChild(span);
+    }
+  }
+
+  function effectColors(tone, team) {
+    if (tone === "fatal") return ["#ffffff", "#ff6572", "#000000", "#e73f4d"];
+    if (tone === "bad") return ["#f8b94b", "#ff6572", "#fff1cf", "#b98f52"];
+    if (team === "blue") return ["#23bfd2", "#9fefff", "#fff1cf", "#62d68a"];
+    return ["#e73f4d", "#ff9aa1", "#fff1cf", "#62d68a"];
+  }
+
+  function flash(tone) {
+    var layer = document.getElementById("effect-layer");
+    var div = document.createElement("div");
+    div.className = "flash " + tone;
+    layer.appendChild(div);
+    setTimeout(function() { if (div.parentNode) div.parentNode.removeChild(div); }, 700);
+  }
+
+  function banner(title, sub, tone) {
+    var layer = document.getElementById("effect-layer");
+    var div = document.createElement("div");
+    div.className = "banner " + tone;
+    div.innerHTML = '<div class="banner-title">' + escapeHtml(title) + '</div><div class="banner-sub">' + escapeHtml(sub) + '</div>';
+    layer.appendChild(div);
+    setTimeout(function() { if (div.parentNode) div.parentNode.removeChild(div); }, 1600);
+  }
+
+  function burstAt(element, tone, team) {
+    var rect = element.getBoundingClientRect();
+    var cx = rect.left + rect.width / 2;
+    var cy = rect.top + rect.height / 2;
+    var layer = document.getElementById("effect-layer");
+    var colors = effectColors(tone, team);
+    var count = tone === "fatal" ? 58 : tone === "bad" ? 34 : 42;
+    for (var i = 0; i < count; i++) {
+      var p = document.createElement("div");
+      var angle = (Math.PI * 2 * i / count) + uiRand() * 0.35;
+      var dist = (tone === "fatal" ? 250 : 145) * (0.45 + uiRand() * 0.65);
+      p.className = "burst";
+      p.style.setProperty("--x", cx + "px");
+      p.style.setProperty("--y", cy + "px");
+      p.style.setProperty("--dx", Math.cos(angle) * dist + "px");
+      p.style.setProperty("--dy", Math.sin(angle) * dist + "px");
+      p.style.setProperty("--c", colors[i % colors.length]);
+      p.style.width = (6 + uiRand() * 10) + "px";
+      p.style.height = p.style.width;
+      layer.appendChild(p);
+      setTimeout((function(node) {
+        return function() { if (node.parentNode) node.parentNode.removeChild(node); };
+      })(p), 1000);
+    }
+  }
+
+  function screenShake() {
+    var app = document.getElementById("app");
+    app.classList.remove("shake");
+    void app.offsetWidth;
+    app.classList.add("shake");
+  }
+
+  function playRevealEffect(view) {
+    var reveal = view.lastReveal;
+    if (!reveal || reveal.seq === lastRevealSeq) return;
+    lastRevealSeq = reveal.seq;
+    var tone = reveal.outcome === "fatal" ? "fatal" : reveal.outcome === "good" ? "good" : "bad";
+    var card = document.querySelector('[data-card="' + reveal.index + '"]');
+    setTimeout(function() {
+      if (playgent.sound) playgent.sound(tone === "good" ? "positive.clean" : (tone === "fatal" ? "negative.sting" : "negative.warning"));
+      if (card) burstAt(card, tone, reveal.kind);
+      flash(tone);
+      banner(revealTitle(reveal), revealSubtitle(reveal), tone);
+      if (tone !== "good") screenShake();
+    }, 80);
+  }
+
+  function confetti(team) {
+    var layer = document.getElementById("effect-layer");
+    var colors = team === "blue"
+      ? ["#23bfd2", "#9fefff", "#fff1cf", "#62d68a"]
+      : ["#e73f4d", "#ff9aa1", "#fff1cf", "#f8b94b"];
+    for (var i = 0; i < 90; i++) {
+      var c = document.createElement("div");
+      c.className = "confetti";
+      c.style.setProperty("--x", (uiRand() * 100) + "vw");
+      c.style.setProperty("--c", colors[i % colors.length]);
+      c.style.setProperty("--dur", (2200 + uiRand() * 1700) + "ms");
+      c.style.animationDelay = (uiRand() * 350) + "ms";
+      layer.appendChild(c);
+      setTimeout((function(node) {
+        return function() { if (node.parentNode) node.parentNode.removeChild(node); };
+      })(c), 4500);
+    }
+  }
+
+  function playFinale(view) {
+    if (view.phase !== "gameOverDisplay" && view.phase !== "gameOver") return;
+    var key = view.winnerTeam + ":" + view.winnerReason;
+    if (key === lastFinaleKey) return;
+    lastFinaleKey = key;
+    var viewerWon = !view.myTeam || view.myTeam === view.winnerTeam;
+    if (viewerWon) {
+      if (playgent.sound) playgent.sound("game.victory");
+      confetti(view.winnerTeam);
+      banner(teamLabel(view.winnerTeam) + " Wins", view.winnerReason || "Mission complete", "good");
+      flash("good");
+    } else {
+      if (playgent.sound) playgent.sound("game.defeat");
+      banner("Mission Failed", teamLabel(view.winnerTeam) + " team wins", "bad");
+      flash("bad");
+      screenShake();
+    }
+  }
+
+  playgent.onStateChange(function(view, legalActions, ctx) {
+    legalActions = normalizeActions(legalActions || []);
+    renderHeader(view, legalActions, ctx);
+    renderClue(view);
+    renderRoster(view, ctx);
+    renderBoard(view, legalActions);
+    renderActions(view, legalActions);
+    updatePlayerContainer(ctx);
+    playRevealEffect(view);
+    playFinale(view);
+  });
+})();
+</script>

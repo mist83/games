@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 154" role="img" aria-labelledby="title">
+  <title id="title">Team Agent Tactics thumbnail</title>
+  <rect width="220" height="154" rx="14" fill="#0f172a"/>
+  <g stroke="#334155" stroke-width="2" fill="#1e293b">
+    <path d="M55 32h28l14 24-14 24H55L41 56z"/>
+    <path d="M96 32h28l14 24-14 24H96L82 56z"/>
+    <path d="M137 32h28l14 24-14 24h-28l-14-24z"/>
+    <path d="M75 68h28l14 24-14 24H75L61 92z"/>
+    <path d="M116 68h28l14 24-14 24h-28l-14-24z"/>
+  </g>
+  <g fill="#38bdf8" stroke="#e0f2fe" stroke-width="4">
+    <rect x="58" y="42" width="30" height="32" rx="8"/>
+    <circle cx="68" cy="54" r="3" fill="#0f172a" stroke="none"/>
+    <circle cx="79" cy="54" r="3" fill="#0f172a" stroke="none"/>
+  </g>
+  <g fill="#fb7185" stroke="#ffe4e6" stroke-width="4">
+    <rect x="132" y="77" width="30" height="32" rx="8"/>
+    <circle cx="142" cy="89" r="3" fill="#0f172a" stroke="none"/>
+    <circle cx="153" cy="89" r="3" fill="#0f172a" stroke="none"/>
+  </g>
+  <path d="M92 61l35 21" stroke="#facc15" stroke-width="7" stroke-linecap="round"/>
+  <path d="M127 82l-16 1 8-14z" fill="#facc15"/>
+</svg>

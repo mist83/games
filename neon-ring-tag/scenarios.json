@@ -1,0 +1,542 @@
+{
+  "scenarios": [
+    {
+      "name": "clinch knee vs retreat misses and stores damage",
+      "players": 2,
+      "seed": 42,
+      "actions": [
+        [
+          "player-0",
+          {
+            "type": "queue",
+            "attack1": "advance",
+            "attack2": "knee",
+            "attack3": "jab"
+          }
+        ],
+        [
+          "player-1",
+          {
+            "type": "queue",
+            "attack1": "advance",
+            "attack2": "retreat",
+            "attack3": "jab"
+          }
+        ]
+      ],
+      "expect": {
+        "phase": "fighting",
+        "state": {
+          "activeExchange.attacks[0].end.range": 0,
+          "activeExchange.attacks[1].events[1].type": "whiff",
+          "activeExchange.attacks[1].events[1].action": "knee",
+          "activeExchange.attacks[1].events[2].type": "dodge",
+          "activeExchange.attacks[1].events[2].dodgedAction": "knee",
+          "activeExchange.attacks[1].events[3].source": "dodge_heavy",
+          "activeExchange.attacks[1].end.fighters.p2.storedDmg": 2,
+          "activeExchange.attacks[1].end.fighters.p1.hp": 30
+        }
+      }
+    },
+    {
+      "name": "advance vs retreat keeps range stable and grants pressure storage",
+      "players": 2,
+      "seed": 42,
+      "actions": [
+        [
+          "player-0",
+          {
+            "type": "queue",
+            "attack1": "advance",
+            "attack2": "teep",
+            "attack3": "cross"
+          }
+        ],
+        [
+          "player-1",
+          {
+            "type": "queue",
+            "attack1": "retreat",
+            "attack2": "elbow",
+            "attack3": "knee"
+          }
+        ]
+      ],
+      "expect": {
+        "phase": "fighting",
+        "state": {
+          "activeExchange.attacks[0].start.range": 2,
+          "activeExchange.attacks[0].end.range": 2,
+          "activeExchange.attacks[0].events[2].type": "pressure",
+          "activeExchange.attacks[0].events[3].source": "pressure",
+          "activeExchange.attacks[0].end.fighters.p1.storedDmg": 1,
+          "activeExchange.attacks[1].events[1].spentStoredDmg": 1,
+          "activeExchange.attacks[1].events[1].amount": 3
+        }
+      }
+    },
+    {
+      "name": "light catches movement only at final range",
+      "players": 2,
+      "seed": 42,
+      "actions": [
+        [
+          "player-0",
+          {
+            "type": "queue",
+            "attack1": "jab",
+            "attack2": "teep",
+            "attack3": "cross"
+          }
+        ],
+        [
+          "player-1",
+          {
+            "type": "queue",
+            "attack1": "retreat",
+            "attack2": "roll",
+            "attack3": "advance"
+          }
+        ]
+      ],
+      "expect": {
+        "phase": "fighting",
+        "state": {
+          "activeExchange.attacks[0].end.range": 2,
+          "activeExchange.attacks[0].events[1].type": "whiff",
+          "activeExchange.attacks[0].events[2].type": "dodge",
+          "activeExchange.attacks[0].end.fighters.p1.storedDmg": 0,
+          "activeExchange.attacks[1].events[1].type": "hit",
+          "activeExchange.attacks[1].events[1].action": "teep",
+          "activeExchange.attacks[1].events[2].source": "light_movement",
+          "activeExchange.attacks[1].end.fighters.p2.hp": 28,
+          "activeExchange.attacks[1].end.fighters.p1.storedDmg": 1
+        }
+      }
+    },
+    {
+      "name": "heavy always misses movement",
+      "players": 2,
+      "seed": 42,
+      "actions": [
+        [
+          "player-0",
+          {
+            "type": "queue",
+            "attack1": "cross",
+            "attack2": "jab",
+            "attack3": "cross"
+          }
+        ],
+        [
+          "player-1",
+          {
+            "type": "queue",
+            "attack1": "roll",
+            "attack2": "elbow",
+            "attack3": "knee"
+          }
+        ]
+      ],
+      "expect": {
+        "phase": "fighting",
+        "state": {
+          "activeExchange.attacks[0].events[1].type": "whiff",
+          "activeExchange.attacks[0].events[1].action": "cross",
+          "activeExchange.attacks[0].events[2].type": "dodge",
+          "activeExchange.attacks[0].events[3].source": "dodge_heavy",
+          "activeExchange.attacks[0].end.fighters.p2.storedDmg": 2,
+          "activeExchange.attacks[0].end.fighters.p2.hp": 30
+        }
+      }
+    },
+    {
+      "name": "heavy stuffs light and stores damage",
+      "players": 2,
+      "seed": 42,
+      "actions": [
+        [
+          "player-0",
+          {
+            "type": "queue",
+            "attack1": "flying_knee",
+            "attack2": "jab",
+            "attack3": "cross"
+          }
+        ],
+        [
+          "player-1",
+          {
+            "type": "queue",
+            "attack1": "teep",
+            "attack2": "elbow",
+            "attack3": "knee"
+          }
+        ]
+      ],
+      "expect": {
+        "phase": "fighting",
+        "state": {
+          "activeExchange.attacks[0].events[0].type": "whiff",
+          "activeExchange.attacks[0].events[0].action": "teep",
+          "activeExchange.attacks[0].events[1].type": "hit",
+          "activeExchange.attacks[0].events[1].action": "flying_knee",
+          "activeExchange.attacks[0].events[3].source": "heavy_light",
+          "activeExchange.attacks[0].end.fighters.p1.storedDmg": 1,
+          "activeExchange.attacks[0].end.fighters.p2.hp": 28
+        }
+      }
+    },
+    {
+      "name": "wrong range attack against non mover is a whiff not a dodge",
+      "players": 2,
+      "seed": 42,
+      "actions": [
+        [
+          "player-0",
+          {
+            "type": "queue",
+            "attack1": "elbow",
+            "attack2": "jab",
+            "attack3": "cross"
+          }
+        ],
+        [
+          "player-1",
+          {
+            "type": "queue",
+            "attack1": "knee",
+            "attack2": "jab",
+            "attack3": "cross"
+          }
+        ]
+      ],
+      "expect": {
+        "phase": "fighting",
+        "state": {
+          "activeExchange.attacks[0].events[0].type": "whiff",
+          "activeExchange.attacks[0].events[1].type": "whiff",
+          "activeExchange.attacks[0].end.fighters.p1.storedDmg": 0,
+          "activeExchange.attacks[0].end.fighters.p2.storedDmg": 0,
+          "activeExchange.attacks[0].end.fighters.p1.dodgeStreak": 0,
+          "activeExchange.attacks[0].end.fighters.p2.dodgeStreak": 0
+        }
+      }
+    },
+    {
+      "name": "stored damage spends on next landed hit",
+      "players": 2,
+      "seed": 42,
+      "actions": [
+        [
+          "player-0",
+          {
+            "type": "queue",
+            "attack1": "roll",
+            "attack2": "teep",
+            "attack3": "cross"
+          }
+        ],
+        [
+          "player-1",
+          {
+            "type": "queue",
+            "attack1": "flying_knee",
+            "attack2": "elbow",
+            "attack3": "knee"
+          }
+        ]
+      ],
+      "expect": {
+        "phase": "fighting",
+        "state": {
+          "activeExchange.attacks[0].end.fighters.p1.storedDmg": 2,
+          "activeExchange.attacks[1].events[1].type": "hit",
+          "activeExchange.attacks[1].events[1].spentStoredDmg": 2,
+          "activeExchange.attacks[1].events[1].amount": 4,
+          "activeExchange.attacks[1].end.fighters.p1.storedDmg": 0,
+          "activeExchange.attacks[1].end.fighters.p2.hp": 26
+        }
+      }
+    },
+    {
+      "name": "stored damage carries into the next exchange hit",
+      "players": 2,
+      "seed": 42,
+      "actions": [
+        [
+          "player-0",
+          {
+            "type": "queue",
+            "attack1": "roll",
+            "attack2": "retreat",
+            "attack3": "jab"
+          }
+        ],
+        [
+          "player-1",
+          {
+            "type": "queue",
+            "attack1": "flying_knee",
+            "attack2": "retreat",
+            "attack3": "elbow"
+          }
+        ],
+        [
+          "__system__",
+          { "type": "advance_phase", "phase": "fighting", "exchange": 1 }
+        ],
+        [
+          "player-0",
+          {
+            "type": "queue",
+            "attack1": "teep",
+            "attack2": "retreat",
+            "attack3": "jab"
+          }
+        ],
+        [
+          "player-1",
+          {
+            "type": "queue",
+            "attack1": "elbow",
+            "attack2": "retreat",
+            "attack3": "elbow"
+          }
+        ]
+      ],
+      "expect": {
+        "phase": "fighting",
+        "state": {
+          "activeExchange.number": 2,
+          "history[0].attacks[0].end.fighters.p1.storedDmg": 2,
+          "activeExchange.attacks[0].start.fighters.p1.storedDmg": 2,
+          "activeExchange.attacks[0].events[1].type": "hit",
+          "activeExchange.attacks[0].events[1].spentStoredDmg": 2,
+          "activeExchange.attacks[0].events[1].amount": 4,
+          "activeExchange.attacks[0].end.fighters.p1.storedDmg": 0,
+          "activeExchange.attacks[0].end.fighters.p2.hp": 26
+        }
+      }
+    },
+    {
+      "name": "stored damage expires after one carried exchange",
+      "players": 2,
+      "seed": 42,
+      "actions": [
+        [
+          "player-0",
+          {
+            "type": "queue",
+            "attack1": "roll",
+            "attack2": "retreat",
+            "attack3": "jab"
+          }
+        ],
+        [
+          "player-1",
+          {
+            "type": "queue",
+            "attack1": "cross",
+            "attack2": "retreat",
+            "attack3": "elbow"
+          }
+        ],
+        [
+          "__system__",
+          { "type": "advance_phase", "phase": "fighting", "exchange": 1 }
+        ],
+        [
+          "player-0",
+          {
+            "type": "queue",
+            "attack1": "elbow",
+            "attack2": "knee",
+            "attack3": "jab"
+          }
+        ],
+        [
+          "player-1",
+          {
+            "type": "queue",
+            "attack1": "knee",
+            "attack2": "elbow",
+            "attack3": "jab"
+          }
+        ],
+        [
+          "__system__",
+          { "type": "advance_phase", "phase": "fighting", "exchange": 2 }
+        ]
+      ],
+      "expect": {
+        "phase": "planning",
+        "state": {
+          "history[0].attacks[0].end.fighters.p1.storedDmg": 2,
+          "lastExchange.attacks[0].start.fighters.p1.storedDmg": 2,
+          "fighters.p1.storedDmg": 0,
+          "fighters.p1.hitStreak": 0,
+          "fighters.p1.dodgeStreak": 0
+        }
+      }
+    },
+    {
+      "name": "hit streaks add plus two then plus four combo damage",
+      "players": 2,
+      "seed": 42,
+      "actions": [
+        [
+          "player-0",
+          {
+            "type": "queue",
+            "attack1": "teep",
+            "attack2": "flying_knee",
+            "attack3": "jab"
+          }
+        ],
+        [
+          "player-1",
+          {
+            "type": "queue",
+            "attack1": "knee",
+            "attack2": "knee",
+            "attack3": "elbow"
+          }
+        ]
+      ],
+      "expect": {
+        "phase": "fighting",
+        "state": {
+          "activeExchange.attacks[0].events[1].amount": 2,
+          "activeExchange.attacks[1].events[1].comboDmg": 2,
+          "activeExchange.attacks[1].events[1].amount": 4,
+          "activeExchange.attacks[2].events[1].comboDmg": 4,
+          "activeExchange.attacks[2].events[1].amount": 6,
+          "activeExchange.attacks[2].end.fighters.p2.hp": 18
+        }
+      }
+    },
+    {
+      "name": "two consecutive dodges cash into ten damage counter",
+      "players": 2,
+      "seed": 42,
+      "actions": [
+        [
+          "player-0",
+          {
+            "type": "queue",
+            "attack1": "roll",
+            "attack2": "roll",
+            "attack3": "teep"
+          }
+        ],
+        [
+          "player-1",
+          {
+            "type": "queue",
+            "attack1": "flying_knee",
+            "attack2": "flying_knee",
+            "attack3": "elbow"
+          }
+        ]
+      ],
+      "expect": {
+        "phase": "fighting",
+        "state": {
+          "activeExchange.attacks[0].end.fighters.p1.storedDmg": 2,
+          "activeExchange.attacks[1].events[3].source": "dodge_heavy",
+          "activeExchange.attacks[1].events[4].source": "combo_dodge",
+          "activeExchange.attacks[1].end.fighters.p1.storedDmg": 8,
+          "activeExchange.attacks[1].end.fighters.p1.dodgeStreak": 2,
+          "activeExchange.attacks[2].events[1].type": "hit",
+          "activeExchange.attacks[2].events[1].spentStoredDmg": 8,
+          "activeExchange.attacks[2].events[1].amount": 10,
+          "activeExchange.attacks[2].end.fighters.p2.hp": 20
+        }
+      }
+    },
+    {
+      "name": "simultaneous knockout resolves as draw",
+      "players": 2,
+      "seed": 42,
+      "actions": [
+        [
+          "player-0",
+          {
+            "type": "queue",
+            "attack1": "teep",
+            "attack2": "flying_knee",
+            "attack3": "jab"
+          }
+        ],
+        [
+          "player-1",
+          {
+            "type": "queue",
+            "attack1": "teep",
+            "attack2": "flying_knee",
+            "attack3": "jab"
+          }
+        ],
+        [
+          "__system__",
+          { "type": "advance_phase", "phase": "fighting", "exchange": 1 }
+        ],
+        [
+          "player-0",
+          {
+            "type": "queue",
+            "attack1": "jab",
+            "attack2": "cross",
+            "attack3": "jab"
+          }
+        ],
+        [
+          "player-1",
+          {
+            "type": "queue",
+            "attack1": "jab",
+            "attack2": "cross",
+            "attack3": "jab"
+          }
+        ],
+        [
+          "__system__",
+          { "type": "advance_phase", "phase": "fighting", "exchange": 2 }
+        ],
+        [
+          "player-0",
+          {
+            "type": "queue",
+            "attack1": "jab",
+            "attack2": "cross",
+            "attack3": "jab"
+          }
+        ],
+        [
+          "player-1",
+          {
+            "type": "queue",
+            "attack1": "jab",
+            "attack2": "cross",
+            "attack3": "jab"
+          }
+        ],
+        [
+          "__system__",
+          { "type": "advance_phase", "phase": "fighting", "exchange": 3 }
+        ]
+      ],
+      "expect": {
+        "phase": "gameOver",
+        "outcomeType": "draw",
+        "state": {
+          "draw": true,
+          "winner": null,
+          "lastExchange.attacks.length": 2,
+          "lastExchange.attacks[1].events[3].type": "ko"
+        }
+      }
+    }
+  ]
+}

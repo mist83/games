@@ -1,0 +1,12 @@
+{
+  "slug": "fightship",
+  "name": "FightShip",
+  "description": "A fast, flashy naval duel with simultaneous five-ship placement, decisive shots, and slot-machine style hit and miss reveals.",
+  "minPlayers": 2,
+  "maxPlayers": 2,
+  "version": "1.3.0",
+  "tags": ["strategy", "hidden-info", "naval", "sequential-turns", "pixi"],
+  "thumbnail": "thumbnail.svg",
+  "libraries": ["pixi"],
+  "rules": "OVERVIEW\nTwo-player 10x10 fleet duel. Each player places Carrier 5, Battleship 4, Cruiser 3, Submarine 3, Destroyer 2, then alternates firing until all 17 enemy ship cells are hit.\n\nPLACEMENT\nShips are straight horizontal or vertical, inside the grid, and non-overlapping. auto_place commits a deterministic legal fleet. ready accepts a JSON fleet string when all five ships are legal.\n\nBATTLE VIEW\nmyBoard shows your ships plus incoming hits/misses. enemyBoard shows only your knowledge: unknown, miss, hit, and sunk. agentView prints both grids, last shot, and fleet hit counts.\n\nACTIONS\nfire(row,col) targets an untried enemy coordinate. Hits do not grant extra turns.\n\nWIN\nSink every enemy ship segment before your own fleet is destroyed."
+}

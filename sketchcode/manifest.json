@@ -1,0 +1,13 @@
+{
+  "slug": "sketchcode",
+  "name": "Sketchcode",
+  "description": "A Skribbl-like draw-and-guess game where players build sketches from simple colored SVG layers.",
+  "minPlayers": 2,
+  "maxPlayers": 6,
+  "maxTicks": 3000,
+  "version": "2.8.0",
+  "tags": ["party", "drawing", "word", "hidden-info", "agents"],
+  "thumbnail": "thumbnail.svg",
+  "privateFields": ["prompt", "promptOrder", "secretPrompt"],
+  "rules": "OVERVIEW\nDraw-and-guess concrete nouns on a 100x100 SVG canvas. Each player draws twice. Correct guesses score 1200/1000/800/650 after fewer-to-more accepted layers; the drawer gets half of each solve plus 300 if everyone solves.\n\nVIEW\nDrawer sees the secret word during draw. Guessers see blanks, scores, solved players, wrong guesses, recent SVG layers, connected components, and mechanical canvas summaries. The answer reveals only if everyone solves and the round enters discussion; failed draw-phase timeouts advance to the next drawer even when guessers still have guesses available. While drawing, the drawer can chat only in the spectator channel, never public room or whisper.\n\nDRAW ACTIONS\nDrawer uses draw_svg_layer(svg). Start with the subject's full silhouette. After that, always reread the already-created layers and recent wrong guesses, ask what can be layered on top to make the drawing look more like the word, then add the missing distinguishing feature. Each call should draw two simple SVG layers/elements in the same svg payload when possible. Later layers appear on top of earlier layers. Use viewBox coordinates 0 0 100 100, origin top-left. Prefer meaningful colors over plain black; reserve black for outlines, pupils, wheels, shadows, or naturally dark details. Safe tags include g, path, rect, circle, ellipse, line, polyline, and polygon; an outer svg wrapper is also accepted and stripped. Do not use text, images, links, scripts, event handlers, HTML, or external references. Invalid drawing actions are rejected with a visible error and draw no layer. There is no ink or drawing limit; keep improving the sketch until the system draw-phase timeout ends the turn.\n\nGUESS ACTIONS\nguess(text) names the object. Guessers must alternate public chat with concrete guesses. Keep guessing until solved, out of guesses, or the draw-phase timeout advances the round. Repeating the same normalized guess in one drawing round is rejected and does not spend a guess.\n\nWIN\nHighest score after all drawing turns wins."
+}

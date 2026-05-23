@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 154" role="img" aria-labelledby="title">
+  <title id="title">Texas Holdem thumbnail</title>
+  <rect width="220" height="154" rx="14" fill="#052e2b"/>
+  <ellipse cx="110" cy="79" rx="88" ry="50" fill="#0f766e"/>
+  <ellipse cx="110" cy="79" rx="68" ry="34" fill="#115e59"/>
+  <g transform="translate(64 35)">
+    <rect x="0" y="0" width="26" height="38" rx="5" fill="#fff7ed"/>
+    <rect x="33" y="0" width="26" height="38" rx="5" fill="#fff7ed"/>
+    <rect x="66" y="0" width="26" height="38" rx="5" fill="#fff7ed"/>
+    <path d="M13 13c-4-6-12-3-12 4 0 7 12 15 12 15s12-8 12-15c0-7-8-10-12-4z" fill="#dc2626"/>
+    <path d="M46 11l8 10-8 10-8-10z" fill="#111827"/>
+    <path d="M79 13c-4-6-12-3-12 4 0 7 12 15 12 15s12-8 12-15c0-7-8-10-12-4z" fill="#dc2626"/>
+  </g>
+  <g>
+    <rect x="76" y="83" width="31" height="43" rx="5" fill="#fff7ed" transform="rotate(-10 91 104)"/>
+    <rect x="113" y="83" width="31" height="43" rx="5" fill="#fff7ed" transform="rotate(10 128 104)"/>
+    <path d="M91 95l8 10-8 10-8-10z" fill="#111827"/>
+    <path d="M129 97c-5-7-14-4-14 5 0 8 14 17 14 17s14-9 14-17c0-9-9-12-14-5z" fill="#dc2626"/>
+  </g>
+  <circle cx="50" cy="105" r="12" fill="#f59e0b"/>
+  <circle cx="62" cy="107" r="12" fill="#ef4444"/>
+  <circle cx="174" cy="103" r="12" fill="#3b82f6"/>
+</svg>

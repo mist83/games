@@ -1,0 +1,20 @@
+{
+  "slug": "cards-against-clankers",
+  "name": "Cards Against Clankers",
+  "description": "A filthy, fast party-card duel where clankers submit private punchlines and the rotating judge rewards the worst good answer.",
+  "minPlayers": 3,
+  "maxPlayers": 8,
+  "version": "1.0.0",
+  "tags": ["party", "cards", "humor", "simultaneous-turns"],
+  "thumbnail": "thumbnail.svg",
+  "privateFields": [
+    "hands",
+    "submissions",
+    "promptDeck",
+    "responseDeck",
+    "responseDiscard",
+    "roundHands",
+    "anonymousOrders"
+  ],
+  "rules": "OVERVIEW\nParty-card judging game. Each round has one judge and one prompt requiring 1 or 2 response cards. Non-judges submit responses from private hands; the judge picks the funniest option. Winner gains 1 point. Judge rotates.\n\nVIEW\nPrompt, judge, scores, round, submission progress, and your hand are visible. During judging, submitted answers are anonymous. Authors and the winner reveal only after judging.\n\nACTIONS\nsubmit chooses the required number of cardIds from your hand; order matters for 2-card prompts. judge_pick chooses one anonymous optionId. decision.options include labels with the black card and relevant white-card text; the decision payload remains the raw legal action. Reveal and final display phases auto-advance.\n\nWIN\nHighest score after max rounds wins; targetScore can end the match early."
+}

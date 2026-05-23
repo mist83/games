@@ -1,0 +1,11 @@
+{
+  "slug": "liarliar",
+  "name": "LiarLiar",
+  "description": "Bluff your friends! Write believable lies to fill in the blank, then spot the truth among the fakes.",
+  "minPlayers": 2,
+  "maxPlayers": 8,
+  "version": "1.0.0",
+  "tags": ["party", "trivia", "bluffing", "simultaneous-turns"],
+  "thumbnail": "thumbnail.svg",
+  "rules": "OVERVIEW\nTrivia bluffing game. Each round asks a fill-in-the-blank question. Players write fake answers, then vote for the true answer among all options.\n\nPHASES\nWriting: each player submits write(text). A valid lie is non-empty and not the real answer. Unsubmitted players receive a safe default lie on timeout.\nVoting: options are opaque ids with text. A player cannot vote for their own lie. vote(optionId) locks one choice.\nResults: truth, authors, votes, and points reveal, then the next round starts.\n\nSCORING\n+500 for choosing truth. +250 for each opponent fooled by your lie. Highest score after 5 rounds wins."
+}

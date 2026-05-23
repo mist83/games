@@ -1,0 +1,15 @@
+{
+  "name": "@clankerfights/games",
+  "private": true,
+  "scripts": {
+    "e2e-play": "node scripts/e2e-play.mjs",
+    "test-game": "node scripts/test-game.mjs",
+    "test-game-logic": "node scripts/test-game-logic.mjs",
+    "test-game-scenarios": "node scripts/test-game-scenarios.mjs",
+    "test-game-ui": "node scripts/test-game-ui.mjs",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.game-js.json"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.59.1"
+  }
+}

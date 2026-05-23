@@ -1,0 +1,1297 @@
+{
+  "scenarios": [
+    {
+      "name": "weapon shop alternates twenty picks into ten weapon loadouts",
+      "players": 2,
+      "seed": 42,
+      "config": {
+        "draftWeapons": [
+          "single_shot",
+          "laser",
+          "crater_maker",
+          "flamethrower",
+          "dirtball",
+          "torpedo",
+          "bunker_buster",
+          "lava",
+          "fire_in_the_hole",
+          "water_balloon",
+          "big_shot",
+          "glue_bomb",
+          "earth_mover",
+          "roller",
+          "big_dirtball",
+          "hail_storm",
+          "dirt_slinger",
+          "mower",
+          "digger",
+          "sniper_rifle",
+          "chain_reaction",
+          "five_shot",
+          "napalm",
+          "cruiser"
+        ]
+      },
+      "actions": [
+        ["player-0", { "type": "draft_pick", "slot": 0, "weapon": "single_shot" }],
+        ["player-1", { "type": "draft_pick", "slot": 1, "weapon": "laser" }],
+        ["player-0", { "type": "draft_pick", "slot": 2, "weapon": "crater_maker" }],
+        ["player-1", { "type": "draft_pick", "slot": 3, "weapon": "flamethrower" }],
+        ["player-0", { "type": "draft_pick", "slot": 4, "weapon": "dirtball" }],
+        ["player-1", { "type": "draft_pick", "slot": 5, "weapon": "torpedo" }],
+        ["player-0", { "type": "draft_pick", "slot": 6, "weapon": "bunker_buster" }],
+        ["player-1", { "type": "draft_pick", "slot": 7, "weapon": "lava" }],
+        ["player-0", { "type": "draft_pick", "slot": 8, "weapon": "fire_in_the_hole" }],
+        ["player-1", { "type": "draft_pick", "slot": 9, "weapon": "water_balloon" }],
+        ["player-0", { "type": "draft_pick", "slot": 10, "weapon": "big_shot" }],
+        ["player-1", { "type": "draft_pick", "slot": 11, "weapon": "glue_bomb" }],
+        ["player-0", { "type": "draft_pick", "slot": 12, "weapon": "earth_mover" }],
+        ["player-1", { "type": "draft_pick", "slot": 13, "weapon": "roller" }],
+        ["player-0", { "type": "draft_pick", "slot": 14, "weapon": "big_dirtball" }],
+        ["player-1", { "type": "draft_pick", "slot": 15, "weapon": "hail_storm" }],
+        ["player-0", { "type": "draft_pick", "slot": 16, "weapon": "dirt_slinger" }],
+        ["player-1", { "type": "draft_pick", "slot": 17, "weapon": "mower" }],
+        ["player-0", { "type": "draft_pick", "slot": 18, "weapon": "digger" }],
+        ["player-1", { "type": "draft_pick", "slot": 19, "weapon": "sniper_rifle" }]
+      ],
+      "expect": {
+        "phase": "battle",
+        "state": {
+          "loadouts.p1.length": 10,
+          "loadouts.p2.length": 10,
+          "draftPool[0].owner": "p1",
+          "draftPool[19].owner": "p2",
+          "terrainGrid.columns.length": 200,
+          "terrainGrid.version": 1,
+          "moveFuel.p1": 280,
+          "turn": 0
+        },
+        "projections": [
+          {
+            "playerId": "player-0",
+            "equals": {
+              "view.phase": "battle",
+              "view.weaponCount": 50,
+              "view.maxTurns": 20,
+              "view.world.width": 1600,
+              "view.world.tankHeight": 26,
+              "view.inventory.p1.length": 10,
+              "view.inventory.p2.length": 10,
+              "view.draft.loadoutSize": 10,
+              "view.terrainGrid.cellSize": 8,
+              "view.weapons.triple_shot.scoreMode": "perPiece",
+              "view.weapons.triple_shot.scoreLabel": "hit 16 x3"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "player one random all deals ten weapons to each side",
+      "players": 2,
+      "seed": 42,
+      "config": {
+        "draftWeapons": [
+          "single_shot",
+          "laser",
+          "crater_maker",
+          "flamethrower",
+          "dirtball",
+          "torpedo",
+          "bunker_buster",
+          "lava",
+          "fire_in_the_hole",
+          "water_balloon",
+          "big_shot",
+          "glue_bomb",
+          "earth_mover",
+          "roller",
+          "big_dirtball",
+          "hail_storm",
+          "dirt_slinger",
+          "mower",
+          "digger",
+          "sniper_rifle"
+        ]
+      },
+      "actions": [
+        ["player-0", { "type": "draft_random_all" }]
+      ],
+      "expect": {
+        "phase": "battle",
+        "state": {
+          "loadouts.p1.length": 10,
+          "loadouts.p2.length": 10,
+          "draftPool[0].owner": "p1",
+          "draftPool[9].owner": "p2",
+          "draftPool[10].owner": "p1",
+          "draftPool[19].owner": "p2",
+          "currentIndex": 0,
+          "turn": 0
+        },
+        "projections": [
+          {
+            "playerId": "player-0",
+            "equals": {
+              "view.phase": "battle",
+              "view.inventory.p1.length": 10,
+              "view.inventory.p2.length": 10,
+              "view.draft.picksTotal": 20,
+              "view.draft.loadoutSize": 10
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "crater maker removes a large circular chunk and consumes movement fuel",
+      "players": 2,
+      "seed": 42,
+      "config": {
+        "draftWeapons": [
+          "single_shot",
+          "laser",
+          "crater_maker",
+          "flamethrower",
+          "dirtball",
+          "torpedo",
+          "bunker_buster",
+          "lava",
+          "fire_in_the_hole",
+          "water_balloon",
+          "big_shot",
+          "glue_bomb",
+          "earth_mover",
+          "roller",
+          "big_dirtball",
+          "hail_storm",
+          "dirt_slinger",
+          "mower",
+          "digger",
+          "sniper_rifle",
+          "chain_reaction",
+          "five_shot",
+          "napalm",
+          "cruiser"
+        ]
+      },
+      "actions": [
+        ["__system__", { "type": "start_battle", "pick": 20 }],
+        ["player-0", { "type": "fire", "weapon": "crater_maker", "move": 32, "angle": 45, "power": 82 }]
+      ],
+      "expect": {
+        "phase": "battle",
+        "state": {
+          "turn": 1,
+          "currentIndex": 1,
+          "moveFuel.p1": 248,
+          "usedWeapons.p1[0]": "crater_maker",
+          "lastShot.terrainOps[0].type": "subtractDisk",
+          "lastShot.terrainOps[0].r": 92,
+          "lastShot.terrainOps[1].type": "mowBand",
+          "lastShot.impacts[0].type": "huge_crater",
+          "terrainGrid.version": 3
+        },
+        "projections": [
+          {
+            "playerId": "player-0",
+            "equals": {
+              "view.inventory.p1.length": 9,
+              "view.lastShot.weapon": "crater_maker",
+              "view.lastShot.move": 32,
+              "view.lastShot.timeline.opCount": 2
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "fire in the hole burns after impact and advances the turn",
+      "players": 2,
+      "seed": 42,
+      "config": {
+        "draftWeapons": [
+          "single_shot",
+          "laser",
+          "crater_maker",
+          "flamethrower",
+          "dirtball",
+          "torpedo",
+          "bunker_buster",
+          "lava",
+          "fire_in_the_hole",
+          "water_balloon",
+          "big_shot",
+          "glue_bomb",
+          "earth_mover",
+          "roller",
+          "big_dirtball",
+          "hail_storm",
+          "dirt_slinger",
+          "mower",
+          "digger",
+          "sniper_rifle",
+          "chain_reaction",
+          "five_shot",
+          "napalm",
+          "cruiser"
+        ]
+      },
+      "actions": [
+        ["__system__", { "type": "start_battle", "pick": 20 }],
+        ["player-0", { "type": "fire", "weapon": "fire_in_the_hole", "move": 0, "angle": 52, "power": 90 }]
+      ],
+      "expect": {
+        "phase": "battle",
+        "state": {
+          "turn": 1,
+          "currentIndex": 1,
+          "lastShot.weapon": "fire_in_the_hole",
+          "lastShot.terrainOps[1].mat": "scorch",
+          "lastShot.burnTicks[0].target": "p2",
+          "activeHazards[0].kind": "fire"
+        }
+      }
+    },
+    {
+      "name": "fire hazards expire after two turn checks",
+      "players": 2,
+      "seed": 42,
+      "config": {
+        "draftWeapons": [
+          "fire_in_the_hole",
+          "single_shot",
+          "big_shot",
+          "laser",
+          "water_balloon",
+          "dirtball",
+          "flamethrower",
+          "torpedo",
+          "crater_maker",
+          "glue_bomb",
+          "earth_mover",
+          "roller",
+          "big_dirtball",
+          "hail_storm",
+          "dirt_slinger",
+          "mower",
+          "digger",
+          "sniper_rifle",
+          "chain_reaction",
+          "five_shot"
+        ]
+      },
+      "actions": [
+        ["__system__", { "type": "start_battle", "pick": 20 }],
+        ["player-0", { "type": "fire", "weapon": "fire_in_the_hole", "move": 0, "angle": 52, "power": 90 }],
+        ["player-1", { "type": "fire", "weapon": "single_shot", "move": 0, "angle": 43, "power": 96 }],
+        ["player-0", { "type": "fire", "weapon": "big_shot", "move": 0, "angle": 52, "power": 90 }]
+      ],
+      "expect": {
+        "phase": "battle",
+        "state": {
+          "turn": 3,
+          "currentIndex": 1,
+          "lastShot.weapon": "big_shot",
+          "activeHazards.length": 0
+        }
+      }
+    },
+    {
+      "name": "water balloon extinguishes clustered flames",
+      "players": 2,
+      "seed": 42,
+      "config": {
+        "draftWeapons": [
+          "fire_in_the_hole",
+          "water_balloon",
+          "big_shot",
+          "single_shot",
+          "dirtball",
+          "laser",
+          "flamethrower",
+          "torpedo",
+          "crater_maker",
+          "glue_bomb",
+          "earth_mover",
+          "roller",
+          "big_dirtball",
+          "hail_storm",
+          "dirt_slinger",
+          "mower",
+          "digger",
+          "sniper_rifle",
+          "chain_reaction",
+          "five_shot"
+        ]
+      },
+      "actions": [
+        ["__system__", { "type": "start_battle", "pick": 20 }],
+        ["player-0", { "type": "fire", "weapon": "fire_in_the_hole", "move": 0, "angle": 52, "power": 90 }],
+        ["player-1", { "type": "fire", "weapon": "water_balloon", "move": 0, "angle": 80, "power": 20 }]
+      ],
+      "expect": {
+        "phase": "battle",
+        "state": {
+          "turn": 2,
+          "currentIndex": 0,
+          "lastShot.weapon": "water_balloon",
+          "lastShot.extinguished.length": 7,
+          "activeHazards.length": 0
+        }
+      }
+    },
+    {
+      "name": "dirtball close landing encases the enemy tank",
+      "players": 2,
+      "seed": 42,
+      "config": {
+        "draftWeapons": [
+          "dirtball",
+          "single_shot",
+          "big_dirtball",
+          "laser",
+          "fire_in_the_hole",
+          "water_balloon",
+          "flamethrower",
+          "torpedo",
+          "crater_maker",
+          "glue_bomb",
+          "earth_mover",
+          "roller",
+          "bunker_buster",
+          "hail_storm",
+          "dirt_slinger",
+          "mower",
+          "digger",
+          "sniper_rifle",
+          "chain_reaction",
+          "five_shot"
+        ]
+      },
+      "actions": [
+        ["__system__", { "type": "start_battle", "pick": 20 }],
+        ["player-0", { "type": "fire", "weapon": "dirtball", "move": 0, "angle": 50, "power": 90 }]
+      ],
+      "expect": {
+        "phase": "battle",
+        "state": {
+          "turn": 1,
+          "lastShot.weapon": "dirtball",
+          "lastShot.impacts[0].type": "encase",
+          "lastShot.impacts[0].hitTank": "p2",
+          "lastShot.terrainOps[3].type": "addDisk",
+          "tanks.p2.lockTurns": 2,
+          "tanks.p2.buriedMaterial": "dirt",
+          "tanks.p2.buriedRadius": 40.3
+        }
+      }
+    },
+    {
+      "name": "fire hazards do not block the turn from returning",
+      "players": 2,
+      "seed": 42,
+      "config": {
+        "draftWeapons": [
+          "single_shot",
+          "laser",
+          "crater_maker",
+          "flamethrower",
+          "dirtball",
+          "torpedo",
+          "bunker_buster",
+          "lava",
+          "fire_in_the_hole",
+          "water_balloon",
+          "big_shot",
+          "glue_bomb",
+          "earth_mover",
+          "roller",
+          "big_dirtball",
+          "hail_storm",
+          "dirt_slinger",
+          "mower",
+          "digger",
+          "sniper_rifle",
+          "chain_reaction",
+          "five_shot",
+          "napalm",
+          "cruiser"
+        ]
+      },
+      "actions": [
+        ["__system__", { "type": "start_battle", "pick": 20 }],
+        ["player-0", { "type": "fire", "weapon": "fire_in_the_hole", "move": 0, "angle": 52, "power": 90 }],
+        ["player-1", { "type": "fire", "weapon": "flamethrower", "move": 0, "angle": 43, "power": 96 }]
+      ],
+      "expect": {
+        "phase": "battle",
+        "state": {
+          "turn": 2,
+          "currentIndex": 0,
+          "lastShot.weapon": "flamethrower",
+          "activeHazards.length": 19
+        },
+        "projections": [
+          {
+            "playerId": "player-0",
+            "equals": {
+              "view.phase": "battle",
+              "view.currentKey": "p1",
+              "view.inventory.p1.length": 9,
+              "view.inventory.p2.length": 9
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "saved aim survives opponent turn and later shot reuses it",
+      "players": 2,
+      "seed": 42,
+      "config": {
+        "draftWeapons": [
+          "single_shot",
+          "laser",
+          "crater_maker",
+          "flamethrower",
+          "dirtball",
+          "torpedo",
+          "bunker_buster",
+          "lava",
+          "fire_in_the_hole",
+          "water_balloon",
+          "big_shot",
+          "glue_bomb",
+          "earth_mover",
+          "roller",
+          "big_dirtball",
+          "hail_storm",
+          "dirt_slinger",
+          "mower",
+          "digger",
+          "sniper_rifle",
+          "chain_reaction",
+          "five_shot",
+          "napalm",
+          "cruiser"
+        ]
+      },
+      "actions": [
+        ["__system__", { "type": "start_battle", "pick": 20 }],
+        ["player-0", { "type": "fire", "weapon": "single_shot", "move": 24, "angle": 38, "power": 76 }],
+        ["player-1", { "type": "fire", "weapon": "laser", "move": 0, "angle": 57, "power": 88 }],
+        ["player-0", { "type": "fire", "weapon": "big_shot", "move": 0 }]
+      ],
+      "expect": {
+        "phase": "battle",
+        "state": {
+          "turn": 3,
+          "currentIndex": 1,
+          "moveFuel.p1": 256,
+          "aim.p1.angle": 38,
+          "aim.p1.power": 76,
+          "aim.p2.angle": 57,
+          "aim.p2.power": 88,
+          "lastShot.weapon": "big_shot",
+          "lastShot.angle": 38,
+          "lastShot.power": 76,
+          "lastShot.terrainOps[0].r": 50
+        }
+      }
+    },
+    {
+      "name": "skipper direct hit collides with tank and scores full direct damage",
+      "players": 2,
+      "seed": 42,
+      "config": {
+        "draftWeapons": [
+          "skipper",
+          "laser",
+          "single_shot",
+          "flamethrower",
+          "big_shot",
+          "torpedo",
+          "crater_maker",
+          "lava",
+          "fire_in_the_hole",
+          "water_balloon",
+          "dirtball",
+          "glue_bomb",
+          "earth_mover",
+          "roller",
+          "big_dirtball",
+          "hail_storm",
+          "dirt_slinger",
+          "mower",
+          "digger",
+          "sniper_rifle",
+          "chain_reaction",
+          "five_shot",
+          "napalm",
+          "cruiser"
+        ]
+      },
+      "actions": [
+        ["__system__", { "type": "start_battle", "pick": 20 }],
+        ["player-0", { "type": "fire", "weapon": "skipper", "move": 0, "angle": 52, "power": 90 }]
+      ],
+      "expect": {
+        "phase": "battle",
+        "state": {
+          "turn": 1,
+          "scores.p1": 44,
+          "lastShot.weapon": "skipper",
+          "lastShot.impact.hitTank": "p2",
+          "lastShot.impacts[0].type": "direct",
+          "lastShot.impacts[0].hitTank": "p2",
+          "lastShot.score.delta.p1": 44
+        }
+      }
+    },
+    {
+      "name": "single shot direct scores full without terrain bonus leakage",
+      "players": 2,
+      "seed": 42,
+      "config": {
+        "draftWeapons": [
+          "single_shot",
+          "laser",
+          "big_shot",
+          "flamethrower",
+          "crater_maker",
+          "torpedo",
+          "dirtball",
+          "lava",
+          "fire_in_the_hole",
+          "water_balloon",
+          "earth_mover",
+          "glue_bomb",
+          "big_dirtball",
+          "roller",
+          "dirt_slinger",
+          "hail_storm",
+          "digger",
+          "mower",
+          "bunker_buster",
+          "sniper_rifle",
+          "chain_reaction",
+          "five_shot",
+          "napalm",
+          "cruiser"
+        ]
+      },
+      "actions": [
+        ["__system__", { "type": "start_battle", "pick": 20 }],
+        ["player-0", { "type": "fire", "weapon": "single_shot", "move": 0, "angle": 52, "power": 90 }]
+      ],
+      "expect": {
+        "phase": "battle",
+        "state": {
+          "turn": 1,
+          "scores.p1": 35,
+          "lastShot.impact.hitTank": "p2",
+          "lastShot.impacts[0].type": "direct",
+          "lastShot.impacts[0].points": 35,
+          "lastShot.impacts[1].points": 0,
+          "lastShot.score.delta.p1": 35
+        }
+      }
+    },
+    {
+      "name": "crater maker near splash scores less than a direct hit",
+      "players": 2,
+      "seed": 42,
+      "config": {
+        "draftWeapons": [
+          "single_shot",
+          "laser",
+          "big_shot",
+          "flamethrower",
+          "crater_maker",
+          "torpedo",
+          "dirtball",
+          "lava",
+          "fire_in_the_hole",
+          "water_balloon",
+          "earth_mover",
+          "glue_bomb",
+          "big_dirtball",
+          "roller",
+          "dirt_slinger",
+          "hail_storm",
+          "digger",
+          "mower",
+          "bunker_buster",
+          "sniper_rifle",
+          "chain_reaction",
+          "five_shot",
+          "napalm",
+          "cruiser"
+        ]
+      },
+      "actions": [
+        ["__system__", { "type": "start_battle", "pick": 20 }],
+        ["player-0", { "type": "fire", "weapon": "crater_maker", "move": 0, "angle": 51, "power": 90 }]
+      ],
+      "expect": {
+        "phase": "battle",
+        "state": {
+          "turn": 1,
+          "scores.p1": 1,
+          "lastShot.weapon": "crater_maker",
+          "lastShot.impact.material": "dirt",
+          "lastShot.impacts[0].type": "huge_crater",
+          "lastShot.score.delta.p1": 1
+        }
+      }
+    },
+    {
+      "name": "triple shot splits into three independent crater impacts",
+      "players": 2,
+      "seed": 42,
+      "config": {
+        "draftWeapons": [
+          "triple_shot",
+          "single_shot",
+          "laser",
+          "big_shot",
+          "crater_maker",
+          "fire_in_the_hole",
+          "water_balloon",
+          "dirtball",
+          "lava",
+          "big_dirtball",
+          "roller",
+          "dirt_slinger",
+          "digger",
+          "chain_reaction",
+          "napalm",
+          "cruiser",
+          "magic_wall",
+          "hail_storm",
+          "skipper",
+          "flamethrower"
+        ]
+      },
+      "actions": [
+        ["__system__", { "type": "start_battle", "pick": 20 }],
+        ["player-0", { "type": "fire", "weapon": "triple_shot", "move": 0, "angle": 35, "power": 82 }]
+      ],
+      "expect": {
+        "phase": "battle",
+        "state": {
+          "turn": 1,
+          "lastShot.weapon": "triple_shot",
+          "lastShot.fragments.length": 3,
+          "lastShot.terrainOps.length": 3,
+          "lastShot.impacts.length": 3,
+          "lastShot.impacts[0].type": "splitter",
+          "lastShot.timeline.fragmentFlights.length": 3
+        }
+      }
+    },
+    {
+      "name": "magic wall creates tall bouncy terrain",
+      "players": 2,
+      "seed": 42,
+      "config": {
+        "draftWeapons": [
+          "magic_wall",
+          "single_shot",
+          "laser",
+          "big_shot",
+          "crater_maker",
+          "fire_in_the_hole",
+          "water_balloon",
+          "dirtball",
+          "lava",
+          "big_dirtball",
+          "roller",
+          "dirt_slinger",
+          "digger",
+          "chain_reaction",
+          "napalm",
+          "cruiser",
+          "triple_shot",
+          "hail_storm",
+          "skipper",
+          "flamethrower"
+        ]
+      },
+      "actions": [
+        ["__system__", { "type": "start_battle", "pick": 20 }],
+        ["player-0", { "type": "fire", "weapon": "magic_wall", "move": 0, "angle": 35, "power": 82 }]
+      ],
+      "expect": {
+        "phase": "battle",
+        "state": {
+          "turn": 1,
+          "lastShot.weapon": "magic_wall",
+          "lastShot.terrainOps.length": 1,
+          "lastShot.terrainOps[0].type": "addWall",
+          "lastShot.terrainOps[0].mat": "bouncy",
+          "lastShot.impacts[0].type": "wall",
+          "lastShot.impacts[0].material": "bouncy"
+        }
+      }
+    },
+    {
+      "name": "dirt slinger drops seven settled dirt clumps",
+      "players": 2,
+      "seed": 42,
+      "config": {
+        "draftWeapons": [
+          "dirt_slinger",
+          "single_shot",
+          "laser",
+          "big_shot",
+          "crater_maker",
+          "fire_in_the_hole",
+          "water_balloon",
+          "dirtball",
+          "lava",
+          "big_dirtball",
+          "roller",
+          "magic_wall",
+          "digger",
+          "chain_reaction",
+          "napalm",
+          "cruiser",
+          "triple_shot",
+          "hail_storm",
+          "skipper",
+          "flamethrower"
+        ]
+      },
+      "actions": [
+        ["__system__", { "type": "start_battle", "pick": 20 }],
+        ["player-0", { "type": "fire", "weapon": "dirt_slinger", "move": 0, "angle": 35, "power": 82 }]
+      ],
+      "expect": {
+        "phase": "battle",
+        "state": {
+          "turn": 1,
+          "lastShot.weapon": "dirt_slinger",
+          "lastShot.terrainOps.length": 7,
+          "lastShot.impacts.length": 7,
+          "lastShot.terrainOps[0].type": "addDisk",
+          "lastShot.terrainOps[0].mat": "dirt",
+          "lastShot.impacts[0].type": "dirt"
+        }
+      }
+    },
+    {
+      "name": "laser cuts a direct terrain line",
+      "players": 2,
+      "seed": 42,
+      "config": {
+        "draftWeapons": [
+          "laser",
+          "single_shot",
+          "triple_shot",
+          "big_shot",
+          "crater_maker",
+          "fire_in_the_hole",
+          "water_balloon",
+          "dirtball",
+          "lava",
+          "big_dirtball",
+          "roller",
+          "magic_wall",
+          "digger",
+          "chain_reaction",
+          "napalm",
+          "cruiser",
+          "dirt_slinger",
+          "hail_storm",
+          "skipper",
+          "flamethrower"
+        ]
+      },
+      "actions": [
+        ["__system__", { "type": "start_battle", "pick": 20 }],
+        ["player-0", { "type": "fire", "weapon": "laser", "move": 0, "angle": 52, "power": 90 }]
+      ],
+      "expect": {
+        "phase": "battle",
+        "state": {
+          "turn": 1,
+          "lastShot.weapon": "laser",
+          "lastShot.archetype": "laser",
+          "lastShot.terrainOps.length": 1,
+          "lastShot.terrainOps[0].type": "subtractLine",
+          "lastShot.impacts[0].type": "laser",
+          "lastShot.timeline.flight": 0.2
+        }
+      }
+    },
+    {
+      "name": "flat fire is chip damage without terrain setup",
+      "players": 2,
+      "seed": 42,
+      "config": {
+        "draftWeapons": [
+          "fire_in_the_hole",
+          "single_shot",
+          "big_shot",
+          "laser",
+          "crater_maker",
+          "water_balloon",
+          "dirtball",
+          "lava",
+          "big_dirtball",
+          "roller",
+          "dirt_slinger",
+          "digger",
+          "chain_reaction",
+          "napalm",
+          "cruiser",
+          "magic_wall",
+          "triple_shot",
+          "hail_storm",
+          "skipper",
+          "flamethrower"
+        ]
+      },
+      "actions": [
+        ["__system__", { "type": "start_battle", "pick": 20 }],
+        ["player-0", { "type": "fire", "weapon": "fire_in_the_hole", "move": 0, "angle": 52, "power": 90 }]
+      ],
+      "expect": {
+        "phase": "battle",
+        "state": {
+          "turn": 1,
+          "scores.p1": 14,
+          "lastShot.weapon": "fire_in_the_hole",
+          "lastShot.score.delta.p1": 14,
+          "lastShot.burnTicks.length": 3,
+          "lastShot.burnTicks[0].points": 1,
+          "activeHazards.length": 7
+        }
+      }
+    },
+    {
+      "name": "digger pit into fire creates a high payoff combo",
+      "players": 2,
+      "seed": 42,
+      "config": {
+        "draftWeapons": [
+          "digger",
+          "single_shot",
+          "fire_in_the_hole",
+          "big_shot",
+          "laser",
+          "crater_maker",
+          "water_balloon",
+          "dirtball",
+          "lava",
+          "big_dirtball",
+          "roller",
+          "dirt_slinger",
+          "chain_reaction",
+          "napalm",
+          "cruiser",
+          "magic_wall",
+          "triple_shot",
+          "hail_storm",
+          "skipper",
+          "flamethrower"
+        ]
+      },
+      "actions": [
+        ["__system__", { "type": "start_battle", "pick": 20 }],
+        ["player-0", { "type": "fire", "weapon": "digger", "move": 0, "angle": 52, "power": 90 }],
+        ["player-1", { "type": "fire", "weapon": "single_shot", "move": 0, "angle": 45, "power": 70 }],
+        ["player-0", { "type": "fire", "weapon": "fire_in_the_hole", "move": 0, "angle": 52, "power": 90 }]
+      ],
+      "expect": {
+        "phase": "battle",
+        "state": {
+          "turn": 3,
+          "scores.p1": 91,
+          "lastShot.weapon": "fire_in_the_hole",
+          "lastShot.score.delta.p1": 77,
+          "lastShot.burnTicks.length": 7,
+          "lastShot.burnTicks[0].cluster": 1,
+          "lastShot.burnTicks[0].heat": 13.5
+        }
+      }
+    },
+    {
+      "name": "drillers carve wide branched pits instead of scratches",
+      "players": 2,
+      "seed": 42,
+      "config": {
+        "draftWeapons": [
+          "drillers",
+          "single_shot",
+          "big_shot",
+          "laser",
+          "crater_maker",
+          "water_balloon",
+          "dirtball",
+          "lava",
+          "big_dirtball",
+          "roller",
+          "dirt_slinger",
+          "digger",
+          "chain_reaction",
+          "napalm",
+          "cruiser",
+          "magic_wall",
+          "triple_shot",
+          "hail_storm",
+          "skipper",
+          "flamethrower"
+        ]
+      },
+      "actions": [
+        ["__system__", { "type": "start_battle", "pick": 20 }],
+        ["player-0", { "type": "fire", "weapon": "drillers", "move": 0, "angle": 35, "power": 82 }]
+      ],
+      "expect": {
+        "phase": "battle",
+        "state": {
+          "turn": 1,
+          "lastShot.weapon": "drillers",
+          "lastShot.terrainOps.length": 8,
+          "lastShot.terrainOps[0].type": "subtractLine",
+          "lastShot.terrainOps[1].type": "subtractDisk",
+          "lastShot.terrainOps[0].w": 15.8,
+          "lastShot.impacts.length": 4
+        }
+      }
+    },
+    {
+      "name": "mower counters dirt burial by shaving and freeing tanks",
+      "players": 2,
+      "seed": 42,
+      "config": {
+        "draftWeapons": [
+          "dirtball",
+          "mower",
+          "single_shot",
+          "big_shot",
+          "laser",
+          "crater_maker",
+          "water_balloon",
+          "lava",
+          "big_dirtball",
+          "roller",
+          "dirt_slinger",
+          "digger",
+          "chain_reaction",
+          "napalm",
+          "cruiser",
+          "magic_wall",
+          "triple_shot",
+          "hail_storm",
+          "skipper",
+          "flamethrower"
+        ]
+      },
+      "actions": [
+        ["__system__", { "type": "start_battle", "pick": 20 }],
+        ["player-0", { "type": "fire", "weapon": "dirtball", "move": 0, "angle": 50, "power": 90 }],
+        ["player-1", { "type": "fire", "weapon": "mower", "move": 0, "angle": 60, "power": 20 }]
+      ],
+      "expect": {
+        "phase": "battle",
+        "state": {
+          "turn": 2,
+          "lastShot.weapon": "mower",
+          "lastShot.terrainOps.length": 3,
+          "lastShot.terrainOps[0].type": "mowBand",
+          "lastShot.terrainOps[2].type": "subtractDisk",
+          "lastShot.impacts[0].type": "mower"
+        },
+        "projections": [
+          {
+            "playerId": "player-1",
+            "equals": {
+              "view.tanks.p2.trappedTurns": 0,
+              "view.tanks.p2.buriedMaterial": ""
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "jackhammer pile-drives a deep vertical shaft",
+      "players": 2,
+      "seed": 42,
+      "config": {
+        "draftWeapons": [
+          "jackhammer",
+          "single_shot",
+          "big_shot",
+          "laser",
+          "crater_maker",
+          "water_balloon",
+          "dirtball",
+          "lava",
+          "big_dirtball",
+          "roller",
+          "dirt_slinger",
+          "digger",
+          "chain_reaction",
+          "napalm",
+          "cruiser",
+          "magic_wall",
+          "triple_shot",
+          "hail_storm",
+          "skipper",
+          "flamethrower"
+        ]
+      },
+      "actions": [
+        ["__system__", { "type": "start_battle", "pick": 20 }],
+        ["player-0", { "type": "fire", "weapon": "jackhammer", "move": 0, "angle": 52, "power": 90 }]
+      ],
+      "expect": {
+        "phase": "battle",
+        "state": {
+          "turn": 1,
+          "lastShot.weapon": "jackhammer",
+          "lastShot.terrainOps.length": 14,
+          "lastShot.terrainOps[0].type": "subtractLine",
+          "lastShot.terrainOps[1].type": "subtractDisk",
+          "lastShot.impacts[1].type": "jackhammer",
+          "tanks.p2.pitTurns": 2
+        }
+      }
+    },
+    {
+      "name": "flying digger cuts a long slanted trench and pocket",
+      "players": 2,
+      "seed": 42,
+      "config": {
+        "draftWeapons": [
+          "flying_digger",
+          "single_shot",
+          "big_shot",
+          "laser",
+          "crater_maker",
+          "water_balloon",
+          "dirtball",
+          "lava",
+          "big_dirtball",
+          "roller",
+          "dirt_slinger",
+          "digger",
+          "chain_reaction",
+          "napalm",
+          "cruiser",
+          "magic_wall",
+          "triple_shot",
+          "hail_storm",
+          "skipper",
+          "flamethrower"
+        ]
+      },
+      "actions": [
+        ["__system__", { "type": "start_battle", "pick": 20 }],
+        ["player-0", { "type": "fire", "weapon": "flying_digger", "move": 0, "angle": 52, "power": 90 }]
+      ],
+      "expect": {
+        "phase": "battle",
+        "state": {
+          "turn": 1,
+          "lastShot.weapon": "flying_digger",
+          "lastShot.terrainOps.length": 3,
+          "lastShot.terrainOps[0].type": "subtractLine",
+          "lastShot.terrainOps[1].type": "subtractLine",
+          "lastShot.terrainOps[2].type": "subtractDisk",
+          "tanks.p2.pitTurns": 2
+        }
+      }
+    },
+    {
+      "name": "concrete donut builds a hard ring around the target",
+      "players": 2,
+      "seed": 42,
+      "config": {
+        "draftWeapons": [
+          "concrete_donut",
+          "single_shot",
+          "big_shot",
+          "laser",
+          "crater_maker",
+          "water_balloon",
+          "dirtball",
+          "lava",
+          "big_dirtball",
+          "roller",
+          "dirt_slinger",
+          "digger",
+          "chain_reaction",
+          "napalm",
+          "cruiser",
+          "magic_wall",
+          "triple_shot",
+          "hail_storm",
+          "skipper",
+          "flamethrower"
+        ]
+      },
+      "actions": [
+        ["__system__", { "type": "start_battle", "pick": 20 }],
+        ["player-0", { "type": "fire", "weapon": "concrete_donut", "move": 0, "angle": 50, "power": 90 }]
+      ],
+      "expect": {
+        "phase": "battle",
+        "state": {
+          "turn": 1,
+          "lastShot.weapon": "concrete_donut",
+          "lastShot.terrainOps.length": 9,
+          "lastShot.terrainOps[0].mat": "concrete",
+          "lastShot.terrainOps[8].type": "subtractDisk",
+          "lastShot.impacts[0].type": "concrete_donut"
+        },
+        "projections": [
+          {
+            "playerId": "player-1",
+            "equals": {
+              "view.tanks.p2.trappedTurns": 2,
+              "view.tanks.p2.buriedMaterial": "concrete"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "carpet bomb peels a wide ridge with marching craters",
+      "players": 2,
+      "seed": 42,
+      "config": {
+        "draftWeapons": [
+          "carpet_bomb",
+          "single_shot",
+          "big_shot",
+          "laser",
+          "crater_maker",
+          "water_balloon",
+          "dirtball",
+          "lava",
+          "big_dirtball",
+          "roller",
+          "dirt_slinger",
+          "digger",
+          "chain_reaction",
+          "napalm",
+          "cruiser",
+          "magic_wall",
+          "triple_shot",
+          "hail_storm",
+          "skipper",
+          "flamethrower"
+        ]
+      },
+      "actions": [
+        ["__system__", { "type": "start_battle", "pick": 20 }],
+        ["player-0", { "type": "fire", "weapon": "carpet_bomb", "move": 0, "angle": 52, "power": 90 }]
+      ],
+      "expect": {
+        "phase": "battle",
+        "state": {
+          "turn": 1,
+          "lastShot.weapon": "carpet_bomb",
+          "lastShot.terrainOps.length": 11,
+          "lastShot.terrainOps[0].type": "mowBand",
+          "lastShot.terrainOps[10].type": "subtractDisk",
+          "lastShot.impacts[1].type": "carpet"
+        }
+      }
+    },
+    {
+      "name": "dive bomb punches vertically from above",
+      "players": 2,
+      "seed": 42,
+      "config": {
+        "draftWeapons": [
+          "dive_bomb",
+          "single_shot",
+          "big_shot",
+          "laser",
+          "crater_maker",
+          "water_balloon",
+          "dirtball",
+          "lava",
+          "big_dirtball",
+          "roller",
+          "dirt_slinger",
+          "digger",
+          "chain_reaction",
+          "napalm",
+          "cruiser",
+          "magic_wall",
+          "triple_shot",
+          "hail_storm",
+          "skipper",
+          "flamethrower"
+        ]
+      },
+      "actions": [
+        ["__system__", { "type": "start_battle", "pick": 20 }],
+        ["player-0", { "type": "fire", "weapon": "dive_bomb", "move": 0, "angle": 52, "power": 90 }]
+      ],
+      "expect": {
+        "phase": "battle",
+        "state": {
+          "turn": 1,
+          "lastShot.weapon": "dive_bomb",
+          "lastShot.terrainOps.length": 4,
+          "lastShot.terrainOps[0].type": "subtractLine",
+          "lastShot.terrainOps[1].type": "subtractDisk",
+          "lastShot.impacts[1].type": "dive_bomb",
+          "lastShot.impacts[2].type": "dive_splinter"
+        }
+      }
+    },
+    {
+      "name": "needle bloom creates radial cut lines near the target",
+      "players": 2,
+      "seed": 42,
+      "config": {
+        "draftWeapons": [
+          "needle_bloom",
+          "single_shot",
+          "big_shot",
+          "laser",
+          "crater_maker",
+          "water_balloon",
+          "dirtball",
+          "lava",
+          "big_dirtball",
+          "roller",
+          "dirt_slinger",
+          "digger",
+          "chain_reaction",
+          "napalm",
+          "cruiser",
+          "magic_wall",
+          "triple_shot",
+          "hail_storm",
+          "skipper",
+          "flamethrower"
+        ]
+      },
+      "actions": [
+        ["__system__", { "type": "start_battle", "pick": 20 }],
+        ["player-0", { "type": "fire", "weapon": "needle_bloom", "move": 0, "angle": 52, "power": 90 }]
+      ],
+      "expect": {
+        "phase": "battle",
+        "state": {
+          "turn": 1,
+          "lastShot.weapon": "needle_bloom",
+          "lastShot.terrainOps.length": 10,
+          "lastShot.terrainOps[0].type": "subtractLine",
+          "lastShot.terrainOps[9].type": "subtractLine",
+          "lastShot.impacts[0].type": "needle_bloom"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "slug": "texas-holdem",
+  "name": "Texas Hold'em",
+  "description": "No-limit Texas Hold'em poker. Bet, bluff, and bust your opponents!",
+  "minPlayers": 2,
+  "maxPlayers": 12,
+  "version": "2.0.0",
+  "tags": ["classic", "strategy", "cards", "poker"],
+  "thumbnail": "thumbnail.svg",
+  "libraries": ["pixi"],
+  "files": [
+    "constants.js",
+    "tween.js",
+    "layout.js",
+    "hand-eval.js",
+    "card-sprite.js",
+    "table-view.js",
+    "player-node.js",
+    "action-bar.js",
+    "effects.js",
+    "spectator-odds.js"
+  ],
+  "settings": [
+    {
+      "key": "startingChips",
+      "type": "select",
+      "default": 250,
+      "label": "Starting Chips",
+      "options": [
+        { "value": 250, "label": "250" },
+        { "value": 500, "label": "500" },
+        { "value": 1000, "label": "1,000" },
+        { "value": 2000, "label": "2,000" }
+      ]
+    }
+  ],
+  "rules": "OVERVIEW\nNo-limit Texas Hold'em. Each player has 2 private hole cards; up to 5 community cards form the board. Best 5-card poker hand wins the pot. Last player with chips wins the match. Blinds double every 10 hands.\n\nVIEW\nmyCards shows your hole cards. communityCards, pot, currentBet, blinds, position roles, folded/all-in state, and bets are public. Showdown reveals remaining hands and hand names. Eliminated players and spectators see all hands.\n\nACTIONS\nfold exits the hand. check is available when nothing is owed. call matches currentBet. raise(amount) raises to a legal total. allin commits all remaining chips.\n\nWIN\nWin pots to eliminate opponents. A hand can end by folds or showdown."
+}

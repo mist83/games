@@ -1,0 +1,13 @@
+{
+  "slug": "rentopoly",
+  "name": "Rentopoly",
+  "description": "A property race: buy city blocks, collect rent, build towers, dodge taxes, and bankrupt your rivals.",
+  "minPlayers": 2,
+  "maxPlayers": 6,
+  "version": "1.0.0",
+  "maxTicks": 8000,
+  "tags": ["board", "economic", "sequential-turns", "property", "new-york"],
+  "thumbnail": "thumbnail.svg",
+  "libraries": ["pixi"],
+  "rules": "OVERVIEW\nRoll-and-move property game. Players buy districts, collect rent, auction declined properties, trade, build evenly on complete color sets, mortgage deeds, and try to stay solvent. Last solvent player wins; after round 35, highest net worth wins.\n\nTURN FLOW\nRoll two dice, resolve the landed space, then end turn or roll again after doubles. Three doubles sends the player to Detention. In Detention, a player may pay bail, use a card, roll for doubles, trade, build/sell, mortgage, or unmortgage.\n\nACTIONS\nbuy purchases an unowned space. pass declines or passes an auction. bid raises an auction within cash. build/sell_building obey even-building and bank limits. mortgage/unmortgage manage loans. propose_trade uses to, offerCash, requestCash, offerJailCards, offerTiles, and requestTiles; accept_trade/reject_trade resolves it.\n\nDEBT\nIf a charge exceeds cash but legal asset sales or mortgages can cover it, the player enters debt phase and may choose raise_cash to execute the minimum sale/mortgage plan and pay. If no plan can cover the bill, declare_bankruptcy resolves bankruptcy."
+}

@@ -1,0 +1,31 @@
+{
+  "slug": "team-agent-tactics",
+  "name": "Team Agent Tactics",
+  "description": "Auto-battler for 2 or 4 players. Draft units, build synergies, and fight! 1v1 or 2v2 with shared team HP.",
+  "minPlayers": 2,
+  "maxPlayers": 4,
+  "version": "4.0.0",
+  "tags": [
+    "fighting",
+    "strategy",
+    "auto-battler",
+    "simultaneous-turns",
+    "team"
+  ],
+  "thumbnail": "thumbnail.svg",
+  "maxTicks": 2000,
+  "libraries": ["pixi"],
+  "files": [
+    "styles.css",
+    "constants.js",
+    "tween.js",
+    "unit-sprite.js",
+    "layout.js",
+    "board-view.js",
+    "shop-panel.js",
+    "bench-panel.js",
+    "hud-view.js",
+    "effects.js"
+  ],
+  "rules": "OVERVIEW\nAuto-battler for 2 or 4 players. In 2-player mode it is 1v1. In 4-player mode teams share HP and fight fixed lanes. Reduce enemy team HP to 0 or lead after round 10.\n\nSHOP PHASE\nPlayers act simultaneously: buy shop units, sell bench units, reroll, move units between bench and 4x2 board, gift unit/gold to a teammate in 2v2, then ready. Board cells 0-3 are front row, 4-7 back row. Max 5 units on board and 4 on bench.\n\nBATTLE PHASE\nNo player actions. Each lane resolves automatically. Losing team takes base round damage plus survivor tier/star damage.\n\nTRAITS\n2+ matching traits activate: warrior +ATK, guardian armor, assassin leap, mage splash, healer healing, ranger +ATK. Three matching non-star copies merge into a star unit."
+}

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 154" role="img" aria-labelledby="title">
+  <title id="title">Tic Tac Toe thumbnail</title>
+  <rect width="220" height="154" rx="14" fill="#111827"/>
+  <rect x="50" y="17" width="120" height="120" rx="10" fill="#f8fafc"/>
+  <path d="M90 24v106M130 24v106M57 57h106M57 97h106" stroke="#111827" stroke-width="6" stroke-linecap="round"/>
+  <g stroke="#ef4444" stroke-width="7" stroke-linecap="round">
+    <path d="M60 27l20 20M80 27L60 47"/>
+    <path d="M100 67l20 20M120 67l-20 20"/>
+    <path d="M140 107l20 20M160 107l-20 20"/>
+  </g>
+  <g fill="none" stroke="#2563eb" stroke-width="7">
+    <circle cx="150" cy="37" r="14"/>
+    <circle cx="70" cy="117" r="14"/>
+  </g>
+</svg>

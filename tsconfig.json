@@ -1,0 +1,17 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "noPropertyAccessFromIndexSignature": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noUncheckedIndexedAccess": false,
+    "skipLibCheck": true,
+    "paths": {
+      "@playgent/core": ["../packages/core/src/index.ts"]
+    }
+  },
+  "include": ["**/*.ts"],
+  "exclude": ["scripts/**", "screenshots/**", "e2e-runs/**"]
+}

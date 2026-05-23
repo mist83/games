@@ -1,0 +1,1354 @@
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    width: 100vw;
+    min-height: 100vh;
+    background: #000;
+    color: #e2e8f0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    overflow: hidden;
+  }
+  #root {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    padding: 10px;
+    gap: 10px;
+  }
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 14px;
+    background: rgba(10, 10, 25, 0.85);
+    border: 1px solid #4c1d95;
+    border-radius: 12px;
+    box-shadow: 0 0 24px rgba(168, 85, 247, 0.25);
+    z-index: 10;
+  }
+  .title {
+    font-weight: 900;
+    font-size: 18px;
+    background: linear-gradient(90deg, #f472b6, #a855f7, #22d3ee);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    letter-spacing: 1px;
+  }
+  .status-pill {
+    font-size: 11px;
+    padding: 5px 12px;
+    border-radius: 999px;
+    background: #1e293b;
+    color: #cbd5e1;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    font-weight: 800;
+  }
+  .status-pill.your-turn { background: #15803d; color: #fff; box-shadow: 0 0 14px #22c55e; animation: pulse 1.8s infinite; }
+  .status-pill.waiting { background: #475569; }
+  .status-pill.game-over { background: #dc2626; color: #fff; }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 12px #22c55e; }
+    50% { box-shadow: 0 0 24px #4ade80; }
+  }
+
+  /* ===== DRAFT ===== */
+  .draft-container { display: flex; flex-direction: column; gap: 12px; }
+  .draft-title {
+    text-align: center;
+    font-size: 24px;
+    font-weight: 900;
+    color: #f472b6;
+    text-shadow: 0 0 18px rgba(244, 114, 182, 0.6);
+  }
+  .draft-subtitle { text-align: center; font-size: 13px; color: #94a3b8; }
+  .roster-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+  }
+  .brainrot-card {
+    background: linear-gradient(160deg, #1e293b 0%, #0f172a 100%);
+    border: 2px solid #334155;
+    border-radius: 14px;
+    padding: 12px;
+    cursor: pointer;
+    transition: transform 0.12s, box-shadow 0.12s, border-color 0.12s;
+    position: relative;
+  }
+  .brainrot-card:hover:not(.disabled):not(.picked) {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(168, 85, 247, 0.4);
+    border-color: #a855f7;
+  }
+  .brainrot-card.disabled { opacity: 0.5; cursor: not-allowed; }
+  .brainrot-card.picked {
+    border-color: #22c55e;
+    box-shadow: 0 0 16px rgba(34, 197, 94, 0.6);
+    cursor: default;
+  }
+  .brainrot-card.picked::after {
+    content: "✓ PICKED";
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: #15803d;
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 900;
+  }
+  .card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .card-emoji { font-size: 40px; filter: drop-shadow(0 0 8px currentColor); }
+  .card-name { font-weight: 900; font-size: 15px; }
+  .card-hp { font-size: 11px; color: #fbbf24; font-weight: 700; margin-top: 2px; }
+  .card-attacks { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+  .card-attack {
+    font-size: 10px;
+    background: rgba(30, 41, 59, 0.6);
+    padding: 4px 6px;
+    border-radius: 6px;
+  }
+  .card-attack .atk-name { font-weight: 700; color: #e2e8f0; }
+  .card-attack .atk-stat { color: #94a3b8; }
+  .draft-status {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    font-size: 13px;
+    color: #cbd5e1;
+    padding: 10px;
+    background: rgba(15, 23, 42, 0.7);
+    border-radius: 10px;
+  }
+  .draft-status b { color: #f472b6; }
+
+  /* ===== BATTLE ARENA ===== */
+  .battle-container { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+
+  .arena {
+    position: relative;
+    width: 100%;
+    flex: 1;
+    min-height: 380px;
+    border-radius: 18px;
+    overflow: hidden;
+    background:
+      radial-gradient(ellipse at 50% 0%, rgba(255, 200, 100, 0.15), transparent 60%),
+      linear-gradient(to bottom,
+        #1a0f3a 0%,
+        #2d1b4e 30%,
+        #4c1d95 55%,
+        #831843 80%,
+        #450a0a 100%
+      );
+    box-shadow: inset 0 0 60px rgba(0,0,0,0.6), 0 0 40px rgba(168, 85, 247, 0.2);
+    border: 2px solid #4c1d95;
+  }
+  .arena::before {
+    /* starfield */
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 55%;
+    background-image:
+      radial-gradient(1px 1px at 10% 20%, #fff, transparent),
+      radial-gradient(1px 1px at 30% 50%, #fff, transparent),
+      radial-gradient(1px 1px at 50% 10%, #fff, transparent),
+      radial-gradient(1px 1px at 70% 35%, #fff, transparent),
+      radial-gradient(1px 1px at 85% 15%, #fff, transparent),
+      radial-gradient(1px 1px at 15% 40%, #fff, transparent),
+      radial-gradient(1px 1px at 45% 30%, #fff, transparent),
+      radial-gradient(1px 1px at 60% 55%, #fff, transparent),
+      radial-gradient(1px 1px at 90% 45%, #fff, transparent),
+      radial-gradient(1px 1px at 25% 25%, #fff, transparent);
+    opacity: 0.7;
+    animation: twinkle 4s infinite;
+  }
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 0.9; }
+  }
+  .arena::after {
+    /* horizon glow */
+    content: '';
+    position: absolute;
+    left: 0; right: 0; top: 55%;
+    height: 4px;
+    background: linear-gradient(90deg, transparent, rgba(251, 191, 36, 0.8), transparent);
+    box-shadow: 0 0 24px #fbbf24;
+  }
+
+  .platform {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(ellipse at center, rgba(168, 85, 247, 0.6) 0%, rgba(76, 29, 149, 0.4) 40%, transparent 70%);
+    filter: blur(1px);
+    pointer-events: none;
+  }
+  .platform.opp {
+    top: 38%;
+    right: 8%;
+    width: 36%;
+    height: 10%;
+  }
+  .platform.mine {
+    bottom: 18%;
+    left: 6%;
+    width: 42%;
+    height: 12%;
+  }
+
+  .combatant-slot {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    z-index: 2;
+    transition: opacity 0.3s;
+  }
+  .combatant-slot.opp {
+    top: 12%;
+    right: 14%;
+  }
+  .combatant-slot.mine {
+    bottom: 24%;
+    left: 12%;
+  }
+  .combatant-slot.fainted { opacity: 0; transform: translateY(30px) rotate(25deg); }
+
+  .sprite {
+    position: relative;
+    transition: transform 0.3s ease;
+    filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.6));
+    user-select: none;
+  }
+  .sprite.opp { font-size: 82px; transform: scaleX(-1); }
+  .sprite.mine { font-size: 118px; }
+
+  .sprite.step-forward-opp { animation: stepOpp 0.45s ease-out; }
+  .sprite.step-forward-mine { animation: stepMine 0.45s ease-out; }
+  @keyframes stepOpp {
+    0% { transform: scaleX(-1) translate(0, 0); }
+    45% { transform: scaleX(-1) translate(60px, 30px) scale(1.08); }
+    100% { transform: scaleX(-1) translate(0, 0); }
+  }
+  @keyframes stepMine {
+    0% { transform: translate(0, 0); }
+    45% { transform: translate(60px, -40px) scale(1.08); }
+    100% { transform: translate(0, 0); }
+  }
+  .sprite.hit { animation: hitShake 0.55s ease-in-out; }
+  @keyframes hitShake {
+    0%, 100% { transform: translate(0, 0); filter: drop-shadow(0 8px 18px rgba(0,0,0,0.6)); }
+    15% { transform: translate(-8px, -3px) rotate(-6deg); filter: drop-shadow(0 8px 18px red) brightness(2); }
+    30% { transform: translate(9px, 4px) rotate(5deg); filter: drop-shadow(0 8px 18px red) brightness(2); }
+    45% { transform: translate(-7px, 2px) rotate(-4deg); filter: drop-shadow(0 8px 18px rgba(255,80,80,0.9)); }
+    60% { transform: translate(6px, -3px) rotate(3deg); filter: drop-shadow(0 8px 18px rgba(255,80,80,0.7)); }
+    75% { transform: translate(-3px, 1px) rotate(-2deg); }
+  }
+  .sprite.opp.hit { animation: hitShakeOpp 0.55s ease-in-out; }
+  @keyframes hitShakeOpp {
+    0%, 100% { transform: scaleX(-1) translate(0, 0); filter: drop-shadow(0 8px 18px rgba(0,0,0,0.6)); }
+    15% { transform: scaleX(-1) translate(-8px, -3px) rotate(-6deg); filter: drop-shadow(0 8px 18px red) brightness(2); }
+    30% { transform: scaleX(-1) translate(9px, 4px) rotate(5deg); filter: drop-shadow(0 8px 18px red) brightness(2); }
+    45% { transform: scaleX(-1) translate(-7px, 2px) rotate(-4deg); filter: drop-shadow(0 8px 18px rgba(255,80,80,0.9)); }
+    60% { transform: scaleX(-1) translate(6px, -3px) rotate(3deg); filter: drop-shadow(0 8px 18px rgba(255,80,80,0.7)); }
+    75% { transform: scaleX(-1) translate(-3px, 1px) rotate(-2deg); }
+  }
+
+  .sprite.entering-opp { animation: enterOpp 0.5s ease-out; }
+  .sprite.entering-mine { animation: enterMine 0.5s ease-out; }
+  @keyframes enterOpp {
+    0% { transform: scaleX(-1) translate(60px, -80px) scale(0.2); opacity: 0; }
+    100% { transform: scaleX(-1) translate(0, 0) scale(1); opacity: 1; }
+  }
+  @keyframes enterMine {
+    0% { transform: translate(-60px, 80px) scale(0.2); opacity: 0; }
+    100% { transform: translate(0, 0) scale(1); opacity: 1; }
+  }
+
+  .sprite.fainting-opp { animation: faintOpp 0.9s ease-in forwards; }
+  .sprite.fainting-mine { animation: faintMine 0.9s ease-in forwards; }
+  @keyframes faintOpp {
+    0% { transform: scaleX(-1) translate(0,0); opacity: 1; }
+    100% { transform: scaleX(-1) translate(0, 120px) rotate(-35deg); opacity: 0; }
+  }
+  @keyframes faintMine {
+    0% { transform: translate(0,0); opacity: 1; }
+    100% { transform: translate(0, 120px) rotate(35deg); opacity: 0; }
+  }
+
+  .nameplate {
+    background: rgba(15, 23, 42, 0.85);
+    border: 1.5px solid #a855f7;
+    border-radius: 10px;
+    padding: 6px 10px;
+    min-width: 180px;
+    backdrop-filter: blur(4px);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+  }
+  .nameplate-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 4px;
+  }
+  .nameplate-name { font-weight: 900; font-size: 13px; }
+  .nameplate-hp-text { font-size: 10px; color: #cbd5e1; font-weight: 700; }
+  .hp-bar-wrap {
+    width: 100%;
+    background: #0f172a;
+    border-radius: 999px;
+    height: 8px;
+    overflow: hidden;
+    border: 1px solid #334155;
+  }
+  .hp-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #22c55e, #84cc16);
+    transition: width 0.6s ease;
+    border-radius: 999px;
+  }
+  .hp-bar.mid { background: linear-gradient(90deg, #fbbf24, #f59e0b); }
+  .hp-bar.low { background: linear-gradient(90deg, #ef4444, #dc2626); }
+
+  /* Projectile */
+  .projectile {
+    position: absolute;
+    font-size: 40px;
+    z-index: 5;
+    pointer-events: none;
+    filter: drop-shadow(0 0 8px #fff);
+    transform: translate(-50%, -50%);
+  }
+  .damage-num {
+    position: absolute;
+    font-weight: 900;
+    font-size: 32px;
+    color: #fff;
+    text-shadow: 0 0 8px #000, 0 0 16px #ef4444, 2px 2px 0 #7f1d1d;
+    z-index: 6;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    animation: damagePopup 1.2s ease-out forwards;
+  }
+  .damage-num.heal { color: #4ade80; text-shadow: 0 0 8px #000, 0 0 16px #16a34a, 2px 2px 0 #14532d; }
+  @keyframes damagePopup {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+    20% { opacity: 1; transform: translate(-50%, -70%) scale(1.3); }
+    70% { opacity: 1; transform: translate(-50%, -110%) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -140%) scale(0.9); }
+  }
+  .impact-burst {
+    position: absolute;
+    font-size: 80px;
+    z-index: 5;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    animation: impactBurst 0.4s ease-out forwards;
+    filter: drop-shadow(0 0 12px #fbbf24);
+  }
+  @keyframes impactBurst {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.3) rotate(0); }
+    40% { opacity: 1; transform: translate(-50%, -50%) scale(1.4) rotate(40deg); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8) rotate(80deg); }
+  }
+
+  .flash {
+    position: absolute;
+    inset: 0;
+    background: #fff;
+    opacity: 0;
+    z-index: 4;
+    pointer-events: none;
+  }
+  .flash.fire { animation: flash 0.3s ease-out; }
+  @keyframes flash {
+    0% { opacity: 0; }
+    30% { opacity: 0.5; }
+    100% { opacity: 0; }
+  }
+
+  .attack-banner {
+    position: absolute;
+    top: 44%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.5);
+    background: rgba(0, 0, 0, 0.8);
+    border: 2px solid #f472b6;
+    border-radius: 10px;
+    padding: 10px 22px;
+    font-size: 20px;
+    font-weight: 900;
+    color: #fff;
+    text-shadow: 0 0 10px #f472b6;
+    z-index: 7;
+    pointer-events: none;
+    opacity: 0;
+    animation: bannerShow 0.9s ease-out forwards;
+    white-space: nowrap;
+  }
+  @keyframes bannerShow {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.4) rotate(-5deg); }
+    20% { opacity: 1; transform: translate(-50%, -50%) scale(1.1) rotate(0); }
+    80% { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(0); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(0.9) rotate(0); }
+  }
+
+  /* Bench under each platform */
+  .bench {
+    position: absolute;
+    display: flex;
+    gap: 4px;
+    z-index: 3;
+  }
+  .bench.opp { top: 8px; right: 8px; }
+  .bench.mine { bottom: 8px; left: 8px; }
+  .bench-slot {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background: rgba(15, 23, 42, 0.8);
+    border: 2px solid #334155;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    position: relative;
+  }
+  .bench-slot.fainted { opacity: 0.35; filter: grayscale(1); }
+  .bench-slot.active { border-color: #22c55e; box-shadow: 0 0 10px #22c55e; }
+  .bench-slot.switch-option { cursor: pointer; border-color: #a855f7; background: rgba(168, 85, 247, 0.3); }
+  .bench-slot.switch-option:hover { transform: scale(1.15); border-color: #f472b6; }
+
+  /* Controls */
+  .controls {
+    background: rgba(10, 10, 25, 0.92);
+    border: 2px solid #4c1d95;
+    border-radius: 14px;
+    padding: 12px;
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 5;
+  }
+  .controls-label {
+    font-size: 12px;
+    color: #a855f7;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+  .attacks-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .attack-btn {
+    background: linear-gradient(135deg, #7c3aed, #4c1d95);
+    border: 2px solid #a855f7;
+    border-radius: 10px;
+    padding: 10px 12px;
+    color: #fff;
+    font-family: inherit;
+    cursor: pointer;
+    text-align: left;
+    transition: transform 0.1s, box-shadow 0.1s;
+    font-size: 13px;
+  }
+  .attack-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(168, 85, 247, 0.5);
+  }
+  .attack-btn:active:not(:disabled) { transform: translateY(0); }
+  .attack-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .attack-btn .atk-title { font-weight: 900; display: block; }
+  .attack-btn .atk-desc { font-size: 10px; color: #e9d5ff; margin-top: 2px; }
+
+  .log-panel {
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-size: 12px;
+    min-height: 40px;
+    max-height: 60px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column-reverse;
+    border: 1px solid #334155;
+  }
+  .log-line { color: #cbd5e1; padding: 1px 0; }
+  .log-line:last-child { color: #f472b6; font-weight: 700; }
+
+  .game-over-panel {
+    text-align: center;
+    padding: 24px;
+    background: linear-gradient(135deg, #4c1d95, #831843);
+    border: 2px solid #f472b6;
+    border-radius: 14px;
+    box-shadow: 0 0 32px rgba(244, 114, 182, 0.5);
+  }
+  .game-over-title {
+    font-size: 32px;
+    font-weight: 900;
+    background: linear-gradient(90deg, #fbbf24, #f472b6);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    margin-bottom: 8px;
+  }
+  .game-over-sub { font-size: 14px; color: #e9d5ff; }
+
+  #player-container { display: none; }
+</style>
+
+<div id="root" data-phase="draft" data-status="waiting"></div>
+<div id="player-container"></div>
+
+<script>
+(function() {
+  var E2E_GAME_SLUG = "brainrot-battles";
+  var E2E = window.__playgentE2EState || {
+    version: 1,
+    regions: [],
+    lastPhase: "loading",
+    lastStatus: "loading",
+    lastPlayerId: "",
+    lastCurrentPlayer: "",
+    lastLegalActionCount: 0,
+    lastVisibleLegalActionCount: 0,
+    lastActions: [],
+    lastRawActions: []
+  };
+  window.__playgentE2EState = E2E;
+
+  function setE2EAttr(el, name, value) {
+    if (!el) return;
+    el.setAttribute(name, value == null ? "" : String(value));
+  }
+
+  function unwrapE2EAction(option) {
+    if (option && typeof option === "object" && option.decision !== undefined) return option.decision;
+    if (option && typeof option === "object" && option.action !== undefined) return option.action;
+    return option;
+  }
+
+  function isVisibleE2EAction(action) {
+    action = unwrapE2EAction(action);
+    if (!action || typeof action !== "object") return false;
+    if (action.type === "advance_phase" || action.type === "system" || action.type === "noop") return false;
+    return true;
+  }
+
+  function getVisibleE2EActions(actions) {
+    var out = [];
+    for (var i = 0; actions && i < actions.length; i++) {
+      if (isVisibleE2EAction(actions[i])) out.push(unwrapE2EAction(actions[i]));
+    }
+    return out;
+  }
+
+  function ensureE2ETelemetry() {
+    var el = document.getElementById("e2e-telemetry");
+    if (!el) {
+      el = document.createElement("div");
+      el.id = "e2e-telemetry";
+      if (document.body) document.body.appendChild(el);
+    }
+    el.setAttribute("aria-hidden", "true");
+    el.style.cssText = "position:fixed;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;left:0;top:0;";
+    setE2EAttr(el, "data-game", E2E_GAME_SLUG);
+    setE2EAttr(el, "data-phase", E2E.lastPhase);
+    setE2EAttr(el, "data-status", E2E.lastStatus);
+    setE2EAttr(el, "data-player", E2E.lastPlayerId || "spectator");
+    return el;
+  }
+
+  function addUnique(list, el) {
+    if (!el) return;
+    for (var i = 0; i < list.length; i++) if (list[i] === el) return;
+    list.push(el);
+  }
+
+  function getE2ERoots() {
+    var roots = [];
+    addUnique(roots, ensureE2ETelemetry());
+    addUnique(roots, document.getElementById("telemetry"));
+    addUnique(roots, document.getElementById("game"));
+    addUnique(roots, document.getElementById("game-container"));
+    addUnique(roots, document.querySelector("[data-board]"));
+    return roots;
+  }
+
+  function getCurrentPlayerE2E(view) {
+    if (!view) return "";
+    return view.currentPlayer || view.currentPlayerId || view.currentActor || view.turn || "";
+  }
+
+  function updateE2EPlayers(players) {
+    var telemetry = ensureE2ETelemetry();
+    var host = document.getElementById("e2e-players");
+    if (!host) {
+      host = document.createElement("div");
+      host.id = "e2e-players";
+      telemetry.appendChild(host);
+    }
+    host.textContent = "";
+    for (var i = 0; players && i < players.length; i++) {
+      var p = players[i] || {};
+      var span = document.createElement("span");
+      setE2EAttr(span, "data-player", p.id || "");
+      setE2EAttr(span, "data-player-name", p.name || p.id || "");
+      span.textContent = p.name || p.id || "";
+      host.appendChild(span);
+    }
+  }
+
+  function updateE2ELandmarks(view, legalActions, context) {
+    var visibleActions = getVisibleE2EActions(legalActions || []);
+    var phase = context && context.gameOver ? "game-over" : (view && (view.phase || view.mode || view.stage) ? (view.phase || view.mode || view.stage) : "playing");
+    var status = context && context.gameOver ? "game-over" : (visibleActions.length > 0 ? "your-turn" : "waiting");
+    var playerId = context && context.myId ? context.myId : "spectator";
+    var currentPlayer = getCurrentPlayerE2E(view);
+    var roots = getE2ERoots();
+    E2E.lastPhase = phase;
+    E2E.lastStatus = status;
+    E2E.lastPlayerId = playerId;
+    E2E.lastCurrentPlayer = currentPlayer;
+    E2E.lastRawActions = legalActions || [];
+    E2E.lastActions = visibleActions;
+    E2E.lastLegalActionCount = (legalActions || []).length;
+    E2E.lastVisibleLegalActionCount = visibleActions.length;
+    for (var i = 0; i < roots.length; i++) {
+      setE2EAttr(roots[i], "data-game", E2E_GAME_SLUG);
+      setE2EAttr(roots[i], "data-phase", phase);
+      setE2EAttr(roots[i], "data-status", status);
+      setE2EAttr(roots[i], "data-player", playerId);
+      setE2EAttr(roots[i], "data-current-player", currentPlayer);
+      if (view && view.round != null) setE2EAttr(roots[i], "data-round", view.round);
+      if (view && view.turnNumber != null) setE2EAttr(roots[i], "data-turn", view.turnNumber);
+    }
+    updateE2EPlayers(context && context.players ? context.players : []);
+  }
+
+  function actionTypeForIndex(idx) {
+    var raw = E2E.lastRawActions && E2E.lastRawActions[idx] ? unwrapE2EAction(E2E.lastRawActions[idx]) : null;
+    return raw && raw.type ? raw.type : "choose";
+  }
+
+  function safeLabelFromNode(node) {
+    var label = node.getAttribute("data-action-label") || node.getAttribute("aria-label") || node.title || node.textContent || node.value || "";
+    return String(label).replace(/\s+/g, " ").trim().slice(0, 100);
+  }
+
+  function decorateE2EDOMControls() {
+    var nodes = document.querySelectorAll("[data-action-idx], [data-action], button, [role='button'], input[type='button'], input[type='submit'], input:not([type='hidden']), select, textarea, [data-cell], [data-card], [data-card-id], [data-option-id], [data-brainrot], canvas");
+    for (var i = 0; i < nodes.length; i++) {
+      var node = nodes[i];
+      if (node.hasAttribute("data-action") && !node.hasAttribute("data-action-idx")) {
+        node.setAttribute("data-action-idx", node.getAttribute("data-action"));
+      }
+      if (node.hasAttribute("data-action-idx")) {
+        var idx = parseInt(node.getAttribute("data-action-idx"), 10);
+        if (!isNaN(idx) && !node.hasAttribute("data-action-type")) node.setAttribute("data-action-type", actionTypeForIndex(idx));
+        if (!node.hasAttribute("data-action-label")) node.setAttribute("data-action-label", safeLabelFromNode(node));
+      }
+      if (node.hasAttribute("data-cell") && !node.getAttribute("aria-label")) {
+        node.setAttribute("aria-label", "cell " + node.getAttribute("data-cell"));
+      }
+      if ((node.hasAttribute("data-card") || node.hasAttribute("data-card-id")) && !node.getAttribute("aria-label")) {
+        node.setAttribute("aria-label", "card " + (node.getAttribute("data-card") || node.getAttribute("data-card-id")));
+      }
+      if (node.tagName === "CANVAS" && !node.getAttribute("aria-label")) {
+        node.setAttribute("aria-label", E2E_GAME_SLUG + " canvas");
+      }
+    }
+  }
+
+  function e2eBeginFrame(view, legalActions, context) {
+    E2E.regions = [];
+    updateE2ELandmarks(view || {}, legalActions || [], context || {});
+  }
+
+  function e2eAfterRender() {
+    decorateE2EDOMControls();
+  }
+
+  function isVisibleE2ENode(node) {
+    if (!node || !node.getBoundingClientRect) return false;
+    var rect = node.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return false;
+    if (rect.right <= 0 || rect.bottom <= 0 || rect.left >= window.innerWidth || rect.top >= window.innerHeight) return false;
+    var style = window.getComputedStyle ? window.getComputedStyle(node) : null;
+    if (style && (style.display === "none" || style.visibility === "hidden" || style.opacity === "0")) return false;
+    if (node.disabled || node.getAttribute("aria-disabled") === "true") return false;
+    return true;
+  }
+
+  function regionKindForNode(node) {
+    if (node.tagName === "CANVAS") return "canvas";
+    if (node.tagName === "INPUT" || node.tagName === "SELECT" || node.tagName === "TEXTAREA") return "input";
+    if (node.hasAttribute("data-cell")) return "cell";
+    if (node.hasAttribute("data-card") || node.hasAttribute("data-card-id")) return "card";
+    return "button";
+  }
+
+  function getDOMActionRegions() {
+    decorateE2EDOMControls();
+    var nodes = document.querySelectorAll("[data-action-idx], button, [role='button'], input[type='button'], input[type='submit'], input:not([type='hidden']), select, textarea, [data-cell], [data-card], [data-card-id], [data-option-id], [data-brainrot], canvas");
+    var out = [];
+    for (var i = 0; i < nodes.length; i++) {
+      var node = nodes[i];
+      if (!isVisibleE2ENode(node)) continue;
+      var r = clipE2ERect(node.getBoundingClientRect());
+      if (!r) continue;
+      var id = node.id || node.getAttribute("data-action-idx") || node.getAttribute("data-cell") || node.getAttribute("data-card") || node.getAttribute("data-card-id") || node.getAttribute("data-option-id") || node.getAttribute("data-brainrot") || ("control-" + i);
+      out.push({
+        id: String(id),
+        kind: regionKindForNode(node),
+        label: safeLabelFromNode(node),
+        actionType: node.getAttribute("data-action-type") || "",
+        selector: node.id ? ("#" + node.id) : "",
+        rect: { x: r.left, y: r.top, width: r.width, height: r.height },
+        center: { x: r.left + r.width / 2, y: r.top + r.height / 2 }
+      });
+    }
+    return out;
+  }
+
+  function clipE2ERect(rect) {
+    if (!rect) return null;
+    var x = Number(rect.x != null ? rect.x : rect.left) || 0;
+    var y = Number(rect.y != null ? rect.y : rect.top) || 0;
+    var width = Number(rect.width) || 0;
+    var height = Number(rect.height) || 0;
+    var left = Math.max(0, x);
+    var top = Math.max(0, y);
+    var right = Math.min(window.innerWidth, x + width);
+    var bottom = Math.min(window.innerHeight, y + height);
+    if (right - left <= 0 || bottom - top <= 0) return null;
+    return { x: left, y: top, width: right - left, height: bottom - top };
+  }
+
+  function e2eRegisterRegion(region) {
+    if (!region || !region.id || !region.rect) return;
+    var r = clipE2ERect(region.rect);
+    if (!r || r.width == null || r.height == null) return;
+    var item = {
+      id: String(region.id),
+      kind: region.kind || "button",
+      label: region.label || "",
+      actionType: region.actionType || "",
+      rect: { x: Number(r.x) || 0, y: Number(r.y) || 0, width: Number(r.width) || 0, height: Number(r.height) || 0 },
+      center: region.center || { x: (Number(r.x) || 0) + (Number(r.width) || 0) / 2, y: (Number(r.y) || 0) + (Number(r.height) || 0) / 2 }
+    };
+    for (var i = 0; i < E2E.regions.length; i++) {
+      if (E2E.regions[i].id === item.id) {
+        E2E.regions[i] = item;
+        return;
+      }
+    }
+    E2E.regions.push(item);
+  }
+
+  function e2eCanvasRect(localRect, app) {
+    var canvas = app && app.canvas ? app.canvas : document.querySelector("canvas");
+    var screen = app && app.screen ? app.screen : null;
+    if (!canvas || !localRect) return null;
+    var canvasRect = canvas.getBoundingClientRect();
+    var screenW = screen && screen.width ? screen.width : canvasRect.width;
+    var screenH = screen && screen.height ? screen.height : canvasRect.height;
+    var sx = canvasRect.width / (screenW || canvasRect.width || 1);
+    var sy = canvasRect.height / (screenH || canvasRect.height || 1);
+    return {
+      x: canvasRect.left + localRect.x * sx,
+      y: canvasRect.top + localRect.y * sy,
+      width: localRect.width * sx,
+      height: localRect.height * sy
+    };
+  }
+
+  function e2ePixiBounds(displayObject, app) {
+    if (!displayObject || !displayObject.getBounds) return null;
+    var b = displayObject.getBounds();
+    return e2eCanvasRect({ x: b.x, y: b.y, width: b.width, height: b.height }, app);
+  }
+
+  function getE2ECanvasInfo() {
+    var canvas = document.querySelector("canvas");
+    if (!canvas) return null;
+    var rect = canvas.getBoundingClientRect();
+    return { selector: "canvas", width: rect.width, height: rect.height };
+  }
+
+  function getAllE2ERegions() {
+    var out = E2E.regions.slice();
+    var dom = getDOMActionRegions();
+    var seen = {};
+    var merged = [];
+    for (var i = 0; i < out.length; i++) { seen[out[i].id] = true; merged.push(out[i]); }
+    for (var j = 0; j < dom.length; j++) {
+      if (!seen[dom[j].id]) merged.push(dom[j]);
+    }
+    return merged;
+  }
+
+  function runE2ELayoutChecks() {
+    var failures = [];
+    var regions = getAllE2ERegions();
+    var canvas = getE2ECanvasInfo();
+    if (E2E.lastVisibleLegalActionCount > 0 && regions.length === 0) {
+      failures.push({ severity: "error", message: "active legal actions did not create visible controls" });
+    }
+    if (canvas && (canvas.width <= 0 || canvas.height <= 0)) {
+      failures.push({ severity: "error", message: "canvas has empty bounds" });
+    }
+    for (var i = 0; i < regions.length; i++) {
+      var region = regions[i];
+      var r = region.rect;
+      if (!r) {
+        failures.push({ severity: "error", message: region.id + " has no rect" });
+        continue;
+      }
+      if (r.width <= 0 || r.height <= 0) failures.push({ severity: "error", message: region.id + " has empty bounds" });
+      if (r.x < -1 || r.y < -1 || r.x + r.width > window.innerWidth + 1 || r.y + r.height > window.innerHeight + 1) {
+        failures.push({ severity: "error", message: region.id + " is offscreen" });
+      }
+      if (region.kind !== "canvas" && (r.width < 36 || r.height < 36)) {
+        failures.push({ severity: "warning", message: region.id + " is a small touch target" });
+      }
+    }
+    return failures;
+  }
+
+  window.__playgentE2EBegin = e2eBeginFrame;
+  window.__playgentE2EAfterRender = e2eAfterRender;
+  window.__playgentE2ERegisterRegion = e2eRegisterRegion;
+  window.__playgentE2ECanvasRect = e2eCanvasRect;
+  window.__playgentE2EPixiBounds = e2ePixiBounds;
+  window.__playgentE2ERunLayoutChecks = runE2ELayoutChecks;
+  window.__playgentE2E = {
+    version: 1,
+    getSnapshot: function() {
+      return {
+        phase: E2E.lastPhase,
+        status: E2E.lastStatus,
+        playerId: E2E.lastPlayerId,
+        currentPlayer: E2E.lastCurrentPlayer,
+        legalActionCount: E2E.lastVisibleLegalActionCount,
+        regionCount: getAllE2ERegions().length,
+        canvas: getE2ECanvasInfo()
+      };
+    },
+    getInteractiveRegions: function() { return getAllE2ERegions(); },
+    checkLayout: function() { return runE2ELayoutChecks(); }
+  };
+
+  if (typeof window.__playgentCheckLayout !== "function") {
+    window.__playgentCheckLayout = function() { return runE2ELayoutChecks(); };
+  }
+
+  function patchPlaygentE2E() {
+    if (!window.playgent || !window.playgent.onStateChange || window.playgent.__e2ePatched) return false;
+    var original = window.playgent.onStateChange;
+    window.playgent.onStateChange = function(cb) {
+      return original.call(window.playgent, function(view, legalActions, context) {
+        e2eBeginFrame(view, legalActions, context || {});
+        var result = cb.apply(this, arguments);
+        e2eAfterRender();
+        return result;
+      });
+    };
+    window.playgent.__e2ePatched = true;
+    return true;
+  }
+
+  ensureE2ETelemetry();
+  decorateE2EDOMControls();
+  if (!patchPlaygentE2E()) {
+    var tries = 0;
+    var timer = setInterval(function() {
+      tries++;
+      if (patchPlaygentE2E() || tries > 80) clearInterval(timer);
+    }, 50);
+  }
+}());
+</script>
+
+<script>
+  var root = document.getElementById('root');
+  var currentContext = null;
+  var currentView = null;
+  // Counter-based PRNG for cosmetic randomness (Math.random is blocked by platform)
+  var _uiSeed = 98765;
+  function unwrapAction(option) {
+    return option && option.decision ? option.decision : option;
+  }
+  function uiRandom() {
+    _uiSeed = (_uiSeed * 16807) % 2147483647;
+    if (_uiSeed <= 0) _uiSeed += 2147483647;
+    return _uiSeed / 2147483647;
+  }
+
+  // Track prior state for animation sequencing
+  var lastState = {
+    phase: null,
+    myActiveId: null,
+    oppActiveId: null,
+    lastAttackRef: null,
+    myHp: null,
+    oppHp: null,
+    myActiveIdx: -1,
+    oppActiveIdx: -1
+  };
+  var isAnimating = false;
+
+  function hpClass(hp, maxHp) {
+    var pct = hp / maxHp;
+    if (pct > 0.5) return '';
+    if (pct > 0.25) return 'mid';
+    return 'low';
+  }
+
+  function renderDraft(view, legalActions, context) {
+    var myPick = {};
+    (view.myDraft || []).forEach(function(id) { myPick[id] = true; });
+    var legal = {};
+    legalActions.forEach(function(option) {
+      var a = unwrapAction(option);
+      if (a.type === 'pick') legal[a.id] = true;
+    });
+
+    var html = '<div class="header">' +
+      '<div class="title">🧠 BRAINROT BATTLES</div>' +
+      '<div class="status-pill ' + (legalActions.length ? 'your-turn' : 'waiting') + '">' +
+      (legalActions.length ? 'DRAFT: ' + (view.myDraft || []).length + '/3' : 'WAITING') +
+      '</div></div>';
+
+    html += '<div class="draft-container">';
+    html += '<div class="draft-title">Pick Your Squad</div>';
+    html += '<div class="draft-subtitle">Choose 3 brainrots to battle with</div>';
+    html += '<div class="draft-status">';
+    var counts = view.draftCounts || [];
+    for (var i = 0; i < (view.players || []).length; i++) {
+      var pid = view.players[i];
+      var label = pid === context.myId ? 'You' : (pid);
+      html += '<div>' + label + ': <b>' + (counts[i] || 0) + '/3</b></div>';
+    }
+    html += '</div>';
+
+    html += '<div class="roster-grid">';
+    (view.roster || []).forEach(function(br) {
+      var picked = myPick[br.id];
+      var canPick = legal[br.id] && !picked;
+      var disabled = !canPick && !picked;
+      var cls = 'brainrot-card' + (picked ? ' picked' : '') + (disabled ? ' disabled' : '');
+      html += '<div class="' + cls + '" data-brainrot="' + br.id + '">';
+      html += '<div class="card-head">';
+      html += '<div class="card-emoji" style="color:' + br.color + '">' + br.emoji + '</div>';
+      html += '<div><div class="card-name">' + br.name + '</div>';
+      html += '<div class="card-hp">❤️ ' + br.maxHp + ' HP</div></div></div>';
+      html += '<div class="card-attacks">';
+      br.attacks.forEach(function(a) {
+        var tail = a.heal > 0 ? ' +' + a.heal + 'HP' : '';
+        html += '<div class="card-attack"><span class="atk-name">' + a.name + '</span>' +
+          '<div class="atk-stat">' + a.min + '–' + a.max + ' dmg' + tail + '</div></div>';
+      });
+      html += '</div></div>';
+    });
+    html += '</div></div>';
+
+    root.innerHTML = html;
+    root.setAttribute('data-phase', 'draft');
+    root.setAttribute('data-status', legalActions.length ? 'your-turn' : 'waiting');
+
+    root.querySelectorAll('.brainrot-card').forEach(function(card) {
+      var id = card.getAttribute('data-brainrot');
+      if (legal[id]) {
+        card.addEventListener('click', function() {
+          if (playgent.sound) playgent.sound('ui.select');
+          playgent.submitAction({ type: 'pick', id: id });
+        });
+      }
+    });
+  }
+
+  function resolvePerspective(view, context) {
+    var players = view.players || [];
+    var myId = context.myId;
+    var myIdx = players.indexOf(myId);
+    if (myIdx === -1) myIdx = 0;
+    var theirIdx = 1 - myIdx;
+    return { myIdx: myIdx, theirIdx: theirIdx, myId: players[myIdx] || '', theirId: players[theirIdx] || '' };
+  }
+
+  function renderBattle(view, legalActions, context) {
+    var p = resolvePerspective(view, context);
+    var myTeam = view.teams[p.myIdx] || [];
+    var theirTeam = view.teams[p.theirIdx] || [];
+    var myActiveIdx = view.activeIdx[p.myIdx];
+    var theirActiveIdx = view.activeIdx[p.theirIdx];
+    var myActive = myTeam[myActiveIdx];
+    var theirActive = theirTeam[theirActiveIdx];
+
+    var isMyTurn = view.turn === p.myId && !view.needsSwitch;
+    var needSwitch = view.needsSwitch === p.myId;
+    var gameOver = view.phase === 'game_over';
+
+    var status = 'waiting';
+    var statusLabel = 'OPPONENT TURN';
+    if (gameOver) { status = 'game-over'; statusLabel = view.winner === p.myId ? 'VICTORY' : 'DEFEAT'; }
+    else if (needSwitch) { status = 'your-turn'; statusLabel = 'SWITCH!'; }
+    else if (isMyTurn) { status = 'your-turn'; statusLabel = 'YOUR TURN'; }
+
+    var html = '<div class="header">' +
+      '<div class="title">🧠 BRAINROT BATTLES</div>' +
+      '<div class="status-pill ' + status + '">' + statusLabel + '</div></div>';
+
+    html += '<div class="battle-container">';
+
+    // ---- ARENA ----
+    html += '<div class="arena" id="arena">';
+    html += '<div class="platform opp"></div>';
+    html += '<div class="platform mine"></div>';
+    html += '<div class="flash" id="flash"></div>';
+
+    // Opponent bench
+    html += '<div class="bench opp">';
+    theirTeam.forEach(function(mon, i) {
+      var cls = 'bench-slot' + (mon.hp <= 0 ? ' fainted' : '') + (i === theirActiveIdx ? ' active' : '');
+      html += '<div class="' + cls + '" title="' + mon.name + '">' + mon.emoji + '</div>';
+    });
+    html += '</div>';
+
+    // My bench (and switch options if applicable)
+    var switchOptions = {};
+    if (needSwitch) {
+      legalActions.forEach(function(option) {
+        var a = unwrapAction(option);
+        if (a.type === 'switch') switchOptions[a.idx] = true;
+      });
+    }
+    html += '<div class="bench mine">';
+    myTeam.forEach(function(mon, i) {
+      var cls = 'bench-slot' + (mon.hp <= 0 ? ' fainted' : '') + (i === myActiveIdx ? ' active' : '');
+      var attr = '';
+      if (switchOptions[i]) { cls += ' switch-option'; attr = ' data-switch="' + i + '"'; }
+      html += '<div class="' + cls + '"' + attr + ' title="' + mon.name + (mon.hp > 0 ? ' ' + mon.hp + '/' + mon.maxHp : ' KO') + '">' + mon.emoji + '</div>';
+    });
+    html += '</div>';
+
+    // Opponent combatant
+    if (theirActive) {
+      var oppFainted = theirActive.hp <= 0;
+      html += '<div class="combatant-slot opp" id="oppSlot">';
+      html += '<div class="nameplate">';
+      html += '<div class="nameplate-top"><span class="nameplate-name">' + theirActive.name + '</span>';
+      html += '<span class="nameplate-hp-text">' + theirActive.hp + '/' + theirActive.maxHp + '</span></div>';
+      html += '<div class="hp-bar-wrap"><div class="hp-bar ' + hpClass(theirActive.hp, theirActive.maxHp) + '" style="width:' + Math.max(0, Math.round(theirActive.hp / theirActive.maxHp * 100)) + '%"></div></div>';
+      html += '</div>';
+      html += '<div class="sprite opp" id="oppSprite" style="color:' + theirActive.color + '">' + theirActive.emoji + '</div>';
+      html += '</div>';
+    }
+
+    // My combatant
+    if (myActive) {
+      html += '<div class="combatant-slot mine" id="mySlot">';
+      html += '<div class="sprite mine" id="mySprite" style="color:' + myActive.color + '">' + myActive.emoji + '</div>';
+      html += '<div class="nameplate">';
+      html += '<div class="nameplate-top"><span class="nameplate-name">' + myActive.name + '</span>';
+      html += '<span class="nameplate-hp-text">' + myActive.hp + '/' + myActive.maxHp + '</span></div>';
+      html += '<div class="hp-bar-wrap"><div class="hp-bar ' + hpClass(myActive.hp, myActive.maxHp) + '" style="width:' + Math.max(0, Math.round(myActive.hp / myActive.maxHp * 100)) + '%"></div></div>';
+      html += '</div>';
+      html += '</div>';
+    }
+
+    html += '</div>'; // /arena
+
+    // ---- CONTROLS ----
+    html += '<div class="controls">';
+    if (gameOver) {
+      html += '<div class="game-over-panel">';
+      var headline = view.winner === p.myId ? '🏆 VICTORY!' : (p.myId ? '💀 DEFEATED' : '🏁 GAME OVER');
+      html += '<div class="game-over-title">' + headline + '</div>';
+      html += '<div class="game-over-sub">' + (view.winner ? view.winner + ' won the battle!' : '') + '</div>';
+      html += '</div>';
+    } else if (needSwitch) {
+      html += '<div class="controls-label">Your brainrot fainted — pick a replacement!</div>';
+      html += '<div class="attacks-grid">';
+      Object.keys(switchOptions).forEach(function(k) {
+        var idx = parseInt(k, 10);
+        var mon = myTeam[idx];
+        html += '<button class="attack-btn" data-switch="' + idx + '">' +
+          '<span class="atk-title">' + mon.emoji + ' ' + mon.name + '</span>' +
+          '<div class="atk-desc">' + mon.hp + '/' + mon.maxHp + ' HP</div></button>';
+      });
+      html += '</div>';
+    } else if (isMyTurn && myActive) {
+      html += '<div class="controls-label">Choose attack — ' + myActive.name + '</div>';
+      html += '<div class="attacks-grid">';
+      myActive.attacks.forEach(function(a, i) {
+        var tail = a.heal > 0 ? ' · heals +' + a.heal : '';
+        html += '<button class="attack-btn" data-attack="' + i + '" ' + (isAnimating ? 'disabled' : '') + '>' +
+          '<span class="atk-title">' + a.name + '</span>' +
+          '<div class="atk-desc">' + a.min + '–' + a.max + ' dmg' + tail + '</div></button>';
+      });
+      html += '</div>';
+    } else {
+      html += '<div class="controls-label">' + (view.turn ? view.turn + ' is choosing…' : 'Waiting…') + '</div>';
+      html += '<div style="color:#64748b; font-size:12px; text-align:center; padding: 14px;">⏳</div>';
+    }
+    html += '</div>'; // /controls
+
+    // ---- LOG ----
+    html += '<div class="log-panel">';
+    var logs = (view.log || []).slice().reverse();
+    logs.slice(0, 5).forEach(function(line) { html += '<div class="log-line">' + escapeHtml(line) + '</div>'; });
+    html += '</div>';
+
+    html += '</div>'; // /battle-container
+
+    root.innerHTML = html;
+    root.setAttribute('data-phase', gameOver ? 'game-over' : 'battle');
+    root.setAttribute('data-status', status);
+    if (view.turn) root.setAttribute('data-current-player', view.turn);
+    if (gameOver && lastState.phase !== 'game_over' && playgent.sound) {
+      playgent.sound(view.winner === p.myId ? 'game.victory' : (p.myId ? 'game.defeat' : 'game.over'));
+    }
+
+    // Wire switch buttons
+    root.querySelectorAll('[data-attack]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        if (isAnimating) return;
+        var idx = parseInt(btn.getAttribute('data-attack'), 10);
+        if (playgent.sound) playgent.sound('combat.attack');
+        playgent.submitAction({ type: 'attack', attackIdx: idx });
+      });
+    });
+    root.querySelectorAll('[data-switch]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        if (isAnimating) return;
+        var idx = parseInt(btn.getAttribute('data-switch'), 10);
+        if (playgent.sound) playgent.sound('piece.move');
+        playgent.submitAction({ type: 'switch', idx: idx });
+      });
+    });
+
+    // Trigger entry animation if active changed
+    var prevMy = lastState.myActiveId;
+    var prevOpp = lastState.oppActiveId;
+    var newMy = myActive ? myActive.id + '|' + myActiveIdx : null;
+    var newOpp = theirActive ? theirActive.id + '|' + theirActiveIdx : null;
+    if (prevMy && newMy && prevMy !== newMy) {
+      var sp = document.getElementById('mySprite');
+      if (sp) { sp.classList.add('entering-mine'); setTimeout(function(){ sp && sp.classList.remove('entering-mine'); }, 520); }
+    }
+    if (prevOpp && newOpp && prevOpp !== newOpp) {
+      var sp2 = document.getElementById('oppSprite');
+      if (sp2) { sp2.classList.add('entering-opp'); setTimeout(function(){ sp2 && sp2.classList.remove('entering-opp'); }, 520); }
+    }
+
+    lastState.myActiveId = newMy;
+    lastState.oppActiveId = newOpp;
+    lastState.myActiveIdx = myActiveIdx;
+    lastState.oppActiveIdx = theirActiveIdx;
+    lastState.myHp = myActive ? myActive.hp : null;
+    lastState.oppHp = theirActive ? theirActive.hp : null;
+    lastState.phase = view.phase;
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"]/g, function(c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+
+  // --- Attack animation orchestration ---
+  var ATTACK_EFFECTS = {
+    'Nike Swoosh':    { projectile: '👟', burst: '💨', flash: false },
+    'Shark Bite':     { projectile: '🦷', burst: '💥', flash: true  },
+    'Skate Kick':     { projectile: '🛹', burst: '💥', flash: false },
+    'Tralala Song':   { projectile: '🎵', burst: '🎶', flash: false },
+    'Drop Bomb':      { projectile: '💣', burst: '💥', flash: true  },
+    'Croc Chomp':     { projectile: '🦷', burst: '💥', flash: false },
+    'Air Strike':     { projectile: '✈️', burst: '💥', flash: true  },
+    'Engine Roar':    { projectile: '🔥', burst: '💨', flash: false },
+    'Bat Smack':      { projectile: '🏏', burst: '💥', flash: false },
+    'Sahur Chant':    { projectile: '🔔', burst: '✨', flash: false },
+    'Wooden Slam':    { projectile: '🪵', burst: '💥', flash: true  },
+    'Midnight Strike':{ projectile: '🌙', burst: '⚡', flash: true  },
+    'Cactus Stab':    { projectile: '🌵', burst: '💥', flash: false },
+    'Trunk Slap':     { projectile: '👋', burst: '💥', flash: false },
+    'Desert Dance':   { projectile: '🌪️', burst: '✨', flash: false },
+    'Sandstorm':      { projectile: '🌪️', burst: '💨', flash: true  },
+    'Banana Peel':    { projectile: '🍌', burst: '💥', flash: false },
+    'Monkey Screech': { projectile: '💢', burst: '💥', flash: false },
+    'Fruit Throw':    { projectile: '🍍', burst: '💥', flash: false },
+    'Bananini Slam':  { projectile: '🍌', burst: '💥', flash: true  },
+    'Pirouette Kick': { projectile: '🩰', burst: '✨', flash: false },
+    'Coffee Splash':  { projectile: '☕', burst: '💦', flash: false },
+    'Grand Jeté':     { projectile: '💃', burst: '💥', flash: true  },
+    'Espresso Shot':  { projectile: '☕', burst: '✨', flash: false }
+  };
+
+  function getCenter(el, containerRect) {
+    var rect = el.getBoundingClientRect();
+    return {
+      x: rect.left + rect.width / 2 - containerRect.left,
+      y: rect.top + rect.height / 2 - containerRect.top
+    };
+  }
+
+  function animateAttack(attackerSide, defenderSide, attackName, damage, heal) {
+    isAnimating = true;
+    var arena = document.getElementById('arena');
+    if (!arena) { isAnimating = false; return; }
+    var attackerSprite = document.getElementById(attackerSide === 'mine' ? 'mySprite' : 'oppSprite');
+    var defenderSprite = document.getElementById(defenderSide === 'mine' ? 'mySprite' : 'oppSprite');
+    if (!attackerSprite || !defenderSprite) { isAnimating = false; return; }
+
+    var rect = arena.getBoundingClientRect();
+    var from = getCenter(attackerSprite, rect);
+    var to = getCenter(defenderSprite, rect);
+    var fx = ATTACK_EFFECTS[attackName] || { projectile: '💥', burst: '💥', flash: false };
+
+    // Banner
+    var banner = document.createElement('div');
+    banner.className = 'attack-banner';
+    banner.textContent = attackName.toUpperCase() + '!';
+    arena.appendChild(banner);
+    setTimeout(function() { banner.remove(); }, 900);
+
+    // Step forward
+    attackerSprite.classList.add(attackerSide === 'mine' ? 'step-forward-mine' : 'step-forward-opp');
+    setTimeout(function() {
+      attackerSprite.classList.remove('step-forward-mine', 'step-forward-opp');
+    }, 460);
+
+    // Projectile delay so it launches from attacker's forward pose
+    setTimeout(function() {
+      var proj = document.createElement('div');
+      proj.className = 'projectile';
+      proj.textContent = fx.projectile;
+      proj.style.left = from.x + 'px';
+      proj.style.top = from.y + 'px';
+      arena.appendChild(proj);
+
+      var duration = 400;
+      var start = performance.now();
+      function step(t) {
+        var p = Math.min(1, (t - start) / duration);
+        var eased = p * p;
+        var x = from.x + (to.x - from.x) * p;
+        var y = from.y + (to.y - from.y) * p - Math.sin(p * Math.PI) * 80;
+        proj.style.left = x + 'px';
+        proj.style.top = y + 'px';
+        proj.style.transform = 'translate(-50%,-50%) rotate(' + (p * 720) + 'deg) scale(' + (1 + eased * 0.3) + ')';
+        if (p < 1) requestAnimationFrame(step);
+        else onImpact();
+      }
+      requestAnimationFrame(step);
+
+      function onImpact() {
+        proj.remove();
+        // Flash
+        if (fx.flash) {
+          var flashEl = document.getElementById('flash');
+          if (flashEl) {
+            flashEl.classList.remove('fire');
+            void flashEl.offsetWidth;
+            flashEl.classList.add('fire');
+          }
+        }
+        // Burst
+        if (playgent.sound) playgent.sound(damage > 0 ? 'combat.hit' : 'combat.attack');
+        var burst = document.createElement('div');
+        burst.className = 'impact-burst';
+        burst.textContent = fx.burst;
+        burst.style.left = to.x + 'px';
+        burst.style.top = to.y + 'px';
+        arena.appendChild(burst);
+        setTimeout(function() { burst.remove(); }, 400);
+
+        // Shake defender
+        defenderSprite.classList.remove('hit');
+        void defenderSprite.offsetWidth;
+        defenderSprite.classList.add('hit');
+        setTimeout(function() { defenderSprite.classList.remove('hit'); }, 580);
+
+        // Damage number on defender
+        var dmg = document.createElement('div');
+        dmg.className = 'damage-num';
+        dmg.textContent = '-' + damage;
+        dmg.style.left = to.x + 'px';
+        dmg.style.top = to.y + 'px';
+        arena.appendChild(dmg);
+        setTimeout(function() { dmg.remove(); }, 1200);
+
+        // Heal number on attacker
+        if (heal && heal > 0) {
+          if (playgent.sound) playgent.sound('magic.heal');
+          var healNum = document.createElement('div');
+          healNum.className = 'damage-num heal';
+          healNum.textContent = '+' + heal;
+          healNum.style.left = from.x + 'px';
+          healNum.style.top = from.y + 'px';
+          arena.appendChild(healNum);
+          setTimeout(function() { healNum.remove(); }, 1200);
+        }
+
+        // Release gate after settle
+        setTimeout(function() { isAnimating = false; }, 700);
+      }
+    }, 140);
+  }
+
+  playgent.onStateChange(function(view, legalActions, context) {
+    currentContext = context;
+    currentView = view;
+    var pc = document.getElementById('player-container');
+    pc.innerHTML = '';
+    (context.players || []).forEach(function(p) {
+      var span = document.createElement('span');
+      span.setAttribute('data-player', p.id);
+      span.textContent = p.name || p.id;
+      pc.appendChild(span);
+    });
+
+    if (view.phase === 'draft') {
+      renderDraft(view, legalActions, context);
+    } else {
+      renderBattle(view, legalActions, context);
+    }
+  });
+
+  if (playgent.onAction) {
+    playgent.onAction(function(action, playerId, prev, next) {
+      try {
+        if (!action || action.type !== 'attack') return;
+        if (!next || !next.lastAttack) return;
+        var la = next.lastAttack;
+        // Use perspective from the most recent onStateChange (single source of truth)
+        var ctx = currentContext || {};
+        var myId = ctx.myId;
+        var players = next.players || (currentView && currentView.players) || [];
+        var myIdx = myId ? players.indexOf(myId) : -1;
+        if (myIdx === -1) myIdx = 0;
+        var attackerSide = la.attackerIdx === myIdx ? 'mine' : 'opp';
+        var defenderSide = la.defenderIdx === myIdx ? 'mine' : 'opp';
+        // Delay slightly so DOM re-render finishes
+        setTimeout(function() {
+          animateAttack(attackerSide, defenderSide, la.attackName, la.damage, la.heal);
+        }, 30);
+      } catch (e) { /* swallow */ }
+    });
+  }
+</script>

@@ -1,0 +1,11 @@
+{
+  "slug": "moonshot-hearts",
+  "name": "Moonshot Hearts",
+  "description": "A slick, animated Hearts table where dodging points feels great and taking them really stings.",
+  "minPlayers": 4,
+  "maxPlayers": 4,
+  "version": "1.0.0",
+  "tags": ["cards", "classic", "trick-taking", "strategy"],
+  "thumbnail": "thumbnail.svg",
+  "rules": "OVERVIEW\nFour-player Hearts. Hearts and the Queen of Spades add points. Lowest total score wins when any player reaches the target score.\n\nROUND FLOW\nDeal 13 cards each. Passing rotates left, right, across, hold. Passing requires exactly 3 cards. The 2C holder leads first.\n\nPLAY\nFollow led suit if possible. Highest card of led suit wins the trick and leads next. First trick must start with 2C; points cannot be played on the first trick unless unavoidable. Hearts cannot be led until broken unless only hearts remain.\n\nSCORING\nHearts are 1 point; QS is 13. Taking all 26 points shoots the moon: shooter scores 0, others score 26."
+}

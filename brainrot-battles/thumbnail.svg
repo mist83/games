@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 154" role="img" aria-labelledby="title">
+  <title id="title">Brainrot Battles thumbnail</title>
+  <rect width="220" height="154" rx="14" fill="#6d28d9"/>
+  <rect x="0" y="0" width="220" height="64" rx="14" fill="#8dd4ff"/>
+  <path d="M0 58h220v96H0z" fill="#79c96b"/>
+  <ellipse cx="116" cy="104" rx="96" ry="35" fill="#f6d36b"/>
+  <ellipse cx="116" cy="106" rx="73" ry="22" fill="#e6b94e"/>
+  <g stroke="#111827" stroke-width="3" stroke-linejoin="round">
+    <rect x="18" y="14" width="72" height="12" rx="6" fill="#f8fafc"/>
+    <rect x="24" y="18" width="50" height="4" rx="2" fill="#22c55e" stroke="none"/>
+    <rect x="130" y="14" width="72" height="12" rx="6" fill="#f8fafc"/>
+    <rect x="136" y="18" width="44" height="4" rx="2" fill="#22c55e" stroke="none"/>
+  </g>
+  <g stroke="#111827" stroke-width="4" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M141 57c-8-8-6-20 5-25 5-13 24-11 28 2 13 2 18 18 9 29 7 12-3 27-17 23-9 11-28 5-27-10-13-4-12-18 2-19z" fill="#38bdf8"/>
+    <path d="M158 43c4 9 3 20-3 28M171 47c-7 3-15 3-23-1" fill="none" opacity="0.55"/>
+    <circle cx="159" cy="61" r="3.5" fill="#111827" stroke="none"/>
+    <circle cx="176" cy="59" r="3.5" fill="#111827" stroke="none"/>
+    <path d="M159 76c8 5 16 4 23-3" fill="none"/>
+  </g>
+  <g stroke="#111827" stroke-width="5" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M18 152c-6-28 8-55 35-66 9-20 40-26 58-8 27 3 42 27 34 51 15 7 24 15 28 23z" fill="#fb7185"/>
+    <path d="M58 85l-13-25 29 15M103 77l21-22-2 33" fill="#fb7185"/>
+    <path d="M59 96c14-10 34-13 54-7M47 121c23-13 56-17 92-8" fill="none" opacity="0.55"/>
+  </g>
+  <path d="M106 68l-13 22h16l-9 28 30-42h-16l12-18z" fill="#facc15" stroke="#111827" stroke-width="3" stroke-linejoin="round"/>
+</svg>

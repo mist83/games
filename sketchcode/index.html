@@ -1,0 +1,1662 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sketchcode</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --blue: #245da1;
+      --blue-dark: #123d73;
+      --ink: #16181d;
+      --paper: #ffffff;
+      --panel: #f5f7fb;
+      --panel-2: #e8edf5;
+      --line: #ccd4df;
+      --accent: #2563eb;
+      --good: #12805c;
+      --shadow: 0 8px 22px rgba(0, 0, 0, 0.18);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; }
+    body {
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 18px 18px, rgba(255,255,255,0.12) 0 3px, transparent 4px),
+        radial-gradient(circle at 56px 44px, rgba(255,255,255,0.10) 0 8px, transparent 9px),
+        var(--blue);
+      background-size: 92px 92px;
+    }
+    .app {
+      height: 100vh;
+      min-width: 0;
+      padding: 8px;
+      display: grid;
+      grid-template-rows: minmax(0, 1fr);
+    }
+    .shell {
+      min-height: 0;
+      min-width: 0;
+      display: grid;
+      grid-template-columns: 270px minmax(0, 1fr) 350px;
+      gap: 8px;
+    }
+    .left, .right, .canvasPanel {
+      min-height: 0;
+      min-width: 0;
+      background: var(--panel);
+      border: 5px solid var(--blue-dark);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .left {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+    }
+    .panelTitle {
+      min-width: 0;
+      padding: 9px 11px;
+      font-weight: 900;
+      background: white;
+      border-bottom: 1px solid var(--line);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .players {
+      min-height: 0;
+      overflow: auto;
+      display: grid;
+      align-content: start;
+    }
+    .player {
+      min-height: 70px;
+      display: grid;
+      grid-template-columns: 32px minmax(0, 1fr) 48px;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 8px;
+      background: white;
+      border-bottom: 1px solid var(--line);
+    }
+    .player:nth-child(even) { background: #edf1f7; }
+    .rank { font-size: 17px; font-weight: 900; }
+    .pname { font-weight: 900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pscore { font-size: 13px; }
+    .avatar {
+      width: 44px;
+      height: 44px;
+      border: 3px solid black;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+    }
+    .drawerMark { color: var(--accent); font-size: 12px; font-weight: 900; }
+    .solvedMark { color: var(--good); font-size: 12px; font-weight: 900; }
+    .canvasPanel {
+      background: var(--paper);
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+    }
+    .canvasHead {
+      min-width: 0;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfcfe;
+    }
+    .roundText {
+      min-width: 0;
+      font-size: 19px;
+      font-weight: 950;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .phasePill {
+      border: 2px solid #111;
+      border-radius: 6px;
+      padding: 5px 9px;
+      font-size: 12px;
+      font-weight: 950;
+      background: white;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .canvasWrap {
+      min-height: 0;
+      min-width: 0;
+      position: relative;
+      background: white;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      min-width: 0;
+      min-height: 0;
+      display: block;
+      touch-action: none;
+      background: white;
+    }
+    .svgLayerCanvas {
+      pointer-events: none;
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .bubbleLayer {
+      pointer-events: none;
+      position: absolute;
+      inset: 0;
+    }
+    .statusStrip {
+      min-height: 58px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 6px;
+      padding: 6px;
+      background: #f8fafc;
+      border-top: 1px solid var(--line);
+    }
+    .statusItem {
+      min-width: 0;
+      border: 1px solid var(--line);
+      background: white;
+      border-radius: 6px;
+      padding: 5px 7px;
+      overflow: hidden;
+    }
+    .statusItem b { display: block; color: #64748b; font-size: 11px; }
+    .statusItem span { display: block; font-size: 14px; font-weight: 900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .right {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      background: white;
+    }
+    .feed {
+      min-height: 0;
+      overflow: auto;
+      display: grid;
+      align-content: end;
+      background: white;
+    }
+    .msg {
+      padding: 6px 9px;
+      border-bottom: 1px solid #edf0f3;
+      font-size: 14px;
+      line-height: 1.25;
+      overflow-wrap: anywhere;
+    }
+    .msg:nth-child(odd) { background: #f2f5fa; }
+    .msg.good { color: var(--good); font-weight: 900; }
+    .msg.system { color: var(--accent); font-weight: 900; }
+    .msg.layer { color: #334155; font-size: 13px; }
+    .msg.guess {
+      margin: 4px 8px;
+      border: 1px solid #c8d9f0;
+      border-radius: 6px;
+      background: #eef6ff;
+      font-weight: 850;
+      box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
+    }
+    .msg.guess:nth-child(odd) { background: #eef6ff; }
+    .msg.guess.you { border-color: #111827; }
+    .msg.guess.good {
+      color: var(--good);
+      background: #e9f9f1;
+      border-color: #9ed9bd;
+    }
+    .msg.guess.good:nth-child(odd) { background: #e9f9f1; }
+    .controls {
+      border-top: 1px solid var(--line);
+      padding: 8px;
+      display: grid;
+      gap: 8px;
+      background: #f8fafc;
+    }
+    .guessRow {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 82px;
+      gap: 6px;
+    }
+    input {
+      width: 100%;
+      height: 42px;
+      border: 2px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 0 10px;
+      font-size: 16px;
+      background: white;
+    }
+    textarea {
+      width: 100%;
+      min-height: 154px;
+      border: 2px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 9px 10px;
+      font: 13px/1.35 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      resize: vertical;
+      background: white;
+    }
+    .svgActions {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 0.55fr);
+      gap: 6px;
+    }
+    select {
+      width: 100%;
+      height: 40px;
+      border: 2px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 0 8px;
+      font-size: 14px;
+      font-weight: 850;
+      background: white;
+    }
+    button {
+      min-width: 0;
+      min-height: 38px;
+      border: 0;
+      border-radius: 6px;
+      background: var(--accent);
+      color: white;
+      font-weight: 900;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    button.secondary { background: #5b6472; }
+    button.toolActive { outline: 3px solid #111; }
+    button:disabled { opacity: 0.45; cursor: default; }
+    .drawerTools {
+      display: grid;
+      gap: 7px;
+    }
+    .toolRow, .colorRow, .sizeRow {
+      min-width: 0;
+      display: grid;
+      gap: 5px;
+    }
+    .toolRow { grid-template-columns: repeat(2, 1fr); }
+    .toolRow.mainTools { grid-template-columns: repeat(4, 1fr); }
+    .shapeRow { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+    .colorRow { grid-template-columns: repeat(6, 1fr); }
+    .sizeRow { grid-template-columns: repeat(4, 1fr); }
+    .shapeEditor {
+      display: grid;
+      gap: 7px;
+      padding: 7px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: white;
+    }
+    .fieldGrid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 6px;
+    }
+    .field {
+      display: grid;
+      gap: 3px;
+      min-width: 0;
+      font-size: 11px;
+      font-weight: 900;
+      color: #475467;
+    }
+    .shapeActions {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 6px;
+    }
+    .rangeRow {
+      display: grid;
+      grid-template-columns: 24px minmax(0, 1fr) 36px;
+      gap: 6px;
+      align-items: center;
+      font-size: 11px;
+      font-weight: 900;
+    }
+    .rangeRow input {
+      height: 26px;
+      padding: 0;
+    }
+    .swatch {
+      min-width: 0;
+      min-height: 42px;
+      border: 3px solid #111;
+      border-radius: 6px;
+      color: transparent;
+      font-size: 0;
+    }
+    .swatch.toolActive { outline: 3px solid var(--accent); outline-offset: 1px; }
+    .hint {
+      color: #475467;
+      font-size: 13px;
+      font-weight: 800;
+      min-height: 18px;
+      overflow-wrap: anywhere;
+    }
+    @media (max-width: 980px) {
+      .app { padding: 6px; }
+      .shell {
+        grid-template-columns: 1fr;
+        grid-template-rows: minmax(0, 56vh) minmax(0, 1fr);
+        gap: 6px;
+      }
+      .left { display: none; }
+      .canvasPanel, .right { border-width: 3px; }
+      .canvasHead { padding: 6px 8px; }
+      .roundText { font-size: 15px; }
+      .phasePill { font-size: 11px; padding: 4px 7px; }
+      .statusStrip { min-height: 48px; gap: 4px; padding: 4px; }
+      .statusItem { padding: 4px; }
+      .statusItem b { font-size: 10px; }
+      .statusItem span { font-size: 12px; }
+      .panelTitle { padding: 6px 8px; font-size: 14px; }
+      .feed { min-height: 76px; }
+      .msg { padding: 4px 7px; font-size: 12px; }
+      .controls { padding: 6px; gap: 6px; }
+      .guessRow { grid-template-columns: minmax(0, 1fr) 72px; }
+      input { height: 38px; font-size: 14px; }
+      button { min-height: 36px; font-size: 12px; }
+      .swatch { min-height: 42px; }
+      .hint { font-size: 11px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app" data-phase="loading" data-status="waiting" data-player="">
+    <main class="shell">
+      <aside class="left">
+        <div class="panelTitle">Players</div>
+        <div class="players" id="players"></div>
+      </aside>
+      <section class="canvasPanel">
+        <div class="canvasHead">
+          <div class="roundText" id="roundText">Round 1</div>
+          <div class="phasePill" id="phasePill">Waiting</div>
+        </div>
+        <div class="canvasWrap">
+          <canvas id="board" width="1000" height="1000" aria-label="Sketchcode canvas"></canvas>
+          <svg id="svgLayerCanvas" class="svgLayerCanvas" viewBox="0 0 100 100" aria-hidden="true"></svg>
+          <div class="bubbleLayer" id="bubbleLayer"></div>
+        </div>
+        <div class="statusStrip">
+          <div class="statusItem"><b>Word</b><span id="wordText">_ _ _ _</span></div>
+          <div class="statusItem"><b>Drawer</b><span id="drawerText">-</span></div>
+          <div class="statusItem"><b>Layers</b><span id="markText">0</span></div>
+          <div class="statusItem"><b>Resource</b><span id="resourceText">-</span></div>
+        </div>
+      </section>
+      <aside class="right">
+        <div class="panelTitle" id="rightTitle">Sketchcode</div>
+        <div class="feed" id="feed"></div>
+        <div class="controls" id="controls"></div>
+      </aside>
+    </main>
+  </div>
+  <script>
+(function() {
+  var E2E_GAME_SLUG = "sketchcode";
+  var E2E = window.__playgentE2EState || {
+    version: 1,
+    regions: [],
+    lastPhase: "loading",
+    lastStatus: "loading",
+    lastPlayerId: "",
+    lastCurrentPlayer: "",
+    lastLegalActionCount: 0,
+    lastVisibleLegalActionCount: 0,
+    lastActions: [],
+    lastRawActions: []
+  };
+  window.__playgentE2EState = E2E;
+
+  function setE2EAttr(el, name, value) {
+    if (!el) return;
+    el.setAttribute(name, value == null ? "" : String(value));
+  }
+
+  function unwrapE2EAction(option) {
+    if (option && typeof option === "object" && option.decision !== undefined) return option.decision;
+    if (option && typeof option === "object" && option.action !== undefined) return option.action;
+    return option;
+  }
+
+  function isVisibleE2EAction(action) {
+    action = unwrapE2EAction(action);
+    if (!action || typeof action !== "object") return false;
+    if (action.type === "advance_phase" || action.type === "system" || action.type === "noop") return false;
+    return true;
+  }
+
+  function getVisibleE2EActions(actions) {
+    var out = [];
+    for (var i = 0; actions && i < actions.length; i++) {
+      if (isVisibleE2EAction(actions[i])) out.push(unwrapE2EAction(actions[i]));
+    }
+    return out;
+  }
+
+  function ensureE2ETelemetry() {
+    var el = document.getElementById("e2e-telemetry");
+    if (!el) {
+      el = document.createElement("div");
+      el.id = "e2e-telemetry";
+      if (document.body) document.body.appendChild(el);
+    }
+    el.setAttribute("aria-hidden", "true");
+    el.style.cssText = "position:fixed;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;left:0;top:0;";
+    setE2EAttr(el, "data-game", E2E_GAME_SLUG);
+    setE2EAttr(el, "data-phase", E2E.lastPhase);
+    setE2EAttr(el, "data-status", E2E.lastStatus);
+    setE2EAttr(el, "data-player", E2E.lastPlayerId || "spectator");
+    return el;
+  }
+
+  function addUnique(list, el) {
+    if (!el) return;
+    for (var i = 0; i < list.length; i++) if (list[i] === el) return;
+    list.push(el);
+  }
+
+  function getE2ERoots() {
+    var roots = [];
+    addUnique(roots, ensureE2ETelemetry());
+    addUnique(roots, document.getElementById("telemetry"));
+    addUnique(roots, document.getElementById("game"));
+    addUnique(roots, document.getElementById("game-container"));
+    addUnique(roots, document.querySelector("[data-board]"));
+    return roots;
+  }
+
+  function getCurrentPlayerE2E(view) {
+    if (!view) return "";
+    return view.currentPlayer || view.currentPlayerId || view.currentActor || view.turn || "";
+  }
+
+  function updateE2EPlayers(players) {
+    var telemetry = ensureE2ETelemetry();
+    var host = document.getElementById("e2e-players");
+    if (!host) {
+      host = document.createElement("div");
+      host.id = "e2e-players";
+      telemetry.appendChild(host);
+    }
+    host.textContent = "";
+    for (var i = 0; players && i < players.length; i++) {
+      var p = players[i] || {};
+      var span = document.createElement("span");
+      setE2EAttr(span, "data-player", p.id || "");
+      setE2EAttr(span, "data-player-name", p.name || p.id || "");
+      span.textContent = p.name || p.id || "";
+      host.appendChild(span);
+    }
+  }
+
+  function updateE2ELandmarks(view, legalActions, context) {
+    var visibleActions = getVisibleE2EActions(legalActions || []);
+    var phase = context && context.gameOver ? "game-over" : (view && (view.phase || view.mode || view.stage) ? (view.phase || view.mode || view.stage) : "playing");
+    var status = context && context.gameOver ? "game-over" : (visibleActions.length > 0 ? "your-turn" : "waiting");
+    var playerId = context && context.myId ? context.myId : "spectator";
+    var currentPlayer = getCurrentPlayerE2E(view);
+    var roots = getE2ERoots();
+    E2E.lastPhase = phase;
+    E2E.lastStatus = status;
+    E2E.lastPlayerId = playerId;
+    E2E.lastCurrentPlayer = currentPlayer;
+    E2E.lastRawActions = legalActions || [];
+    E2E.lastActions = visibleActions;
+    E2E.lastLegalActionCount = (legalActions || []).length;
+    E2E.lastVisibleLegalActionCount = visibleActions.length;
+    for (var i = 0; i < roots.length; i++) {
+      setE2EAttr(roots[i], "data-game", E2E_GAME_SLUG);
+      setE2EAttr(roots[i], "data-phase", phase);
+      setE2EAttr(roots[i], "data-status", status);
+      setE2EAttr(roots[i], "data-player", playerId);
+      setE2EAttr(roots[i], "data-current-player", currentPlayer);
+      if (view && view.round != null) setE2EAttr(roots[i], "data-round", view.round);
+      if (view && view.turnNumber != null) setE2EAttr(roots[i], "data-turn", view.turnNumber);
+    }
+    updateE2EPlayers(context && context.players ? context.players : []);
+  }
+
+  function actionTypeForIndex(idx) {
+    var raw = E2E.lastRawActions && E2E.lastRawActions[idx] ? unwrapE2EAction(E2E.lastRawActions[idx]) : null;
+    return raw && raw.type ? raw.type : "choose";
+  }
+
+  function safeLabelFromNode(node) {
+    var label = node.getAttribute("data-action-label") || node.getAttribute("aria-label") || node.title || node.textContent || node.value || "";
+    return String(label).replace(/\s+/g, " ").trim().slice(0, 100);
+  }
+
+  function decorateE2EDOMControls() {
+    var nodes = document.querySelectorAll("[data-action-idx], [data-action], button, [role='button'], input[type='button'], input[type='submit'], input:not([type='hidden']), select, textarea, [data-cell], [data-card], [data-card-id], [data-option-id], [data-brainrot], canvas");
+    for (var i = 0; i < nodes.length; i++) {
+      var node = nodes[i];
+      if (node.hasAttribute("data-action") && !node.hasAttribute("data-action-idx")) {
+        node.setAttribute("data-action-idx", node.getAttribute("data-action"));
+      }
+      if (node.hasAttribute("data-action-idx")) {
+        var idx = parseInt(node.getAttribute("data-action-idx"), 10);
+        if (!isNaN(idx) && !node.hasAttribute("data-action-type")) node.setAttribute("data-action-type", actionTypeForIndex(idx));
+        if (!node.hasAttribute("data-action-label")) node.setAttribute("data-action-label", safeLabelFromNode(node));
+      }
+      if (node.hasAttribute("data-cell") && !node.getAttribute("aria-label")) {
+        node.setAttribute("aria-label", "cell " + node.getAttribute("data-cell"));
+      }
+      if ((node.hasAttribute("data-card") || node.hasAttribute("data-card-id")) && !node.getAttribute("aria-label")) {
+        node.setAttribute("aria-label", "card " + (node.getAttribute("data-card") || node.getAttribute("data-card-id")));
+      }
+      if (node.tagName === "CANVAS" && !node.getAttribute("aria-label")) {
+        node.setAttribute("aria-label", E2E_GAME_SLUG + " canvas");
+      }
+    }
+  }
+
+  function e2eBeginFrame(view, legalActions, context) {
+    E2E.regions = [];
+    updateE2ELandmarks(view || {}, legalActions || [], context || {});
+  }
+
+  function e2eAfterRender() {
+    decorateE2EDOMControls();
+  }
+
+  function isVisibleE2ENode(node) {
+    if (!node || !node.getBoundingClientRect) return false;
+    var rect = node.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return false;
+    if (rect.right <= 0 || rect.bottom <= 0 || rect.left >= window.innerWidth || rect.top >= window.innerHeight) return false;
+    var style = window.getComputedStyle ? window.getComputedStyle(node) : null;
+    if (style && (style.display === "none" || style.visibility === "hidden" || style.opacity === "0")) return false;
+    if (node.disabled || node.getAttribute("aria-disabled") === "true") return false;
+    return true;
+  }
+
+  function regionKindForNode(node) {
+    if (node.tagName === "CANVAS") return "canvas";
+    if (node.tagName === "INPUT" || node.tagName === "SELECT" || node.tagName === "TEXTAREA") return "input";
+    if (node.hasAttribute("data-cell")) return "cell";
+    if (node.hasAttribute("data-card") || node.hasAttribute("data-card-id")) return "card";
+    return "button";
+  }
+
+  function getDOMActionRegions() {
+    decorateE2EDOMControls();
+    var nodes = document.querySelectorAll("[data-action-idx], button, [role='button'], input[type='button'], input[type='submit'], input:not([type='hidden']), select, textarea, [data-cell], [data-card], [data-card-id], [data-option-id], [data-brainrot], canvas");
+    var out = [];
+    for (var i = 0; i < nodes.length; i++) {
+      var node = nodes[i];
+      if (!isVisibleE2ENode(node)) continue;
+      var r = clipE2ERect(node.getBoundingClientRect());
+      if (!r) continue;
+      var id = node.id || node.getAttribute("data-action-idx") || node.getAttribute("data-cell") || node.getAttribute("data-card") || node.getAttribute("data-card-id") || node.getAttribute("data-option-id") || node.getAttribute("data-brainrot") || ("control-" + i);
+      out.push({
+        id: String(id),
+        kind: regionKindForNode(node),
+        label: safeLabelFromNode(node),
+        actionType: node.getAttribute("data-action-type") || "",
+        selector: node.id ? ("#" + node.id) : "",
+        rect: { x: r.left, y: r.top, width: r.width, height: r.height },
+        center: { x: r.left + r.width / 2, y: r.top + r.height / 2 }
+      });
+    }
+    return out;
+  }
+
+  function clipE2ERect(rect) {
+    if (!rect) return null;
+    var x = Number(rect.x != null ? rect.x : rect.left) || 0;
+    var y = Number(rect.y != null ? rect.y : rect.top) || 0;
+    var width = Number(rect.width) || 0;
+    var height = Number(rect.height) || 0;
+    var left = Math.max(0, x);
+    var top = Math.max(0, y);
+    var right = Math.min(window.innerWidth, x + width);
+    var bottom = Math.min(window.innerHeight, y + height);
+    if (right - left <= 0 || bottom - top <= 0) return null;
+    return { x: left, y: top, width: right - left, height: bottom - top };
+  }
+
+  function e2eRegisterRegion(region) {
+    if (!region || !region.id || !region.rect) return;
+    var r = clipE2ERect(region.rect);
+    if (!r || r.width == null || r.height == null) return;
+    var item = {
+      id: String(region.id),
+      kind: region.kind || "button",
+      label: region.label || "",
+      actionType: region.actionType || "",
+      rect: { x: Number(r.x) || 0, y: Number(r.y) || 0, width: Number(r.width) || 0, height: Number(r.height) || 0 },
+      center: region.center || { x: (Number(r.x) || 0) + (Number(r.width) || 0) / 2, y: (Number(r.y) || 0) + (Number(r.height) || 0) / 2 }
+    };
+    for (var i = 0; i < E2E.regions.length; i++) {
+      if (E2E.regions[i].id === item.id) {
+        E2E.regions[i] = item;
+        return;
+      }
+    }
+    E2E.regions.push(item);
+  }
+
+  function e2eCanvasRect(localRect, app) {
+    var canvas = app && app.canvas ? app.canvas : document.querySelector("canvas");
+    var screen = app && app.screen ? app.screen : null;
+    if (!canvas || !localRect) return null;
+    var canvasRect = canvas.getBoundingClientRect();
+    var screenW = screen && screen.width ? screen.width : canvasRect.width;
+    var screenH = screen && screen.height ? screen.height : canvasRect.height;
+    var sx = canvasRect.width / (screenW || canvasRect.width || 1);
+    var sy = canvasRect.height / (screenH || canvasRect.height || 1);
+    return {
+      x: canvasRect.left + localRect.x * sx,
+      y: canvasRect.top + localRect.y * sy,
+      width: localRect.width * sx,
+      height: localRect.height * sy
+    };
+  }
+
+  function e2ePixiBounds(displayObject, app) {
+    if (!displayObject || !displayObject.getBounds) return null;
+    var b = displayObject.getBounds();
+    return e2eCanvasRect({ x: b.x, y: b.y, width: b.width, height: b.height }, app);
+  }
+
+  function getE2ECanvasInfo() {
+    var canvas = document.querySelector("canvas");
+    if (!canvas) return null;
+    var rect = canvas.getBoundingClientRect();
+    return { selector: "canvas", width: rect.width, height: rect.height };
+  }
+
+  function getAllE2ERegions() {
+    var out = E2E.regions.slice();
+    var dom = getDOMActionRegions();
+    var seen = {};
+    var merged = [];
+    for (var i = 0; i < out.length; i++) { seen[out[i].id] = true; merged.push(out[i]); }
+    for (var j = 0; j < dom.length; j++) {
+      if (!seen[dom[j].id]) merged.push(dom[j]);
+    }
+    return merged;
+  }
+
+  function runE2ELayoutChecks() {
+    var failures = [];
+    var regions = getAllE2ERegions();
+    var canvas = getE2ECanvasInfo();
+    if (E2E.lastVisibleLegalActionCount > 0 && regions.length === 0) {
+      failures.push({ severity: "error", message: "active legal actions did not create visible controls" });
+    }
+    if (canvas && (canvas.width <= 0 || canvas.height <= 0)) {
+      failures.push({ severity: "error", message: "canvas has empty bounds" });
+    }
+    for (var i = 0; i < regions.length; i++) {
+      var region = regions[i];
+      var r = region.rect;
+      if (!r) {
+        failures.push({ severity: "error", message: region.id + " has no rect" });
+        continue;
+      }
+      if (r.width <= 0 || r.height <= 0) failures.push({ severity: "error", message: region.id + " has empty bounds" });
+      if (r.x < -1 || r.y < -1 || r.x + r.width > window.innerWidth + 1 || r.y + r.height > window.innerHeight + 1) {
+        failures.push({ severity: "error", message: region.id + " is offscreen" });
+      }
+      if (region.kind !== "canvas" && (r.width < 36 || r.height < 36)) {
+        failures.push({ severity: "warning", message: region.id + " is a small touch target" });
+      }
+    }
+    return failures;
+  }
+
+  window.__playgentE2EBegin = e2eBeginFrame;
+  window.__playgentE2EAfterRender = e2eAfterRender;
+  window.__playgentE2ERegisterRegion = e2eRegisterRegion;
+  window.__playgentE2ECanvasRect = e2eCanvasRect;
+  window.__playgentE2EPixiBounds = e2ePixiBounds;
+  window.__playgentE2ERunLayoutChecks = runE2ELayoutChecks;
+  window.__playgentE2E = {
+    version: 1,
+    getSnapshot: function() {
+      return {
+        phase: E2E.lastPhase,
+        status: E2E.lastStatus,
+        playerId: E2E.lastPlayerId,
+        currentPlayer: E2E.lastCurrentPlayer,
+        legalActionCount: E2E.lastVisibleLegalActionCount,
+        regionCount: getAllE2ERegions().length,
+        canvas: getE2ECanvasInfo()
+      };
+    },
+    getInteractiveRegions: function() { return getAllE2ERegions(); },
+    checkLayout: function() { return runE2ELayoutChecks(); }
+  };
+
+  if (typeof window.__playgentCheckLayout !== "function") {
+    window.__playgentCheckLayout = function() { return runE2ELayoutChecks(); };
+  }
+
+  function patchPlaygentE2E() {
+    if (!window.playgent || !window.playgent.onStateChange || window.playgent.__e2ePatched) return false;
+    var original = window.playgent.onStateChange;
+    window.playgent.onStateChange = function(cb) {
+      return original.call(window.playgent, function(view, legalActions, context) {
+        e2eBeginFrame(view, legalActions, context || {});
+        var result = cb.apply(this, arguments);
+        e2eAfterRender();
+        return result;
+      });
+    };
+    window.playgent.__e2ePatched = true;
+    return true;
+  }
+
+  ensureE2ETelemetry();
+  decorateE2EDOMControls();
+  if (!patchPlaygentE2E()) {
+    var tries = 0;
+    var timer = setInterval(function() {
+      tries++;
+      if (patchPlaygentE2E() || tries > 80) clearInterval(timer);
+    }, 50);
+  }
+}());
+</script>
+
+<script>
+    (function() {
+      var view = {};
+      var legalActions = [];
+      var myName = "";
+      var board = document.getElementById("board");
+      var svgLayerCanvas = document.getElementById("svgLayerCanvas");
+      var ctx = board.getContext("2d");
+      var drawing = false;
+      var currentPoints = [];
+      var currentTool = "brush";
+      var currentColor = "black";
+      var currentFill = "none";
+      var currentWidth = 4;
+      var currentShape = "oval";
+      var shapeDraft = null;
+      var shapeDrag = null;
+      var lastSoundPhase = "";
+      var lastSoundRound = 0;
+      var lastMyScore = null;
+      var lastGameOverSoundKey = "";
+      var colors = ["black", "gray", "red", "orange", "yellow", "green", "blue", "purple", "brown", "pink", "cyan", "tan", "white"];
+      var widths = [2, 4, 8, 14];
+      var gridCols = "ABCDEFGHIJ";
+      var drawActionTypes = ["draw_stroke"];
+      function $(id) { return document.getElementById(id); }
+      function clear(node) { while (node.firstChild) node.removeChild(node.firstChild); }
+      function displayName(name) {
+        var text = String(name || "-");
+        if (text.indexOf("player_") === 0 || text.indexOf("player-") === 0) return "Player";
+        return text;
+      }
+      function actionType(option) {
+        var action = option && option.decision ? option.decision : option;
+        return action && action.type ? action.type : "";
+      }
+      function hasAction(type) {
+        var i;
+        for (i = 0; i < legalActions.length; i++) if (actionType(legalActions[i]) === type) return true;
+        return false;
+      }
+      function hasDrawAction() {
+        var i;
+        for (i = 0; i < drawActionTypes.length; i++) if (hasAction(drawActionTypes[i])) return true;
+        return false;
+      }
+      function winningNames() {
+        var names = view.players || [];
+        var winners = [];
+        var best = -1;
+        var i, name, score;
+        for (i = 0; i < names.length; i++) {
+          name = names[i];
+          score = (view.scores && view.scores[name]) || 0;
+          if (score > best) {
+            best = score;
+            winners = [name];
+          } else if (score === best) {
+            winners.push(name);
+          }
+        }
+        return winners;
+      }
+      function canEditLocalDrawing() {
+        return view.phase === "draw" && view.myRole === "drawer" && hasDrawAction();
+      }
+      function clearLocalDrawingState() {
+        drawing = false;
+        currentPoints = [];
+        shapeDraft = null;
+        shapeDrag = null;
+        if (currentTool === "shape") currentTool = "brush";
+      }
+      function clearLocalDrawingStateIfInactive() {
+        if (canEditLocalDrawing()) return;
+        clearLocalDrawingState();
+      }
+      function setData() {
+        var app = document.querySelector(".app");
+        app.setAttribute("data-phase", view.phase || "unknown");
+        app.setAttribute("data-status", view.lastEvent || "ready");
+        app.setAttribute("data-player", myName || "");
+      }
+      function boardPoint(ev) {
+        var rect = board.getBoundingClientRect();
+        var x = ((ev.clientX - rect.left) / Math.max(1, rect.width)) * 100;
+        var y = ((ev.clientY - rect.top) / Math.max(1, rect.height)) * 100;
+        if (x < 0) x = 0; if (x > 100) x = 100;
+        if (y < 0) y = 0; if (y > 100) y = 100;
+        return [Math.round(x * 10) / 10, Math.round(y * 10) / 10];
+      }
+      function gridCellFromPoint(x, y) {
+        var col = Math.floor(Math.max(0, Math.min(99.9, x)) / 10);
+        var row = Math.floor(Math.max(0, Math.min(99.9, y)) / 10);
+        return gridCols.charAt(col) + String(row + 1);
+      }
+      function gridBoxFromRect(d) {
+        var a = gridCellFromPoint(d.x, d.y);
+        var b = gridCellFromPoint(d.x + d.w - 0.1, d.y + d.h - 0.1);
+        return a === b ? a : a + ":" + b;
+      }
+      function pointsToString(points) {
+        var out = [];
+        var i;
+        for (i = 0; i < points.length; i++) out.push(points[i][0] + "," + points[i][1]);
+        return out.join(" ");
+      }
+      function shapeAction(d) {
+        var top, right, left;
+        if (d.shape === "triangle") {
+          top = gridCellFromPoint(d.x + d.w / 2, d.y);
+          right = gridCellFromPoint(d.x + d.w, d.y + d.h);
+          left = gridCellFromPoint(d.x, d.y + d.h);
+          return { type: "draw_poly", points: top + "," + right + "," + left, stroke: currentColor, fill: d.fill, width: currentWidth };
+        }
+        return { type: d.shape === "rect" ? "draw_rect" : "draw_oval", box: gridBoxFromRect(d), stroke: currentColor, fill: d.fill, width: currentWidth };
+      }
+      function strokeAction(points) {
+        return { type: "draw_stroke", points: pointsToString(points), stroke: currentColor, width: currentWidth };
+      }
+      function dotAction(point) {
+        return { type: "draw_dot", at: gridCellFromPoint(point[0], point[1]), fill: currentColor, stroke: currentColor, width: 2, r: 4 };
+      }
+      function shapeSizeFor(type) {
+        return type === "circle" ? [28, 28] : [34, 28];
+      }
+      function clampValue(value, min, max) {
+        var n = Number(value);
+        if (!isFinite(n)) n = min;
+        if (n < min) n = min;
+        if (n > max) n = max;
+        return Math.round(n * 10) / 10;
+      }
+      function normalizeDraft(draft) {
+        var d = draft;
+        if (!d) return null;
+        d.w = clampValue(d.w, 4, 100);
+        d.h = clampValue(d.h, 4, 100);
+        if (d.shape === "circle") {
+          d.w = Math.min(d.w, d.h);
+          d.h = d.w;
+        }
+        d.x = clampValue(d.x, 0, 100 - d.w);
+        d.y = clampValue(d.y, 0, 100 - d.h);
+        d.stroke = currentColor;
+        d.fill = currentFill;
+        d.width = currentWidth;
+        d.shape = currentShape;
+        return d;
+      }
+      function startShapeDraft(center) {
+        var size = shapeSizeFor(currentShape);
+        var cx = center ? center[0] : 50;
+        var cy = center ? center[1] : 50;
+        currentTool = "shape";
+        shapeDraft = normalizeDraft({
+          type: "shape",
+          shape: currentShape,
+          stroke: currentColor,
+          fill: currentFill,
+          width: currentWidth,
+          x: cx - size[0] / 2,
+          y: cy - size[1] / 2,
+          w: size[0],
+          h: size[1]
+        });
+        renderCanvas();
+        renderControls();
+      }
+      function syncShapeDraft() {
+        if (shapeDraft) {
+          normalizeDraft(shapeDraft);
+          renderCanvas();
+        }
+      }
+      function submitShapeDraft() {
+        var d, action;
+        if (!shapeDraft || !hasDrawAction()) return;
+        d = normalizeDraft(shapeDraft);
+        action = shapeAction(d);
+        if (!hasAction(action.type)) return;
+        if (playgent.sound) playgent.sound("board.place");
+        playgent.submitAction(action);
+        shapeDraft = null;
+        shapeDrag = null;
+        currentTool = "brush";
+        renderControls();
+      }
+      function draftHandleAt(point) {
+        var d = shapeDraft;
+        var handles, i, h;
+        if (!d) return "";
+        handles = [
+          ["nw", d.x, d.y],
+          ["ne", d.x + d.w, d.y],
+          ["sw", d.x, d.y + d.h],
+          ["se", d.x + d.w, d.y + d.h]
+        ];
+        for (i = 0; i < handles.length; i++) {
+          h = handles[i];
+          if (Math.abs(point[0] - h[1]) <= 3.5 && Math.abs(point[1] - h[2]) <= 3.5) return h[0];
+        }
+        if (point[0] >= d.x && point[0] <= d.x + d.w && point[1] >= d.y && point[1] <= d.y + d.h) return "move";
+        return "";
+      }
+      function updateShapeDrag(point) {
+        var d, minX, minY, maxX, maxY;
+        if (!shapeDrag || !shapeDraft) return;
+        d = shapeDraft;
+        if (shapeDrag.mode === "move") {
+          d.x = point[0] - shapeDrag.dx;
+          d.y = point[1] - shapeDrag.dy;
+        } else {
+          minX = shapeDrag.startX;
+          minY = shapeDrag.startY;
+          maxX = shapeDrag.endX;
+          maxY = shapeDrag.endY;
+          if (shapeDrag.mode.indexOf("w") >= 0) minX = point[0];
+          if (shapeDrag.mode.indexOf("e") >= 0) maxX = point[0];
+          if (shapeDrag.mode.indexOf("n") >= 0) minY = point[1];
+          if (shapeDrag.mode.indexOf("s") >= 0) maxY = point[1];
+          d.x = Math.min(minX, maxX);
+          d.y = Math.min(minY, maxY);
+          d.w = Math.abs(maxX - minX);
+          d.h = Math.abs(maxY - minY);
+        }
+        normalizeDraft(d);
+        renderCanvas();
+      }
+      function pointLineDistance(p, a, b) {
+        var dx = b[0] - a[0];
+        var dy = b[1] - a[1];
+        var lenSq = dx * dx + dy * dy;
+        var t, x, y;
+        if (lenSq <= 0.0001) return Math.hypot(p[0] - a[0], p[1] - a[1]);
+        t = ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / lenSq;
+        if (t < 0) t = 0;
+        if (t > 1) t = 1;
+        x = a[0] + t * dx;
+        y = a[1] + t * dy;
+        return Math.hypot(p[0] - x, p[1] - y);
+      }
+      function rdpKeep(points, first, last, epsilon, keep) {
+        var maxDist = 0;
+        var index = -1;
+        var i, d;
+        if (last <= first + 1) return;
+        for (i = first + 1; i < last; i++) {
+          d = pointLineDistance(points[i], points[first], points[last]);
+          if (d > maxDist) {
+            maxDist = d;
+            index = i;
+          }
+        }
+        if (maxDist > epsilon && index > -1) {
+          keep[index] = true;
+          rdpKeep(points, first, index, epsilon, keep);
+          rdpKeep(points, index, last, epsilon, keep);
+        }
+      }
+      function limitPoints(points, maxPoints) {
+        var out = [];
+        var seen = {};
+        var i, idx, key;
+        if (points.length <= maxPoints) return points;
+        for (i = 0; i < maxPoints; i++) {
+          idx = Math.round((i * (points.length - 1)) / (maxPoints - 1));
+          key = String(idx);
+          if (!seen[key]) {
+            out.push(points[idx]);
+            seen[key] = true;
+          }
+        }
+        return out;
+      }
+      function simplifyStroke(points) {
+        var keep = {};
+        var out = [];
+        var i;
+        if (points.length <= 2) return points;
+        keep[0] = true;
+        keep[points.length - 1] = true;
+        rdpKeep(points, 0, points.length - 1, 1.1, keep);
+        for (i = 0; i < points.length; i++) if (keep[i]) out.push(points[i]);
+        return limitPoints(out, 36);
+      }
+      function submitStroke(points) {
+        var simplified, action;
+        if (!hasDrawAction() || points.length < 1) return;
+        simplified = simplifyStroke(points);
+        if (simplified.length < 2) return;
+        action = strokeAction(simplified);
+        if (!hasAction(action.type)) return;
+        if (playgent.sound) playgent.sound("board.place");
+        playgent.submitAction(action);
+      }
+      function startDraw(ev) {
+        var p, hit;
+        if (view.myRole !== "drawer" || view.phase !== "draw") return;
+        p = boardPoint(ev);
+        if (currentTool === "shape") {
+          if (!shapeDraft) startShapeDraft(p);
+          hit = draftHandleAt(p);
+          if (hit) {
+            shapeDrag = {
+              mode: hit,
+              dx: p[0] - shapeDraft.x,
+              dy: p[1] - shapeDraft.y,
+              startX: shapeDraft.x,
+              startY: shapeDraft.y,
+              endX: shapeDraft.x + shapeDraft.w,
+              endY: shapeDraft.y + shapeDraft.h
+            };
+            try { board.setPointerCapture(ev.pointerId); } catch (e) {}
+          }
+          return;
+        }
+        if (!hasDrawAction()) return;
+        drawing = true;
+        currentPoints = [p];
+        try { board.setPointerCapture(ev.pointerId); } catch (e) {}
+      }
+      function moveDraw(ev) {
+        var p, last;
+        if (shapeDrag) {
+          updateShapeDrag(boardPoint(ev));
+          return;
+        }
+        if (!drawing) return;
+        p = boardPoint(ev);
+        last = currentPoints[currentPoints.length - 1];
+        if (Math.abs(p[0] - last[0]) + Math.abs(p[1] - last[1]) >= 0.9) {
+          currentPoints.push(p);
+          renderCanvas();
+          drawPreview(currentPoints);
+        }
+      }
+      function endDraw(ev) {
+        if (shapeDrag) {
+          shapeDrag = null;
+          try { board.releasePointerCapture(ev.pointerId); } catch (e) {}
+          renderControls();
+          return;
+        }
+        if (!drawing) return;
+        drawing = false;
+        if (currentPoints.length > 0) submitStroke(currentPoints);
+        currentPoints = [];
+        try { board.releasePointerCapture(ev.pointerId); } catch (e) {}
+      }
+      board.addEventListener("pointerdown", startDraw);
+      board.addEventListener("pointermove", moveDraw);
+      board.addEventListener("pointerup", endDraw);
+      board.addEventListener("pointercancel", endDraw);
+
+      function drawGrid() {
+        var w = board.width;
+        var h = board.height;
+        var i, x, y;
+        ctx.fillStyle = "white";
+        ctx.fillRect(0, 0, w, h);
+        ctx.strokeStyle = "#f0f2f5";
+        ctx.lineWidth = 1;
+        for (i = 1; i < 10; i++) {
+          x = (w * i) / 10;
+          y = (h * i) / 10;
+          ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+        }
+      }
+      function sx(x) { return (x / 100) * board.width; }
+      function sy(y) { return (y / 100) * board.height; }
+      function applyStrokeStyle(color, width) {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = (width / 100) * board.width;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+      }
+      function applyAlpha(ev) {
+        ctx.globalAlpha = ev.opacity === undefined ? 1 : Math.max(0, Math.min(1, ev.opacity));
+      }
+      function drawStroke(ev) {
+        var pts = ev.points || [];
+        var i;
+        if (pts.length < 2) return;
+        ctx.save();
+        applyAlpha(ev);
+        if (ev.tool === "eraser") {
+          ctx.globalCompositeOperation = "destination-out";
+          applyStrokeStyle("rgba(0,0,0,1)", ev.width || 12);
+        } else {
+          applyStrokeStyle(ev.color || "black", ev.width || 4);
+        }
+        ctx.beginPath();
+        ctx.moveTo(sx(pts[0][0]), sy(pts[0][1]));
+        for (i = 1; i < pts.length; i++) ctx.lineTo(sx(pts[i][0]), sy(pts[i][1]));
+        ctx.stroke();
+        ctx.restore();
+      }
+      function drawLine(ev) {
+        ctx.save();
+        applyAlpha(ev);
+        applyStrokeStyle(ev.stroke || ev.color || "black", ev.width || 4);
+        ctx.beginPath();
+        ctx.moveTo(sx(ev.x1), sy(ev.y1));
+        ctx.lineTo(sx(ev.x2), sy(ev.y2));
+        ctx.stroke();
+        ctx.restore();
+      }
+      function drawCurve(ev) {
+        ctx.save();
+        applyAlpha(ev);
+        applyStrokeStyle(ev.stroke || ev.color || "black", ev.width || 4);
+        ctx.beginPath();
+        ctx.moveTo(sx(ev.x1), sy(ev.y1));
+        ctx.quadraticCurveTo(sx(ev.cx), sy(ev.cy), sx(ev.x2), sy(ev.y2));
+        ctx.stroke();
+        ctx.restore();
+      }
+      function drawShape(ev) {
+        var x = sx(ev.x);
+        var y = sy(ev.y);
+        var w = sx(ev.w);
+        var h = sy(ev.h);
+        ctx.save();
+        applyAlpha(ev);
+        ctx.lineWidth = ((ev.width || 0) / 100) * board.width;
+        ctx.strokeStyle = ev.stroke || "black";
+        ctx.fillStyle = ev.fill === "none" ? "rgba(0,0,0,0)" : (ev.fill || "white");
+        ctx.beginPath();
+        if (ev.shape === "circle" || ev.shape === "oval") {
+          ctx.ellipse(x + w / 2, y + h / 2, w / 2, h / 2, 0, 0, Math.PI * 2);
+        } else if (ev.shape === "triangle") {
+          ctx.moveTo(x + w / 2, y);
+          ctx.lineTo(x + w, y + h);
+          ctx.lineTo(x, y + h);
+          ctx.closePath();
+        } else {
+          ctx.rect(x, y, w, h);
+        }
+        if (ev.fill && ev.fill !== "none") ctx.fill();
+        if ((ev.width || 0) > 0) ctx.stroke();
+        ctx.restore();
+      }
+      function drawDraftShape() {
+        var d = shapeDraft;
+        var x, y, w, h, handles, i;
+        if (!d || !canEditLocalDrawing()) return;
+        normalizeDraft(d);
+        drawShape(d);
+        x = sx(d.x);
+        y = sy(d.y);
+        w = sx(d.w);
+        h = sy(d.h);
+        ctx.save();
+        ctx.setLineDash([8, 5]);
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = "#2563eb";
+        ctx.strokeRect(x, y, w, h);
+        ctx.setLineDash([]);
+        handles = [[d.x, d.y], [d.x + d.w, d.y], [d.x, d.y + d.h], [d.x + d.w, d.y + d.h]];
+        for (i = 0; i < handles.length; i++) {
+          ctx.fillStyle = "white";
+          ctx.strokeStyle = "#111";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.rect(sx(handles[i][0]) - 7, sy(handles[i][1]) - 7, 14, 14);
+          ctx.fill();
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+      function drawPolygon(ev) {
+        var pts = ev.points || [];
+        var i;
+        if (pts.length < 3) return;
+        ctx.save();
+        applyAlpha(ev);
+        ctx.lineWidth = ((ev.width || 0) / 100) * board.width;
+        ctx.strokeStyle = ev.stroke || "black";
+        ctx.fillStyle = ev.fill === "none" ? "rgba(0,0,0,0)" : (ev.fill || "white");
+        ctx.beginPath();
+        ctx.moveTo(sx(pts[0][0]), sy(pts[0][1]));
+        for (i = 1; i < pts.length; i++) ctx.lineTo(sx(pts[i][0]), sy(pts[i][1]));
+        ctx.closePath();
+        if (ev.fill && ev.fill !== "none") ctx.fill();
+        if ((ev.width || 0) > 0 && ev.stroke !== "none") ctx.stroke();
+        ctx.restore();
+      }
+      function drawDot(ev) {
+        ctx.save();
+        applyAlpha(ev);
+        ctx.lineWidth = ((ev.width || 0) / 100) * board.width;
+        ctx.strokeStyle = ev.stroke || "black";
+        ctx.fillStyle = ev.fill === "none" ? "rgba(0,0,0,0)" : (ev.fill || "black");
+        ctx.beginPath();
+        ctx.arc(sx(ev.x), sy(ev.y), (ev.r / 100) * board.width, 0, Math.PI * 2);
+        if (ev.fill && ev.fill !== "none") ctx.fill();
+        if ((ev.width || 0) > 0 && ev.stroke !== "none") ctx.stroke();
+        ctx.restore();
+      }
+      function drawPreview(points) {
+        var i;
+        if (!points || points.length < 2) return;
+        ctx.save();
+        applyStrokeStyle(currentColor, currentWidth);
+        ctx.beginPath();
+        ctx.moveTo(sx(points[0][0]), sy(points[0][1]));
+        for (i = 1; i < points.length; i++) ctx.lineTo(sx(points[i][0]), sy(points[i][1]));
+        ctx.stroke();
+        ctx.restore();
+      }
+      function renderSvgLayers(events) {
+        var parts = [];
+        var i, ev;
+        for (i = 0; i < events.length; i++) {
+          ev = events[i];
+          if (ev && ev.type === "svg_layer" && ev.svg) parts.push("<g data-layer=\"" + (i + 1) + "\">" + ev.svg + "</g>");
+        }
+        svgLayerCanvas.innerHTML = parts.join("");
+      }
+      function renderCanvas() {
+        var rect = board.getBoundingClientRect();
+        var size = Math.max(300, Math.floor(Math.min(rect.width, rect.height) * (window.devicePixelRatio || 1)));
+        var events = view.drawEvents || [];
+        var i;
+        if (board.width !== size || board.height !== size) {
+          board.width = size;
+          board.height = size;
+        }
+        drawGrid();
+        renderSvgLayers(events);
+        for (i = 0; i < events.length; i++) {
+          if (events[i].type === "stroke") drawStroke(events[i]);
+          else if (events[i].type === "line") drawLine(events[i]);
+          else if (events[i].type === "curve") drawCurve(events[i]);
+          else if (events[i].type === "shape") drawShape(events[i]);
+          else if (events[i].type === "polygon") drawPolygon(events[i]);
+          else if (events[i].type === "dot") drawDot(events[i]);
+        }
+        drawDraftShape();
+      }
+      function renderPlayers() {
+        var box = $("players");
+        var players = (view.players || []).slice();
+        var avatarColors = ["#f472b6", "#fb923c", "#38bdf8", "#a855f7", "#22c55e", "#facc15"];
+        var i, player, row, rank, info, name, score, flag, avatar;
+        clear(box);
+        players.sort(function(a, b) { return ((view.scores && view.scores[b]) || 0) - ((view.scores && view.scores[a]) || 0); });
+        for (i = 0; i < players.length; i++) {
+          player = players[i];
+          row = document.createElement("div");
+          row.className = "player";
+          rank = document.createElement("div");
+          rank.className = "rank";
+          rank.textContent = "#" + (i + 1);
+          info = document.createElement("div");
+          name = document.createElement("div");
+          name.className = "pname";
+          name.textContent = displayName(player) + (player === myName ? " (You)" : "");
+          score = document.createElement("div");
+          score.className = "pscore";
+          score.textContent = ((view.scores && view.scores[player]) || 0) + " points";
+          flag = document.createElement("div");
+          flag.className = player === view.drawerName ? "drawerMark" : "solvedMark";
+          flag.textContent = player === view.drawerName ? "drawing" : (view.solved && view.solved[player] ? "guessed it" : "");
+          info.appendChild(name); info.appendChild(score); info.appendChild(flag);
+          avatar = document.createElement("div");
+          avatar.className = "avatar";
+          avatar.style.background = avatarColors[i % avatarColors.length];
+          avatar.textContent = String(i + 1);
+          row.appendChild(rank); row.appendChild(info); row.appendChild(avatar);
+          box.appendChild(row);
+        }
+      }
+      function renderStatus() {
+        var word = view.promptBlanks || "_ _ _ _";
+        if (view.myRole === "drawer" && view.secretPrompt) word = view.secretPrompt.toUpperCase();
+        else if (view.promptVisible && view.prompt) word = view.prompt.toUpperCase();
+        $("roundText").textContent = "Round " + (view.round || 1) + " of " + (view.maxRounds || 1);
+        $("phasePill").textContent = view.phase === "draw" ? "Live draw" : (view.phase || "waiting");
+        $("wordText").textContent = word;
+        $("drawerText").textContent = displayName(view.drawerName);
+        $("markText").textContent = String(view.layerCount || view.markCount || 0);
+        if (view.myRole === "drawer" && view.phase === "draw") $("resourceText").textContent = (view.layerCount || view.markCount || 0) + " layers";
+        else if (view.myRole === "guesser" && view.phase === "draw") $("resourceText").textContent = view.guessesRemaining + " guesses";
+        else $("resourceText").textContent = "-";
+      }
+      function renderFeed() {
+        var box = $("feed");
+        var title = $("rightTitle");
+        var messages = [];
+        var guessLog = view.guessLog || [];
+        var geometry = view.geometryLog || [];
+        var i, g, div;
+        clear(box);
+        if (view.myRole === "drawer" && view.secretPrompt) title.textContent = "Draw: " + view.secretPrompt;
+        else if (view.promptVisible && view.prompt) title.textContent = "Answer: " + view.prompt;
+        else title.textContent = "Guess " + (view.promptBlanks || "");
+        if (view.lastEvent) messages.push({ text: view.lastEvent, cls: "system" });
+        for (i = Math.max(0, geometry.length - 8); i < geometry.length; i++) messages.push({ text: geometry[i], cls: "layer" });
+        for (i = Math.max(0, guessLog.length - 10); i < guessLog.length; i++) {
+          g = guessLog[i];
+          if (g.guessedIt && !g.text) messages.push({ text: (g.isYou ? "You" : displayName(g.player)) + " guessed it!", cls: "guess good" + (g.isYou ? " you" : "") });
+          else if (g.text) messages.push({ text: (g.isYou ? "You" : displayName(g.player)) + ": " + g.text + (g.correct ? " (right)" : ""), cls: "guess" + (g.correct ? " good" : "") + (g.isYou ? " you" : "") });
+          else messages.push({ text: (g.isYou ? "You" : displayName(g.player)) + " guessed.", cls: "guess" + (g.isYou ? " you" : "") });
+        }
+        if (messages.length === 0) messages.push({ text: "Waiting for the first mark.", cls: "system" });
+        for (i = 0; i < messages.length; i++) {
+          div = document.createElement("div");
+          div.className = "msg" + (messages[i].cls ? " " + messages[i].cls : "");
+          div.textContent = messages[i].text;
+          box.appendChild(div);
+        }
+        box.scrollTop = box.scrollHeight;
+      }
+      function makeButton(text, fn, cls) {
+        var b = document.createElement("button");
+        b.textContent = text;
+        if (cls) b.className = cls;
+        b.onclick = fn;
+        return b;
+      }
+      function makeShapeSelect() {
+        var select = document.createElement("select");
+        var shapes = [["oval", "Oval"], ["circle", "Circle"], ["rect", "Box"], ["triangle", "Triangle"]];
+        var i, option;
+        for (i = 0; i < shapes.length; i++) {
+          option = document.createElement("option");
+          option.value = shapes[i][0];
+          option.textContent = shapes[i][1];
+          select.appendChild(option);
+        }
+        select.value = currentShape;
+        select.onchange = function() {
+          if (playgent.sound) playgent.sound("ui.select");
+          currentShape = select.value;
+          if (!shapeDraft) startShapeDraft();
+          syncShapeDraft();
+          renderControls();
+        };
+        return select;
+      }
+      function makeFillSelect() {
+        var select = document.createElement("select");
+        var options = ["none"].concat(colors);
+        var i, option;
+        for (i = 0; i < options.length; i++) {
+          option = document.createElement("option");
+          option.value = options[i];
+          option.textContent = options[i] === "none" ? "No fill" : options[i];
+          select.appendChild(option);
+        }
+        select.value = currentFill;
+        select.onchange = function() {
+          if (playgent.sound) playgent.sound("ui.select");
+          currentFill = select.value;
+          if (currentTool === "shape" && shapeDraft) syncShapeDraft();
+          renderControls();
+        };
+        return select;
+      }
+      function makeRange(label, field, max) {
+        var row = document.createElement("div");
+        var name = document.createElement("span");
+        var input = document.createElement("input");
+        var value = document.createElement("span");
+        row.className = "rangeRow";
+        name.textContent = label;
+        input.type = "range";
+        input.min = "0";
+        input.max = String(max);
+        input.step = "1";
+        input.value = shapeDraft ? String(Math.round(shapeDraft[field])) : "0";
+        value.textContent = input.value;
+        input.oninput = function() {
+          if (!shapeDraft) return;
+          shapeDraft[field] = Number(input.value);
+          normalizeDraft(shapeDraft);
+          value.textContent = String(Math.round(shapeDraft[field]));
+          renderCanvas();
+        };
+        row.appendChild(name);
+        row.appendChild(input);
+        row.appendChild(value);
+        return row;
+      }
+      function renderShapeEditor(wrap) {
+        var editor = document.createElement("div");
+        var grid = document.createElement("div");
+        var shapeField = document.createElement("label");
+        var fillField = document.createElement("label");
+        var actions = document.createElement("div");
+        var hint = document.createElement("div");
+        editor.className = "shapeEditor";
+        grid.className = "fieldGrid";
+        shapeField.className = "field";
+        shapeField.textContent = "Shape";
+        shapeField.appendChild(makeShapeSelect());
+        fillField.className = "field";
+        fillField.textContent = "Fill";
+        fillField.appendChild(makeFillSelect());
+        grid.appendChild(shapeField);
+        grid.appendChild(fillField);
+        editor.appendChild(grid);
+        if (shapeDraft) {
+          editor.appendChild(makeRange("X", "x", 96));
+          editor.appendChild(makeRange("Y", "y", 96));
+          editor.appendChild(makeRange("W", "w", 100));
+          editor.appendChild(makeRange("H", "h", 100));
+        }
+        actions.className = "shapeActions";
+        actions.appendChild(makeButton(shapeDraft ? "Place shape" : "New shape", function() {
+          if (!shapeDraft && playgent.sound) playgent.sound("ui.select");
+          if (!shapeDraft) startShapeDraft();
+          else submitShapeDraft();
+        }));
+        actions.appendChild(makeButton("Cancel", function() {
+          if (playgent.sound) playgent.sound("ui.cancel");
+          shapeDraft = null;
+          shapeDrag = null;
+          currentTool = "brush";
+          renderCanvas();
+          renderControls();
+        }, "secondary"));
+        editor.appendChild(actions);
+        hint.className = "hint";
+        hint.textContent = shapeDraft ? "Drag the shape to move it, drag corner handles to resize, then place it." : "Create one editable shape, then move, resize, fill, and place it.";
+        editor.appendChild(hint);
+        wrap.appendChild(editor);
+      }
+      function toolButton(label, tool) {
+        return makeButton(label, function() {
+          if (playgent.sound) playgent.sound("ui.select");
+          currentTool = tool;
+          if (tool === "shape" && !shapeDraft) startShapeDraft();
+          if (tool === "brush") {
+            shapeDraft = null;
+            shapeDrag = null;
+            renderCanvas();
+          }
+          renderControls();
+        }, currentTool === tool ? "toolActive" : "");
+      }
+      function renderToolRows(wrap) {
+        var tools = document.createElement("div");
+        var colorRow = document.createElement("div");
+        var sizeRow = document.createElement("div");
+        var i, b, color, width;
+        tools.className = "toolRow";
+        tools.appendChild(toolButton("Brush", "brush"));
+        tools.appendChild(makeButton("Undo", function() {
+          if (hasAction("undo_draw")) {
+            if (playgent.sound) playgent.sound("ui.cancel");
+            playgent.submitAction({ type: "undo_draw" });
+          }
+        }, "secondary"));
+        wrap.appendChild(tools);
+
+        colorRow.className = "colorRow";
+        for (i = 0; i < colors.length; i++) {
+          color = colors[i];
+          b = makeButton(color, (function(c) {
+            return function() {
+              if (playgent.sound) playgent.sound("ui.select");
+              currentColor = c;
+              syncShapeDraft();
+              renderControls();
+            };
+          })(color), "swatch" + (currentColor === color ? " toolActive" : ""));
+          b.style.background = color;
+          b.title = color;
+          colorRow.appendChild(b);
+        }
+        wrap.appendChild(colorRow);
+
+        sizeRow.className = "sizeRow";
+        for (i = 0; i < widths.length; i++) {
+          width = widths[i];
+          sizeRow.appendChild(makeButton(String(width), (function(w) {
+            return function() {
+              if (playgent.sound) playgent.sound("ui.select");
+              currentWidth = w;
+              syncShapeDraft();
+              renderControls();
+            };
+          })(width), currentWidth === width ? "toolActive" : ""));
+        }
+        wrap.appendChild(sizeRow);
+      }
+      function renderDrawerControls(box) {
+        var wrap = document.createElement("div");
+        var hint = document.createElement("div");
+        wrap.className = "drawerTools";
+        renderToolRows(wrap);
+        hint.className = "hint";
+        hint.textContent = "Draw on the canvas with the selected color and size.";
+        wrap.appendChild(hint);
+        box.appendChild(wrap);
+      }
+      function submitGuess() {
+        var input = $("guessInput");
+        var text = input ? input.value.trim() : "";
+        if (!text) return;
+        if (playgent.sound) playgent.sound("ui.confirm");
+        playgent.submitAction({ type: "guess", text: text });
+        input.value = "";
+      }
+      function renderGuessControls(box) {
+        var row = document.createElement("div");
+        var input = document.createElement("input");
+        var btn = makeButton("Guess", submitGuess);
+        var hint = document.createElement("div");
+        row.className = "guessRow";
+        input.id = "guessInput";
+        input.placeholder = "Type your guess";
+        input.autocomplete = "off";
+        input.onkeydown = function(ev) { if (ev.key === "Enter") submitGuess(); };
+        row.appendChild(input); row.appendChild(btn);
+        box.appendChild(row);
+        hint.className = "hint";
+        hint.textContent = (view.guessesRemaining || 0) + " guesses left";
+        box.appendChild(hint);
+      }
+      function renderControls() {
+        var box = $("controls");
+        var div;
+        clear(box);
+        if (view.phase === "draw" && view.myRole === "drawer" && hasDrawAction()) {
+          renderDrawerControls(box);
+          return;
+        }
+        if (view.phase === "draw" && view.myRole === "guesser" && hasAction("guess")) {
+          renderGuessControls(box);
+          return;
+        }
+        div = document.createElement("div");
+        div.className = "hint";
+        div.textContent = view.phase === "discussion" ? "Roast or compliment the sketch in chat." : "Waiting for the next turn.";
+        box.appendChild(div);
+      }
+      function render() {
+        setData();
+        renderStatus();
+        renderPlayers();
+        renderCanvas();
+        renderFeed();
+        renderControls();
+      }
+      window.addEventListener("resize", function() { renderCanvas(); });
+      playgent.onStateChange(function(nextView, nextActions, context) {
+        view = nextView || {};
+        legalActions = nextActions || [];
+        myName = view.myName || (context && (context.name || context.playerName)) || "";
+        var phase = view.phase || "";
+        var round = view.round || 0;
+        var myScore = view.scores && myName ? view.scores[myName] : null;
+        if (lastSoundPhase && (phase !== lastSoundPhase || round !== lastSoundRound) && playgent.sound) {
+          if (phase === "draw") playgent.sound("phase.change");
+          else if (phase === "discussion") playgent.sound("info.reveal");
+        }
+        if (myScore != null && lastMyScore != null && myScore > lastMyScore && playgent.sound) {
+          playgent.sound("score.tick");
+        }
+        if (phase === "gameOverDisplay" || phase === "gameOver") {
+          var winners = winningNames();
+          var gameOverSoundKey = "final:" + round + ":" + winners.join("|");
+          if (gameOverSoundKey !== lastGameOverSoundKey && playgent.sound) {
+            lastGameOverSoundKey = gameOverSoundKey;
+            playgent.sound(winners.indexOf(myName) !== -1 ? "game.victory" : ((context && context.myId) ? "game.defeat" : "game.over"));
+          }
+        } else {
+          lastGameOverSoundKey = "";
+        }
+        lastSoundPhase = phase;
+        lastSoundRound = round;
+        lastMyScore = myScore;
+        clearLocalDrawingStateIfInactive();
+        render();
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 154" role="img" aria-labelledby="title">
+  <title id="title">LiarLiar thumbnail</title>
+  <rect width="220" height="154" rx="14" fill="#203653"/>
+  <path d="M43 143c8-30 26-46 52-46s44 16 52 46z" fill="#f8fafc" stroke="#101827" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M75 121l20 26 20-26z" fill="#60a5fa" stroke="#101827" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M78 24c-27 1-45 21-45 50 0 31 22 52 51 52 23 0 40-13 47-34 20-1 43 3 68 9 9 2 16-3 17-11 1-9-6-15-15-15-27 1-50-1-70-6-2-28-24-46-53-45z" fill="#f3b38d" stroke="#101827" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M39 58c8-24 28-39 56-41 21-1 38 8 49 26-18-3-34 2-48 14-19-4-38-3-57 1z" fill="#050505" stroke="#101827" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M40 36L70 8l34 26c-22-2-43-1-64 2z" fill="#facc15" stroke="#101827" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M52 30c17-1 33 0 49 4" fill="none" stroke="#38bdf8" stroke-width="5" stroke-linecap="round"/>
+  <path d="M96 12c9 0 16 6 20 18" fill="none" stroke="#ef4444" stroke-width="5" stroke-linecap="round"/>
+  <g stroke="#101827" stroke-width="4">
+    <ellipse cx="79" cy="64" rx="10" ry="18" fill="#f8fafc"/>
+    <ellipse cx="106" cy="65" rx="10" ry="18" fill="#f8fafc"/>
+    <circle cx="82" cy="69" r="4" fill="#2563eb" stroke="none"/>
+    <circle cx="109" cy="70" r="4" fill="#2563eb" stroke="none"/>
+  </g>
+  <path d="M62 55c3-6 8-9 15-8M96 48c7-3 13-1 18 4" fill="none" stroke="#101827" stroke-width="3" stroke-linecap="round"/>
+  <path d="M88 98c7-8 20-5 22 6 2 12-12 20-21 12-7-5-7-13-1-18z" fill="#dc2626" stroke="#101827" stroke-width="4" stroke-linejoin="round"/>
+  <circle cx="64" cy="88" r="6" fill="#ef9a8d"/>
+</svg>

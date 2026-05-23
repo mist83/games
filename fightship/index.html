@@ -1,0 +1,1375 @@
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  margin: 0;
+  overflow: hidden;
+  width: 100vw;
+  height: 100vh;
+  background: #06131f;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+#game-container {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+#telemetry {
+  position: fixed;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+</style>
+
+<div id="game-container"></div>
+<div id="telemetry" data-phase="battle" data-board data-cell="r,c" data-current-player data-move-history data-player="viewer" data-status="waiting"></div>
+
+<script>
+(function() {
+  var E2E_GAME_SLUG = "fightship";
+  var E2E = window.__playgentE2EState || {
+    version: 1,
+    regions: [],
+    lastPhase: "loading",
+    lastStatus: "loading",
+    lastPlayerId: "",
+    lastCurrentPlayer: "",
+    lastLegalActionCount: 0,
+    lastVisibleLegalActionCount: 0,
+    lastActions: [],
+    lastRawActions: []
+  };
+  window.__playgentE2EState = E2E;
+
+  function setE2EAttr(el, name, value) {
+    if (!el) return;
+    el.setAttribute(name, value == null ? "" : String(value));
+  }
+
+  function unwrapE2EAction(option) {
+    if (option && typeof option === "object" && option.decision !== undefined) return option.decision;
+    if (option && typeof option === "object" && option.action !== undefined) return option.action;
+    return option;
+  }
+
+  function isVisibleE2EAction(action) {
+    action = unwrapE2EAction(action);
+    if (!action || typeof action !== "object") return false;
+    if (action.type === "advance_phase" || action.type === "system" || action.type === "noop") return false;
+    return true;
+  }
+
+  function getVisibleE2EActions(actions) {
+    var out = [];
+    for (var i = 0; actions && i < actions.length; i++) {
+      if (isVisibleE2EAction(actions[i])) out.push(unwrapE2EAction(actions[i]));
+    }
+    return out;
+  }
+
+  function ensureE2ETelemetry() {
+    var el = document.getElementById("e2e-telemetry");
+    if (!el) {
+      el = document.createElement("div");
+      el.id = "e2e-telemetry";
+      if (document.body) document.body.appendChild(el);
+    }
+    el.setAttribute("aria-hidden", "true");
+    el.style.cssText = "position:fixed;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;left:0;top:0;";
+    setE2EAttr(el, "data-game", E2E_GAME_SLUG);
+    setE2EAttr(el, "data-phase", E2E.lastPhase);
+    setE2EAttr(el, "data-status", E2E.lastStatus);
+    setE2EAttr(el, "data-player", E2E.lastPlayerId || "spectator");
+    return el;
+  }
+
+  function addUnique(list, el) {
+    if (!el) return;
+    for (var i = 0; i < list.length; i++) if (list[i] === el) return;
+    list.push(el);
+  }
+
+  function getE2ERoots() {
+    var roots = [];
+    addUnique(roots, ensureE2ETelemetry());
+    addUnique(roots, document.getElementById("telemetry"));
+    addUnique(roots, document.getElementById("game"));
+    addUnique(roots, document.getElementById("game-container"));
+    addUnique(roots, document.querySelector("[data-board]"));
+    return roots;
+  }
+
+  function getCurrentPlayerE2E(view) {
+    if (!view) return "";
+    return view.currentPlayer || view.currentPlayerId || view.currentActor || view.turn || "";
+  }
+
+  function updateE2EPlayers(players) {
+    var telemetry = ensureE2ETelemetry();
+    var host = document.getElementById("e2e-players");
+    if (!host) {
+      host = document.createElement("div");
+      host.id = "e2e-players";
+      telemetry.appendChild(host);
+    }
+    host.textContent = "";
+    for (var i = 0; players && i < players.length; i++) {
+      var p = players[i] || {};
+      var span = document.createElement("span");
+      setE2EAttr(span, "data-player", p.id || "");
+      setE2EAttr(span, "data-player-name", p.name || p.id || "");
+      span.textContent = p.name || p.id || "";
+      host.appendChild(span);
+    }
+  }
+
+  function updateE2ELandmarks(view, legalActions, context) {
+    var visibleActions = getVisibleE2EActions(legalActions || []);
+    var phase = context && context.gameOver ? "game-over" : (view && (view.phase || view.mode || view.stage) ? (view.phase || view.mode || view.stage) : "playing");
+    var status = context && context.gameOver ? "game-over" : (visibleActions.length > 0 ? "your-turn" : "waiting");
+    var playerId = context && context.myId ? context.myId : "spectator";
+    var currentPlayer = getCurrentPlayerE2E(view);
+    var roots = getE2ERoots();
+    E2E.lastPhase = phase;
+    E2E.lastStatus = status;
+    E2E.lastPlayerId = playerId;
+    E2E.lastCurrentPlayer = currentPlayer;
+    E2E.lastRawActions = legalActions || [];
+    E2E.lastActions = visibleActions;
+    E2E.lastLegalActionCount = (legalActions || []).length;
+    E2E.lastVisibleLegalActionCount = visibleActions.length;
+    for (var i = 0; i < roots.length; i++) {
+      setE2EAttr(roots[i], "data-game", E2E_GAME_SLUG);
+      setE2EAttr(roots[i], "data-phase", phase);
+      setE2EAttr(roots[i], "data-status", status);
+      setE2EAttr(roots[i], "data-player", playerId);
+      setE2EAttr(roots[i], "data-current-player", currentPlayer);
+      if (view && view.round != null) setE2EAttr(roots[i], "data-round", view.round);
+      if (view && view.turnNumber != null) setE2EAttr(roots[i], "data-turn", view.turnNumber);
+    }
+    updateE2EPlayers(context && context.players ? context.players : []);
+  }
+
+  function actionTypeForIndex(idx) {
+    var raw = E2E.lastRawActions && E2E.lastRawActions[idx] ? unwrapE2EAction(E2E.lastRawActions[idx]) : null;
+    return raw && raw.type ? raw.type : "choose";
+  }
+
+  function safeLabelFromNode(node) {
+    var label = node.getAttribute("data-action-label") || node.getAttribute("aria-label") || node.title || node.textContent || node.value || "";
+    return String(label).replace(/\s+/g, " ").trim().slice(0, 100);
+  }
+
+  function decorateE2EDOMControls() {
+    var nodes = document.querySelectorAll("[data-action-idx], [data-action], button, [role='button'], input[type='button'], input[type='submit'], input:not([type='hidden']), select, textarea, [data-cell], [data-card], [data-card-id], [data-option-id], [data-brainrot], canvas");
+    for (var i = 0; i < nodes.length; i++) {
+      var node = nodes[i];
+      if (node.hasAttribute("data-action") && !node.hasAttribute("data-action-idx")) {
+        node.setAttribute("data-action-idx", node.getAttribute("data-action"));
+      }
+      if (node.hasAttribute("data-action-idx")) {
+        var idx = parseInt(node.getAttribute("data-action-idx"), 10);
+        if (!isNaN(idx) && !node.hasAttribute("data-action-type")) node.setAttribute("data-action-type", actionTypeForIndex(idx));
+        if (!node.hasAttribute("data-action-label")) node.setAttribute("data-action-label", safeLabelFromNode(node));
+      }
+      if (node.hasAttribute("data-cell") && !node.getAttribute("aria-label")) {
+        node.setAttribute("aria-label", "cell " + node.getAttribute("data-cell"));
+      }
+      if ((node.hasAttribute("data-card") || node.hasAttribute("data-card-id")) && !node.getAttribute("aria-label")) {
+        node.setAttribute("aria-label", "card " + (node.getAttribute("data-card") || node.getAttribute("data-card-id")));
+      }
+      if (node.tagName === "CANVAS" && !node.getAttribute("aria-label")) {
+        node.setAttribute("aria-label", E2E_GAME_SLUG + " canvas");
+      }
+    }
+  }
+
+  function e2eBeginFrame(view, legalActions, context) {
+    E2E.regions = [];
+    updateE2ELandmarks(view || {}, legalActions || [], context || {});
+  }
+
+  function e2eAfterRender() {
+    decorateE2EDOMControls();
+  }
+
+  function isVisibleE2ENode(node) {
+    if (!node || !node.getBoundingClientRect) return false;
+    var rect = node.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return false;
+    if (rect.right <= 0 || rect.bottom <= 0 || rect.left >= window.innerWidth || rect.top >= window.innerHeight) return false;
+    var style = window.getComputedStyle ? window.getComputedStyle(node) : null;
+    if (style && (style.display === "none" || style.visibility === "hidden" || style.opacity === "0")) return false;
+    if (node.disabled || node.getAttribute("aria-disabled") === "true") return false;
+    return true;
+  }
+
+  function regionKindForNode(node) {
+    if (node.tagName === "CANVAS") return "canvas";
+    if (node.tagName === "INPUT" || node.tagName === "SELECT" || node.tagName === "TEXTAREA") return "input";
+    if (node.hasAttribute("data-cell")) return "cell";
+    if (node.hasAttribute("data-card") || node.hasAttribute("data-card-id")) return "card";
+    return "button";
+  }
+
+  function getDOMActionRegions() {
+    decorateE2EDOMControls();
+    var nodes = document.querySelectorAll("[data-action-idx], button, [role='button'], input[type='button'], input[type='submit'], input:not([type='hidden']), select, textarea, [data-cell], [data-card], [data-card-id], [data-option-id], [data-brainrot], canvas");
+    var out = [];
+    for (var i = 0; i < nodes.length; i++) {
+      var node = nodes[i];
+      if (!isVisibleE2ENode(node)) continue;
+      var r = clipE2ERect(node.getBoundingClientRect());
+      if (!r) continue;
+      var id = node.id || node.getAttribute("data-action-idx") || node.getAttribute("data-cell") || node.getAttribute("data-card") || node.getAttribute("data-card-id") || node.getAttribute("data-option-id") || node.getAttribute("data-brainrot") || ("control-" + i);
+      out.push({
+        id: String(id),
+        kind: regionKindForNode(node),
+        label: safeLabelFromNode(node),
+        actionType: node.getAttribute("data-action-type") || "",
+        selector: node.id ? ("#" + node.id) : "",
+        rect: { x: r.left, y: r.top, width: r.width, height: r.height },
+        center: { x: r.left + r.width / 2, y: r.top + r.height / 2 }
+      });
+    }
+    return out;
+  }
+
+  function clipE2ERect(rect) {
+    if (!rect) return null;
+    var x = Number(rect.x != null ? rect.x : rect.left) || 0;
+    var y = Number(rect.y != null ? rect.y : rect.top) || 0;
+    var width = Number(rect.width) || 0;
+    var height = Number(rect.height) || 0;
+    var left = Math.max(0, x);
+    var top = Math.max(0, y);
+    var right = Math.min(window.innerWidth, x + width);
+    var bottom = Math.min(window.innerHeight, y + height);
+    if (right - left <= 0 || bottom - top <= 0) return null;
+    return { x: left, y: top, width: right - left, height: bottom - top };
+  }
+
+  function e2eRegisterRegion(region) {
+    if (!region || !region.id || !region.rect) return;
+    var r = clipE2ERect(region.rect);
+    if (!r || r.width == null || r.height == null) return;
+    var item = {
+      id: String(region.id),
+      kind: region.kind || "button",
+      label: region.label || "",
+      actionType: region.actionType || "",
+      rect: { x: Number(r.x) || 0, y: Number(r.y) || 0, width: Number(r.width) || 0, height: Number(r.height) || 0 },
+      center: region.center || { x: (Number(r.x) || 0) + (Number(r.width) || 0) / 2, y: (Number(r.y) || 0) + (Number(r.height) || 0) / 2 }
+    };
+    for (var i = 0; i < E2E.regions.length; i++) {
+      if (E2E.regions[i].id === item.id) {
+        E2E.regions[i] = item;
+        return;
+      }
+    }
+    E2E.regions.push(item);
+  }
+
+  function e2eCanvasRect(localRect, app) {
+    var canvas = app && app.canvas ? app.canvas : document.querySelector("canvas");
+    var screen = app && app.screen ? app.screen : null;
+    if (!canvas || !localRect) return null;
+    var canvasRect = canvas.getBoundingClientRect();
+    var screenW = screen && screen.width ? screen.width : canvasRect.width;
+    var screenH = screen && screen.height ? screen.height : canvasRect.height;
+    var sx = canvasRect.width / (screenW || canvasRect.width || 1);
+    var sy = canvasRect.height / (screenH || canvasRect.height || 1);
+    return {
+      x: canvasRect.left + localRect.x * sx,
+      y: canvasRect.top + localRect.y * sy,
+      width: localRect.width * sx,
+      height: localRect.height * sy
+    };
+  }
+
+  function e2ePixiBounds(displayObject, app) {
+    if (!displayObject || !displayObject.getBounds) return null;
+    var b = displayObject.getBounds();
+    return e2eCanvasRect({ x: b.x, y: b.y, width: b.width, height: b.height }, app);
+  }
+
+  function getE2ECanvasInfo() {
+    var canvas = document.querySelector("canvas");
+    if (!canvas) return null;
+    var rect = canvas.getBoundingClientRect();
+    return { selector: "canvas", width: rect.width, height: rect.height };
+  }
+
+  function getAllE2ERegions() {
+    var out = E2E.regions.slice();
+    var dom = getDOMActionRegions();
+    var seen = {};
+    var merged = [];
+    for (var i = 0; i < out.length; i++) { seen[out[i].id] = true; merged.push(out[i]); }
+    for (var j = 0; j < dom.length; j++) {
+      if (!seen[dom[j].id]) merged.push(dom[j]);
+    }
+    return merged;
+  }
+
+  function runE2ELayoutChecks() {
+    var failures = [];
+    var regions = getAllE2ERegions();
+    var canvas = getE2ECanvasInfo();
+    if (E2E.lastVisibleLegalActionCount > 0 && regions.length === 0) {
+      failures.push({ severity: "error", message: "active legal actions did not create visible controls" });
+    }
+    if (canvas && (canvas.width <= 0 || canvas.height <= 0)) {
+      failures.push({ severity: "error", message: "canvas has empty bounds" });
+    }
+    for (var i = 0; i < regions.length; i++) {
+      var region = regions[i];
+      var r = region.rect;
+      if (!r) {
+        failures.push({ severity: "error", message: region.id + " has no rect" });
+        continue;
+      }
+      if (r.width <= 0 || r.height <= 0) failures.push({ severity: "error", message: region.id + " has empty bounds" });
+      if (r.x < -1 || r.y < -1 || r.x + r.width > window.innerWidth + 1 || r.y + r.height > window.innerHeight + 1) {
+        failures.push({ severity: "error", message: region.id + " is offscreen" });
+      }
+      if (region.kind !== "canvas" && (r.width < 36 || r.height < 36)) {
+        failures.push({ severity: "warning", message: region.id + " is a small touch target" });
+      }
+    }
+    return failures;
+  }
+
+  window.__playgentE2EBegin = e2eBeginFrame;
+  window.__playgentE2EAfterRender = e2eAfterRender;
+  window.__playgentE2ERegisterRegion = e2eRegisterRegion;
+  window.__playgentE2ECanvasRect = e2eCanvasRect;
+  window.__playgentE2EPixiBounds = e2ePixiBounds;
+  window.__playgentE2ERunLayoutChecks = runE2ELayoutChecks;
+  window.__playgentE2E = {
+    version: 1,
+    getSnapshot: function() {
+      return {
+        phase: E2E.lastPhase,
+        status: E2E.lastStatus,
+        playerId: E2E.lastPlayerId,
+        currentPlayer: E2E.lastCurrentPlayer,
+        legalActionCount: E2E.lastVisibleLegalActionCount,
+        regionCount: getAllE2ERegions().length,
+        canvas: getE2ECanvasInfo()
+      };
+    },
+    getInteractiveRegions: function() { return getAllE2ERegions(); },
+    checkLayout: function() { return runE2ELayoutChecks(); }
+  };
+
+  if (typeof window.__playgentCheckLayout !== "function") {
+    window.__playgentCheckLayout = function() { return runE2ELayoutChecks(); };
+  }
+
+  function patchPlaygentE2E() {
+    if (!window.playgent || !window.playgent.onStateChange || window.playgent.__e2ePatched) return false;
+    var original = window.playgent.onStateChange;
+    window.playgent.onStateChange = function(cb) {
+      return original.call(window.playgent, function(view, legalActions, context) {
+        e2eBeginFrame(view, legalActions, context || {});
+        var result = cb.apply(this, arguments);
+        e2eAfterRender();
+        return result;
+      });
+    };
+    window.playgent.__e2ePatched = true;
+    return true;
+  }
+
+  ensureE2ETelemetry();
+  decorateE2EDOMControls();
+  if (!patchPlaygentE2E()) {
+    var tries = 0;
+    var timer = setInterval(function() {
+      tries++;
+      if (patchPlaygentE2E() || tries > 80) clearInterval(timer);
+    }, 50);
+  }
+}());
+</script>
+
+<script>
+function unwrapAction(option) {
+  if (option && typeof option === "object" && option.decision !== undefined) return option.decision;
+  if (option && typeof option === "object" && option.action !== undefined) return option.action;
+  return option;
+}
+
+var FallbackRenderer = {
+  active: false,
+  view: null,
+  actions: [],
+  context: null,
+
+  start: function() {
+    if (this.active) return;
+    this.active = true;
+    var root = document.getElementById("game-container");
+    root.innerHTML = "";
+    root.style.cssText = "position:fixed;inset:0;overflow:auto;background:#06131f;color:#f7fbff;font-family:Inter,Arial,sans-serif;padding:14px;";
+    if (this.view) this.render(this.view, this.actions, this.context);
+  },
+
+  actionFor: function(row, col) {
+    for (var i = 0; i < this.actions.length; i++) {
+      var a = this.actions[i];
+      if (a.type === "fire" && a.row === row && a.col === col) return a;
+    }
+    return null;
+  },
+
+  cellLabel: function(status) {
+    if (status === "ship") return "▰";
+    if (status === "hit") return "✹";
+    if (status === "sunk") return "★";
+    if (status === "miss") return "○";
+    if (status === "unknown") return "·";
+    return "";
+  },
+
+  renderBoard: function(title, cells, canFire) {
+    var size = this.view && this.view.boardSize ? this.view.boardSize : Math.sqrt(cells.length) || 10;
+    var wrap = document.createElement("section");
+    wrap.style.cssText = "margin:12px auto;max-width:390px;border:1px solid rgba(94,255,177,.35);border-radius:14px;padding:10px;background:rgba(8,28,42,.9);";
+    var h = document.createElement("h2");
+    h.textContent = title;
+    h.style.cssText = "font-size:14px;line-height:1;margin:0 0 9px;color:#8ee6ff;font-weight:900;";
+    wrap.appendChild(h);
+    var grid = document.createElement("div");
+    grid.setAttribute("data-board", "");
+    grid.style.cssText = "display:grid;grid-template-columns:repeat(" + size + ",1fr);gap:3px;";
+    for (var i = 0; i < cells.length; i++) {
+      var cell = cells[i];
+      var act = canFire ? this.actionFor(cell.row, cell.col) : null;
+      var btn = document.createElement("button");
+      btn.setAttribute("data-cell", cell.row + "," + cell.col);
+      btn.type = "button";
+      btn.textContent = this.cellLabel(cell.status);
+      var bg = cell.status === "hit" ? "#c92f52" :
+        cell.status === "sunk" ? "#c98208" :
+        cell.status === "miss" ? "#0a3954" :
+        cell.status === "ship" ? "#607d92" :
+        act ? "#1c6382" : "#11506e";
+      btn.style.cssText = "aspect-ratio:1;border-radius:6px;border:2px solid " + (act ? "#ffd25a" : "rgba(142,230,255,.35)") + ";background:" + bg + ";color:#f7fbff;font-size:16px;font-weight:900;";
+      if (act) {
+        btn.onclick = function(a) {
+          return function() {
+            if (typeof playgent !== "undefined") {
+              if (playgent.sound) playgent.sound("combat.attack");
+              playgent.submitAction(a);
+            }
+          };
+        }(act);
+      } else {
+        btn.disabled = true;
+      }
+      grid.appendChild(btn);
+    }
+    wrap.appendChild(grid);
+    return wrap;
+  },
+
+  renderFleets: function(labels, fleets) {
+    var box = document.createElement("div");
+    box.style.cssText = "margin:8px auto 70px;max-width:390px;font-size:12px;font-weight:900;color:#9dffc7;";
+    var rows = [
+      { label: labels.mineFleet, list: fleets.mine },
+      { label: labels.enemyFleet, list: fleets.enemy },
+    ];
+    for (var r = 0; r < rows.length; r++) {
+      var line = document.createElement("div");
+      line.style.cssText = "display:flex;align-items:center;gap:8px;margin:7px 0;";
+      var name = document.createElement("span");
+      name.textContent = rows[r].label;
+      name.style.cssText = "width:48px;color:" + (r === 0 ? "#5cffb1" : "#ffd25a") + ";";
+      line.appendChild(name);
+      for (var i = 0; i < rows[r].list.length; i++) {
+        var ship = rows[r].list[i];
+        for (var s = 0; s < ship.size; s++) {
+          var peg = document.createElement("span");
+          peg.style.cssText = "width:11px;height:11px;border-radius:3px;display:inline-block;background:" + (s < ship.hits ? "#ff3f5f" : "#244356") + ";";
+          line.appendChild(peg);
+        }
+      }
+      box.appendChild(line);
+    }
+    return box;
+  },
+
+  render: function(view, actions, context) {
+    this.view = view;
+    this.actions = (actions || []).map(unwrapAction);
+    this.context = context || {};
+    if (!this.active) return;
+    var labels = view.boardLabels || { enemy: "TARGET GRID", mine: "YOUR FLEET", mineFleet: "YOU", enemyFleet: "ENEMY" };
+    var root = document.getElementById("game-container");
+    root.innerHTML = "";
+    var title = document.createElement("h1");
+    title.textContent = "FIGHTSHIP";
+    title.style.cssText = "text-align:center;font-size:32px;line-height:1;margin:6px 0 4px;font-weight:1000;";
+    root.appendChild(title);
+    var status = document.createElement("div");
+    var myTurn = context && context.myId && view.currentPlayerId === context.myId;
+    status.textContent = view.winner ? "Battle complete" : view.isSpectator ? "Watching live fire" : myTurn ? "Your shot" : "Enemy locking";
+    status.style.cssText = "text-align:center;text-transform:uppercase;color:#8ee6ff;font-size:12px;font-weight:900;margin-bottom:8px;";
+    root.appendChild(status);
+    if (view.phase === "placement") {
+      var auto = document.createElement("button");
+      auto.type = "button";
+      auto.textContent = view.placementRequired ? "AUTO DEPLOY" : "WAITING FOR FLEETS";
+      auto.disabled = !view.placementRequired;
+      auto.style.cssText = "display:block;margin:14px auto;padding:12px 18px;border-radius:10px;border:2px solid #5cffb1;background:#0f3a42;color:#f7fbff;font-weight:900;";
+      auto.onclick = function() {
+        if (typeof playgent !== "undefined") {
+          if (playgent.sound) playgent.sound("board.place");
+          playgent.submitAction({ type: "auto_place" });
+        }
+      };
+      root.appendChild(auto);
+    }
+    root.appendChild(this.renderBoard(labels.enemy, view.enemyBoard, !view.isSpectator));
+    root.appendChild(this.renderBoard(labels.mine, view.myBoard, false));
+    root.appendChild(this.renderFleets(labels, view.fleets));
+  },
+};
+
+var UiRand = {
+  seed: 92821,
+  next: function() {
+    this.seed = (this.seed * 16807) % 2147483647;
+    return this.seed / 2147483647;
+  },
+};
+
+var Tween = {
+  tweens: [],
+  to: function(obj, props, dur, ease, done) {
+    var start = {};
+    for (var k in props) start[k] = obj[k];
+    this.tweens.push({ obj: obj, props: props, start: start, dur: Math.max(1, dur), ease: ease || "linear", t: 0, done: done });
+  },
+  update: function(dt) {
+    for (var i = this.tweens.length - 1; i >= 0; i--) {
+      var tw = this.tweens[i];
+      tw.t = Math.min(tw.t + dt, tw.dur);
+      var p = tw.t / tw.dur;
+      var e = this.ease[tw.ease] ? this.ease[tw.ease](p) : p;
+      for (var k in tw.props) tw.obj[k] = tw.start[k] + (tw.props[k] - tw.start[k]) * e;
+      if (tw.t >= tw.dur) {
+        this.tweens.splice(i, 1);
+        if (tw.done) tw.done();
+      }
+    }
+  },
+  ease: {
+    linear: function(t) { return t; },
+    out: function(t) { return 1 - (1 - t) * (1 - t); },
+    inOut: function(t) { return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; },
+    back: function(t) { var s = 1.70158; return 1 + (s + 1) * Math.pow(t - 1, 3) + s * Math.pow(t - 1, 2); },
+  },
+};
+
+var Renderer = {
+  app: null,
+  root: null,
+  ocean: null,
+  boardLayer: null,
+  fxLayer: null,
+  hudLayer: null,
+  legalActions: [],
+  context: null,
+  view: null,
+  previousLastKey: "",
+  previousGameOverSoundKey: "",
+  cells: [],
+  pulse: 0,
+  shake: 0,
+  selectedShipIndex: 0,
+  placementOrientation: "h",
+  placementDraft: null,
+  placementOwner: null,
+
+  colors: {
+    bgTop: 0x071829,
+    bgBot: 0x02070d,
+    panel: 0x0b2435,
+    panel2: 0x102f43,
+    water: 0x0b5c88,
+    water2: 0x0f789f,
+    unknown: 0x164b68,
+    ship: 0xb8c7d9,
+    hit: 0xff3f5f,
+    sunk: 0xffb000,
+    miss: 0x8ee6ff,
+    gold: 0xffd25a,
+    green: 0x5cffb1,
+    white: 0xf7fbff,
+  },
+
+  init: function() {
+    var container = document.getElementById("game-container");
+    var app = new PIXI.Application();
+    Renderer.app = app;
+    return app.init({
+      resizeTo: container,
+      antialias: true,
+      resolution: Math.min(window.devicePixelRatio || 1, 2),
+      autoDensity: true,
+      background: "#06131f",
+    }).then(function() {
+      container.appendChild(app.canvas);
+      Renderer.root = new PIXI.Container();
+      Renderer.ocean = new PIXI.Container();
+      Renderer.boardLayer = new PIXI.Container();
+      Renderer.fxLayer = new PIXI.Container();
+      Renderer.hudLayer = new PIXI.Container();
+      Renderer.root.addChild(Renderer.ocean, Renderer.boardLayer, Renderer.fxLayer, Renderer.hudLayer);
+      app.stage.addChild(Renderer.root);
+      app.ticker.add(function(ticker) {
+        Tween.update(ticker.deltaMS);
+        Renderer.tick(ticker.deltaMS);
+      });
+      app.renderer.on("resize", function() { Renderer.render(); });
+      Renderer.render();
+    });
+  },
+
+  tick: function(dt) {
+    this.pulse += dt * 0.004;
+    this.drawOcean();
+    if (this.shake > 0) {
+      this.shake *= 0.86;
+      this.root.x = (UiRand.next() - 0.5) * this.shake;
+      this.root.y = (UiRand.next() - 0.5) * this.shake;
+      if (this.shake < 0.2) {
+        this.root.x = 0;
+        this.root.y = 0;
+        this.shake = 0;
+      }
+    }
+  },
+
+  clear: function(container) {
+    while (container.children.length) container.removeChildAt(0);
+  },
+
+  text: function(value, size, color, weight) {
+    return new PIXI.Text({
+      text: value,
+      style: {
+        fontFamily: "Inter, Arial, sans-serif",
+        fontSize: size,
+        fill: color,
+        fontWeight: weight || "700",
+        letterSpacing: 0,
+      },
+    });
+  },
+
+  drawOcean: function() {
+    if (!this.app) return;
+    this.clear(this.ocean);
+    var w = this.app.screen.width;
+    var h = this.app.screen.height;
+    var bg = new PIXI.Graphics()
+      .rect(0, 0, w, h)
+      .fill(this.colors.bgBot);
+    this.ocean.addChild(bg);
+    for (var i = 0; i < 13; i++) {
+      var y = ((i * 73 + this.pulse * 18) % (h + 120)) - 60;
+      var wave = new PIXI.Graphics()
+        .ellipse(w * (0.15 + (i % 5) * 0.19), y, w * 0.22, 18 + (i % 4) * 5)
+        .stroke({ color: i % 2 ? 0x0d516f : 0x1a8cb1, width: 2, alpha: 0.12 });
+      this.ocean.addChild(wave);
+    }
+  },
+
+  layout: function() {
+    var w = this.app.screen.width;
+    var h = this.app.screen.height;
+    var grid = this.view && this.view.boardSize ? this.view.boardSize : 10;
+    var margin = Math.max(14, Math.min(w, h) * 0.035);
+    var gap = Math.max(16, Math.min(w, h) * 0.035);
+    var vertical = h > w * 1.05;
+    var headerSafe = vertical ? 122 : 112;
+    var boardGap = vertical ? 56 : gap;
+    var fleetReserve = 52;
+    var badgeReserve = 60;
+    var boardMax = vertical
+      ? Math.min(w - margin * 2, (h - headerSafe - boardGap - fleetReserve - badgeReserve - 18) / 2)
+      : Math.min((w - margin * 2 - gap) / 2, h - headerSafe - fleetReserve - badgeReserve - 24);
+    var cell = Math.max(18, Math.floor(boardMax / grid));
+    boardMax = cell * grid;
+    if (vertical) {
+      var mineY = headerSafe + boardMax + boardGap;
+      var fleetY = mineY + boardMax + 24;
+      var badgeY = Math.min(h - 44, fleetY + 46);
+      return {
+        vertical: true,
+        cell: cell,
+        enemy: { x: (w - boardMax) / 2, y: headerSafe, size: boardMax },
+        mine: { x: (w - boardMax) / 2, y: mineY, size: boardMax },
+        fleetY: fleetY,
+        badgeY: badgeY,
+      };
+    }
+    var total = boardMax * 2 + gap;
+    var x0 = (w - total) / 2;
+    var fleetY2 = headerSafe + boardMax + 28;
+    return {
+      vertical: false,
+      cell: cell,
+      enemy: { x: x0, y: headerSafe, size: boardMax },
+      mine: { x: x0 + boardMax + gap, y: headerSafe, size: boardMax },
+      fleetY: fleetY2,
+      badgeY: Math.min(h - 44, fleetY2 + 48),
+    };
+  },
+
+  onState: function(view, legalActions, context) {
+    this.view = view;
+    this.legalActions = (legalActions || []).map(unwrapAction);
+    this.context = context || {};
+    var status = document.getElementById("telemetry");
+    if (status) {
+      status.setAttribute("data-phase", view.phase || "battle");
+      status.setAttribute("data-status", context && context.gameOver ? "game-over" : context && context.isMyTurn ? "your-turn" : "waiting");
+    }
+    var key = view.lastShot ? [view.lastShot.attacker, view.lastShot.row, view.lastShot.col, view.lastShot.hit, view.lastShot.sunk, view.turnNumber].join(":") : "";
+    this.render();
+    if (key && key !== this.previousLastKey) {
+      this.previousLastKey = key;
+      this.revealShot(view.lastShot);
+    }
+    var gameOverKey = context && context.gameOver ? (view.winner || "draw") + ":" + (view.turnNumber || "") : "";
+    if (gameOverKey && gameOverKey !== this.previousGameOverSoundKey && typeof playgent !== "undefined" && playgent.sound) {
+      this.previousGameOverSoundKey = gameOverKey;
+      playgent.sound(view.winner ? (view.winner === context.myId ? "game.victory" : (context.myId ? "game.defeat" : "game.over")) : "game.over");
+    } else if (!gameOverKey) {
+      this.previousGameOverSoundKey = "";
+    }
+  },
+
+  render: function() {
+    if (!this.app) return;
+    this.drawOcean();
+    this.clear(this.boardLayer);
+    this.clear(this.hudLayer);
+    this.cells = [];
+    var w = this.app.screen.width;
+    var h = this.app.screen.height;
+    var l = this.layout();
+    this.drawHeader(w);
+    if (!this.view) {
+      var loading = this.text("FIGHTSHIP", 34, this.colors.white, "900");
+      loading.anchor.set(0.5);
+      loading.x = w / 2;
+      loading.y = h / 2;
+      this.hudLayer.addChild(loading);
+      return;
+    }
+    var labels = this.view.boardLabels || { enemy: "TARGET GRID", mine: "YOUR FLEET", mineFleet: "YOU", enemyFleet: "ENEMY" };
+    if (this.view.phase === "placement") {
+      this.drawPlacement(w, h, labels);
+      return;
+    }
+    this.drawBoard(labels.enemy, this.view.enemyBoard, l.enemy, true);
+    this.drawBoard(labels.mine, this.view.myBoard, l.mine, false);
+    this.drawFleetHud(w, h, l);
+    this.drawTurnBadge(w, h, l);
+  },
+
+  drawHeader: function(w) {
+    var title = this.text("FIGHTSHIP", Math.max(24, Math.min(42, w * 0.07)), this.colors.white, "900");
+    title.anchor.set(0.5, 0);
+    title.x = w / 2;
+    title.y = 18;
+    this.hudLayer.addChild(title);
+    var sub = this.text("READY  •  FIRE  •  REVEAL", 12, 0x79e5ff, "800");
+    sub.anchor.set(0.5, 0);
+    sub.x = w / 2;
+    sub.y = title.y + title.height + 3;
+    sub.alpha = 0.72;
+    this.hudLayer.addChild(sub);
+  },
+
+  actionFor: function(row, col) {
+    for (var i = 0; i < this.legalActions.length; i++) {
+      var a = this.legalActions[i];
+      if (a.type === "fire" && a.row === row && a.col === col) return a;
+    }
+    return null;
+  },
+
+  ensurePlacementDraft: function() {
+    var owner = this.context && this.context.myId ? this.context.myId : "viewer";
+    if (this.placementOwner !== owner || !this.placementDraft) {
+      this.placementOwner = owner;
+      this.placementDraft = [];
+      this.selectedShipIndex = 0;
+      this.placementOrientation = "h";
+    }
+    return this.placementDraft;
+  },
+
+  draftCellMap: function() {
+    var draft = this.ensurePlacementDraft();
+    var map = {};
+    for (var i = 0; i < draft.length; i++) {
+      var ship = draft[i];
+      for (var c = 0; c < ship.cells.length; c++) {
+        map[ship.cells[c].row + "," + ship.cells[c].col] = ship;
+      }
+    }
+    return map;
+  },
+
+  canPlaceDraftShip: function(spec, row, col) {
+    var size = this.view && this.view.boardSize ? this.view.boardSize : 10;
+    var cells = [];
+    var occupied = this.draftCellMap();
+    for (var i = 0; i < spec.size; i++) {
+      var r = row + (this.placementOrientation === "v" ? i : 0);
+      var c = col + (this.placementOrientation === "h" ? i : 0);
+      if (r < 0 || r >= size || c < 0 || c >= size) return null;
+      var key = r + "," + c;
+      if (occupied[key] && occupied[key].id !== spec.name.toLowerCase()) return null;
+      cells.push({ row: r, col: c });
+    }
+    return cells;
+  },
+
+  placeDraftShip: function(row, col) {
+    var specs = this.view.fleetSpec || [];
+    if (!this.view.placementRequired || specs.length === 0) return;
+    var spec = specs[this.selectedShipIndex] || specs[0];
+    var cells = this.canPlaceDraftShip(spec, row, col);
+    if (!cells) {
+      if (typeof playgent !== "undefined" && playgent.sound) playgent.sound("ui.error");
+      return;
+    }
+    var draft = this.ensurePlacementDraft();
+    var id = spec.name.toLowerCase();
+    var next = [];
+    for (var i = 0; i < draft.length; i++) {
+      if (draft[i].id !== id) next.push(draft[i]);
+    }
+    next.push({ id: id, name: spec.name, size: spec.size, cells: cells });
+    if (typeof playgent !== "undefined" && playgent.sound) playgent.sound("board.place");
+    this.placementDraft = next;
+    for (var s = 0; s < specs.length; s++) {
+      var found = false;
+      for (var d = 0; d < next.length; d++) {
+        if (next[d].id === specs[s].name.toLowerCase()) found = true;
+      }
+      if (!found) {
+        this.selectedShipIndex = s;
+        this.render();
+        return;
+      }
+    }
+    this.selectedShipIndex = Math.min(this.selectedShipIndex + 1, specs.length - 1);
+    this.render();
+  },
+
+  placementComplete: function() {
+    var specs = this.view.fleetSpec || [];
+    var draft = this.ensurePlacementDraft();
+    for (var i = 0; i < specs.length; i++) {
+      var found = false;
+      for (var d = 0; d < draft.length; d++) {
+        if (draft[d].id === specs[i].name.toLowerCase()) found = true;
+      }
+      if (!found) return false;
+    }
+    return true;
+  },
+
+  submitPlacement: function() {
+    if (!this.placementComplete()) return;
+    if (typeof playgent !== "undefined") {
+      if (playgent.sound) playgent.sound("ui.confirm");
+      playgent.submitAction({ type: "ready", ships: JSON.stringify(this.ensurePlacementDraft()) });
+    }
+  },
+
+  cloneFleet: function(fleet) {
+    var out = [];
+    for (var i = 0; i < fleet.length; i++) {
+      var ship = fleet[i];
+      var cells = [];
+      for (var c = 0; c < ship.cells.length; c++) {
+        cells.push({ row: ship.cells[c].row, col: ship.cells[c].col });
+      }
+      out.push({ id: ship.id, name: ship.name, size: ship.size, cells: cells });
+    }
+    return out;
+  },
+
+  automaticPlacement: function() {
+    if (!this.view.placementRequired || !this.view.autoFleet || this.view.autoFleet.length === 0) return;
+    this.placementOwner = this.context && this.context.myId ? this.context.myId : "viewer";
+    this.placementDraft = this.cloneFleet(this.view.autoFleet);
+    this.selectedShipIndex = Math.max(0, (this.view.fleetSpec || []).length - 1);
+    this.render();
+  },
+
+  drawButton: function(label, x, y, w, h, color, enabled, onTap) {
+    var group = new PIXI.Container();
+    group.x = x;
+    group.y = y;
+    group.alpha = enabled ? 1 : 0.45;
+    var bg = new PIXI.Graphics()
+      .roundRect(0, 0, w, h, 10)
+      .fill({ color: 0x07111c, alpha: 0.92 })
+      .stroke({ color: color, width: 2, alpha: 0.74 });
+    group.addChild(bg);
+    var text = this.text(label, 12, color, "900");
+    text.anchor.set(0.5);
+    text.x = w / 2;
+    text.y = h / 2;
+    group.addChild(text);
+    if (enabled) {
+      group.eventMode = "static";
+      group.cursor = "pointer";
+      group.on("pointertap", onTap);
+    }
+    this.hudLayer.addChild(group);
+    if (enabled && window.__playgentE2ERegisterRegion && window.__playgentE2ECanvasRect) {
+      window.__playgentE2ERegisterRegion({
+        id: "button-" + label.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+        kind: "button",
+        label: label,
+        actionType: label.toLowerCase().indexOf("ready") >= 0 ? "ready" : "choose",
+        rect: window.__playgentE2ECanvasRect({ x: x, y: y, width: w, height: h }, Renderer.app)
+      });
+    }
+    return group;
+  },
+
+  drawPlacement: function(w, h, labels) {
+    var grid = this.view && this.view.boardSize ? this.view.boardSize : 10;
+    var waiting = this.view.isSpectator || !this.view.placementRequired;
+    var boardSize = Math.min(w - 32, h - 230, 390);
+    boardSize = Math.max(220, Math.floor(boardSize / grid) * grid);
+    var box = { x: (w - boardSize) / 2, y: Math.max(112, (h - boardSize) / 2 - 12), size: boardSize };
+    var status = waiting
+      ? this.text("AWAITING FLEET DEPLOYMENT", 15, this.colors.gold, "900")
+      : this.text(labels.mine, 15, this.colors.green, "900");
+    status.anchor.set(0.5, 0);
+    status.x = w / 2;
+    status.y = box.y - 50;
+    this.hudLayer.addChild(status);
+    if (waiting) {
+      this.drawBoard(labels.mine, this.view.myBoard, box, false);
+      this.drawFleetHud(w, h, { fleetY: box.y + boardSize + 30 });
+      return;
+    }
+
+    var draftMap = this.draftCellMap();
+    var cells = [];
+    for (var r = 0; r < grid; r++) {
+      for (var c = 0; c < grid; c++) {
+        var ship = draftMap[r + "," + c];
+        cells.push({ row: r, col: c, status: ship ? "ship" : "empty", ship: ship ? ship.name : null });
+      }
+    }
+    this.drawPlacementBoard(cells, box);
+
+    var specs = this.view.fleetSpec || [];
+    var y = box.y + boardSize + 24;
+    var totalW = Math.min(w - 28, 380);
+    var startX = (w - totalW) / 2;
+    var cols = Math.min(3, specs.length);
+    var buttonW = (totalW - (cols - 1) * 8) / cols;
+    var self = this;
+    for (var i = 0; i < specs.length; i++) {
+      var spec = specs[i];
+      var placed = !!draftMapForShip(this.ensurePlacementDraft(), spec.name.toLowerCase());
+      var bx = startX + (i % cols) * (buttonW + 8);
+      var by = y + Math.floor(i / cols) * 40;
+      this.drawButton(spec.name.toUpperCase(), bx, by, buttonW, 34, i === this.selectedShipIndex ? this.colors.gold : placed ? this.colors.green : 0x8ee6ff, true, function(index) {
+        return function() {
+          if (typeof playgent !== "undefined" && playgent.sound) playgent.sound("ui.select");
+          self.selectedShipIndex = index;
+          self.render();
+        };
+      }(i));
+    }
+    var controlsY = y + Math.ceil(specs.length / cols) * 40 + 8;
+    this.drawButton(this.placementOrientation === "h" ? "ROTATE H" : "ROTATE V", startX, controlsY, buttonW, 36, 0x8ee6ff, true, function() {
+      if (typeof playgent !== "undefined" && playgent.sound) playgent.sound("ui.select");
+      self.placementOrientation = self.placementOrientation === "h" ? "v" : "h";
+      self.render();
+    });
+    this.drawButton("AUTOMATIC", startX + buttonW + 8, controlsY, buttonW, 36, this.colors.gold, true, function() {
+      if (typeof playgent !== "undefined" && playgent.sound) playgent.sound("board.place");
+      self.automaticPlacement();
+    });
+    this.drawButton("READY", startX + (buttonW + 8) * 2, controlsY, buttonW, 36, this.colors.green, this.placementComplete(), function() {
+      self.submitPlacement();
+    });
+
+    function draftMapForShip(draft, id) {
+      for (var d = 0; d < draft.length; d++) {
+        if (draft[d].id === id) return true;
+      }
+      return false;
+    }
+  },
+
+  drawPlacementBoard: function(cells, box) {
+    var group = new PIXI.Container();
+    group.x = box.x;
+    group.y = box.y;
+    this.boardLayer.addChild(group);
+    var halo = new PIXI.Graphics()
+      .roundRect(-10, -34, box.size + 20, box.size + 54, 16)
+      .fill({ color: 0x081d18, alpha: 0.84 })
+      .stroke({ color: this.colors.green, width: 2, alpha: 0.42 });
+    group.addChild(halo);
+    var grid = this.view && this.view.boardSize ? this.view.boardSize : 10;
+    var cell = box.size / grid;
+    for (var i = 0; i < cells.length; i++) {
+      var data = cells[i];
+      var x = data.col * cell;
+      var y = data.row * cell;
+      var tile = new PIXI.Container();
+      tile.x = x;
+      tile.y = y;
+      var color = data.status === "ship"
+        ? { fill: { color: 0x4f6c7f, alpha: 0.95 }, stroke: 0xd7e5f5, alpha: 0.72 }
+        : { fill: { color: this.colors.water, alpha: 0.94 }, stroke: 0x66dcff, alpha: 0.24 };
+      tile.addChild(new PIXI.Graphics()
+        .roundRect(2, 2, cell - 4, cell - 4, Math.max(6, cell * 0.12))
+        .fill(color.fill)
+        .stroke({ color: color.stroke, width: 1.8, alpha: color.alpha }));
+      this.drawCellIcon(tile, data.status, cell, false);
+      tile.eventMode = "static";
+      tile.cursor = "pointer";
+      tile.on("pointertap", function(row, col) {
+        return function() { Renderer.placeDraftShip(row, col); };
+      }(data.row, data.col));
+      group.addChild(tile);
+      if (window.__playgentE2ERegisterRegion && window.__playgentE2ECanvasRect) {
+        window.__playgentE2ERegisterRegion({
+          id: "place-cell-" + data.row + "-" + data.col,
+          kind: "cell",
+          label: "place " + data.row + "," + data.col,
+          actionType: "place-ship",
+          rect: window.__playgentE2ECanvasRect({ x: box.x + x + 2, y: box.y + y + 2, width: cell - 4, height: cell - 4 }, Renderer.app)
+        });
+      }
+    }
+  },
+
+  drawBoard: function(label, cells, box, enemy) {
+    var group = new PIXI.Container();
+    group.x = box.x;
+    group.y = box.y;
+    this.boardLayer.addChild(group);
+    var halo = new PIXI.Graphics()
+      .roundRect(-10, -34, box.size + 20, box.size + 54, 16)
+      .fill({ color: enemy ? 0x061824 : 0x081d18, alpha: 0.82 })
+      .stroke({ color: enemy ? 0x29d6ff : 0x5cffb1, width: 2, alpha: 0.32 });
+    group.addChild(halo);
+    var t = this.text(label, 15, enemy ? 0x8ee6ff : 0x9dffc7, "900");
+    t.x = 0;
+    t.y = -27;
+    group.addChild(t);
+    var grid = this.view && this.view.boardSize ? this.view.boardSize : 10;
+    var cell = box.size / grid;
+    for (var i = 0; i < cells.length; i++) {
+      var data = cells[i];
+      var x = data.col * cell;
+      var y = data.row * cell;
+      var action = enemy ? this.actionFor(data.row, data.col) : null;
+      var tile = new PIXI.Container();
+      tile.x = x;
+      tile.y = y;
+      var color = this.cellColor(data.status, enemy, !!action);
+      var g = new PIXI.Graphics()
+        .roundRect(2, 2, cell - 4, cell - 4, Math.max(6, cell * 0.12))
+        .fill(color.fill)
+        .stroke({ color: color.stroke, width: action ? 3 : 1.5, alpha: color.alpha });
+      tile.addChild(g);
+      this.drawCellIcon(tile, data.status, cell, enemy);
+      if (action) {
+        tile.eventMode = "static";
+        tile.cursor = "crosshair";
+        tile.on("pointertap", function(a) {
+          return function() {
+            if (typeof playgent !== "undefined") {
+              if (playgent.sound) playgent.sound("combat.attack");
+              playgent.submitAction(a);
+            }
+          };
+        }(action));
+        var pulse = new PIXI.Graphics()
+          .circle(cell / 2, cell / 2, cell * (0.18 + Math.sin(this.pulse + i) * 0.025))
+          .stroke({ color: this.colors.gold, width: 2, alpha: 0.62 });
+        tile.addChild(pulse);
+        if (window.__playgentE2ERegisterRegion && window.__playgentE2ECanvasRect) {
+          window.__playgentE2ERegisterRegion({
+            id: "fire-cell-" + data.row + "-" + data.col,
+            kind: "cell",
+            label: "fire " + data.row + "," + data.col,
+            actionType: "fire",
+            rect: window.__playgentE2ECanvasRect({ x: box.x + x + 2, y: box.y + y + 2, width: cell - 4, height: cell - 4 }, Renderer.app)
+          });
+        }
+      }
+      group.addChild(tile);
+      this.cells.push({ row: data.row, col: data.col, enemy: enemy, x: box.x + x + cell / 2, y: box.y + y + cell / 2, size: cell });
+    }
+  },
+
+  cellColor: function(status, enemy, action) {
+    if (status === "hit") return { fill: { color: this.colors.hit, alpha: 0.82 }, stroke: 0xffd1da, alpha: 0.92 };
+    if (status === "sunk") return { fill: { color: this.colors.sunk, alpha: 0.9 }, stroke: 0xffffff, alpha: 0.95 };
+    if (status === "miss") return { fill: { color: 0x0a3954, alpha: 0.88 }, stroke: this.colors.miss, alpha: 0.75 };
+    if (status === "ship") return { fill: { color: 0x4f6c7f, alpha: 0.95 }, stroke: 0xd7e5f5, alpha: 0.58 };
+    if (action) return { fill: { color: 0x1c6382, alpha: 0.96 }, stroke: this.colors.gold, alpha: 0.85 };
+    return { fill: { color: enemy ? this.colors.unknown : this.colors.water, alpha: 0.92 }, stroke: 0x66dcff, alpha: 0.22 };
+  },
+
+  drawCellIcon: function(tile, status, cell, enemy) {
+    if (status === "ship") {
+      tile.addChild(new PIXI.Graphics()
+        .roundRect(cell * 0.25, cell * 0.36, cell * 0.5, cell * 0.28, cell * 0.12)
+        .fill(0xd5e3ee)
+        .stroke({ color: 0x233746, width: 1.5, alpha: 0.8 }));
+    }
+    if (status === "miss") {
+      tile.addChild(new PIXI.Graphics()
+        .circle(cell / 2, cell / 2, cell * 0.16)
+        .stroke({ color: this.colors.miss, width: 3, alpha: 0.95 }));
+    }
+    if (status === "hit" || status === "sunk") {
+      var boom = new PIXI.Graphics()
+        .circle(cell / 2, cell / 2, cell * 0.2)
+        .fill(status === "sunk" ? this.colors.gold : this.colors.hit)
+        .circle(cell / 2, cell / 2, cell * 0.33)
+        .stroke({ color: 0xffffff, width: 2, alpha: 0.8 });
+      tile.addChild(boom);
+    }
+    if (status === "unknown" && enemy) {
+      var dot = new PIXI.Graphics().circle(cell / 2, cell / 2, 2.2).fill({ color: 0x9defff, alpha: 0.35 });
+      tile.addChild(dot);
+    }
+  },
+
+  drawFleetHud: function(w, h, layout) {
+    var mine = this.view.fleets.mine;
+    var enemy = this.view.fleets.enemy;
+    var labels = this.view.boardLabels || { mineFleet: "YOU", enemyFleet: "ENEMY" };
+    var y = layout.fleetY;
+    var x = w / 2;
+    var wrap = new PIXI.Container();
+    wrap.x = x;
+    wrap.y = Math.min(h - 42, y);
+    this.hudLayer.addChild(wrap);
+    var rows = [
+      { label: labels.mineFleet, data: mine, color: this.colors.green },
+      { label: labels.enemyFleet, data: enemy, color: this.colors.gold },
+    ];
+    for (var ri = 0; ri < rows.length; ri++) {
+      var row = rows[ri];
+      var line = this.text(row.label, 11, row.color, "900");
+      line.anchor.set(1, 0.5);
+      line.x = -118;
+      line.y = ri * 20;
+      wrap.addChild(line);
+      for (var i = 0; i < row.data.length; i++) {
+        var ship = row.data[i];
+        for (var s = 0; s < ship.size; s++) {
+          var filled = s < ship.hits;
+          var peg = new PIXI.Graphics()
+            .roundRect(-5, -5, 10, 10, 3)
+            .fill({ color: filled ? (ship.sunk ? this.colors.sunk : this.colors.hit) : 0x244356, alpha: 0.95 })
+            .stroke({ color: 0xffffff, width: 1, alpha: filled ? 0.45 : 0.12 });
+          peg.x = -92 + i * 52 + s * 13;
+          peg.y = ri * 20;
+          wrap.addChild(peg);
+        }
+      }
+    }
+  },
+
+  drawTurnBadge: function(w, h, layout) {
+    var mine = this.context && this.context.myId && this.view.currentPlayerId === this.context.myId;
+    var over = !!this.view.winner;
+    var spectator = !!this.view.isSpectator;
+    var text = over ? (this.view.winner === this.context.myId ? "VICTORY" : "FLEET LOST") : spectator ? "WATCHING" : mine ? "YOUR SHOT" : "ENEMY LOCKING";
+    var color = over ? this.colors.gold : mine ? this.colors.green : 0x8ee6ff;
+    var badge = new PIXI.Graphics()
+      .roundRect(0, 0, 174, 34, 17)
+      .fill({ color: 0x06121d, alpha: 0.9 })
+      .stroke({ color: color, width: 2, alpha: 0.68 });
+    badge.x = w / 2 - 87;
+    badge.y = layout && layout.badgeY ? layout.badgeY : h - 42;
+    var label = this.text(text, 14, color, "900");
+    label.anchor.set(0.5);
+    label.x = w / 2;
+    label.y = badge.y + 17;
+    this.hudLayer.addChild(badge, label);
+  },
+
+  findCell: function(row, col, enemy) {
+    for (var i = 0; i < this.cells.length; i++) {
+      var c = this.cells[i];
+      if (c.row === row && c.col === col && c.enemy === enemy) return c;
+    }
+    return null;
+  },
+
+  revealShot: function(shot) {
+    var isMine = this.context && shot.attacker === this.context.myId;
+    var targetCell = this.findCell(shot.row, shot.col, isMine);
+    var x = targetCell ? targetCell.x : this.app.screen.width / 2;
+    var y = targetCell ? targetCell.y : this.app.screen.height / 2;
+    this.shake = shot.sunk ? 15 : shot.hit ? 10 : 4;
+    this.slotReveal(shot, x, y);
+    if (shot.hit) this.burst(x, y, shot.sunk ? this.colors.gold : this.colors.hit, shot.sunk ? 34 : 22);
+    else this.ripple(x, y);
+    if (typeof playgent !== "undefined" && playgent.sound) {
+      playgent.sound(shot.sunk ? "combat.heavy" : (shot.hit ? "combat.hit" : "ui.click"));
+    }
+  },
+
+  slotReveal: function(shot, x, y) {
+    var group = new PIXI.Container();
+    group.x = this.app.screen.width / 2;
+    group.y = Math.max(96, this.app.screen.height * 0.18);
+    group.scale.set(0.65);
+    group.alpha = 0;
+    this.fxLayer.addChild(group);
+    var outcome = shot.sunk ? "SUNK" : shot.hit ? "HIT" : "MISS";
+    var color = shot.sunk ? this.colors.gold : shot.hit ? this.colors.hit : this.colors.miss;
+    var shell = new PIXI.Graphics()
+      .roundRect(-112, -38, 224, 76, 18)
+      .fill({ color: 0x07111c, alpha: 0.96 })
+      .stroke({ color: color, width: 3, alpha: 0.88 });
+    group.addChild(shell);
+    for (var i = 0; i < 3; i++) {
+      var reel = new PIXI.Graphics()
+        .roundRect(-82 + i * 58, -24, 48, 48, 10)
+        .fill({ color: 0x10283a, alpha: 1 })
+        .stroke({ color: 0xffffff, width: 1, alpha: 0.18 });
+      group.addChild(reel);
+      var icon = this.text(outcome[i] || "!", 26, color, "900");
+      icon.anchor.set(0.5);
+      icon.x = -58 + i * 58;
+      icon.y = -1;
+      icon.scale.y = 0.05;
+      group.addChild(icon);
+      Tween.to(icon.scale, { y: 1 }, 260 + i * 130, "back");
+    }
+    var label = this.text(outcome, 15, color, "900");
+    label.anchor.set(0.5);
+    label.x = 0;
+    label.y = 52;
+    group.addChild(label);
+    Tween.to(group, { alpha: 1 }, 160, "out");
+    Tween.to(group.scale, { x: 1, y: 1 }, 360, "back");
+    var self = this;
+    setTimeout(function() {
+      Tween.to(group, { alpha: 0 }, 300, "out", function() {
+        if (group.parent) group.parent.removeChild(group);
+      });
+      Tween.to(group, { y: group.y - 28 }, 300, "out");
+    }, 1550);
+  },
+
+  burst: function(x, y, color, count) {
+    for (var i = 0; i < count; i++) {
+      var p = new PIXI.Graphics().circle(0, 0, 2 + UiRand.next() * 4).fill(color);
+      p.x = x;
+      p.y = y;
+      this.fxLayer.addChild(p);
+      var a = UiRand.next() * Math.PI * 2;
+      var d = 40 + UiRand.next() * 90;
+      Tween.to(p, { x: x + Math.cos(a) * d, y: y + Math.sin(a) * d, alpha: 0 }, 620 + UiRand.next() * 380, "out", function(node) {
+        return function() { if (node.parent) node.parent.removeChild(node); };
+      }(p));
+    }
+  },
+
+  ripple: function(x, y) {
+    for (var i = 0; i < 3; i++) {
+      var ring = new PIXI.Graphics().circle(0, 0, 10).stroke({ color: this.colors.miss, width: 3, alpha: 0.8 });
+      ring.x = x;
+      ring.y = y;
+      ring.alpha = 0.8;
+      this.fxLayer.addChild(ring);
+      Tween.to(ring.scale, { x: 2.6 + i * 0.8, y: 2.6 + i * 0.8 }, 620 + i * 140, "out");
+      Tween.to(ring, { alpha: 0 }, 680 + i * 140, "out", function(node) {
+        return function() { if (node.parent) node.parent.removeChild(node); };
+      }(ring));
+    }
+  },
+};
+
+(function() {
+  var pending = null;
+  var ready = false;
+
+  function accept(view, actions, context) {
+    if (FallbackRenderer.active) {
+      FallbackRenderer.render(view, actions, context);
+    } else if (ready) Renderer.onState(view, actions, context);
+    else pending = { view: view, actions: actions, context: context };
+  }
+
+  var bootStartedAt = Date.now();
+  function boot() {
+    if (FallbackRenderer.active) return;
+    if (typeof PIXI === "undefined") {
+      if (Date.now() - bootStartedAt > 1800) {
+        FallbackRenderer.start();
+        if (pending) {
+          FallbackRenderer.render(pending.view, pending.actions, pending.context);
+        }
+        return;
+      }
+      setTimeout(boot, 50);
+      return;
+    }
+    Renderer.init().then(function() {
+      ready = true;
+      if (pending) {
+        Renderer.onState(pending.view, pending.actions, pending.context);
+        pending = null;
+      }
+    }).catch(function(err) {
+      var el = document.getElementById("game-container");
+      el.style.color = "#ff7b7b";
+      el.style.padding = "20px";
+      el.textContent = err && err.message ? err.message : String(err);
+    });
+  }
+
+  if (typeof playgent !== "undefined" && playgent.onStateChange) {
+    playgent.onStateChange(accept);
+  } else {
+    var timer = setInterval(function() {
+      if (typeof playgent !== "undefined" && playgent.onStateChange) {
+        clearInterval(timer);
+        playgent.onStateChange(accept);
+      }
+    }, 50);
+  }
+  boot();
+})();
+</script>

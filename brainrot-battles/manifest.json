@@ -1,0 +1,19 @@
+{
+  "slug": "brainrot-battles",
+  "name": "Brainrot Battles",
+  "description": "Pokemon-style turn-based combat with Italian Brainrot characters. Draft a team of 3, then battle until one team faints!",
+  "minPlayers": 2,
+  "maxPlayers": 2,
+  "version": "1.0.0",
+  "tags": [
+    "fighting",
+    "combat",
+    "turn-based",
+    "draft",
+    "sequential-turns",
+    "brainrot"
+  ],
+  "thumbnail": "thumbnail.svg",
+  "maxTicks": 800,
+  "rules": "OVERVIEW\nTwo players draft three brainrots each, then battle until one team has no conscious member.\n\nPHASES\nDraft: each player privately picks one unpicked brainrot at a time until they have 3. Roster entries show HP, attack damage ranges, and any healing.\nBattle: one active brainrot per team. The current player either attacks with attackIdx 0-3 or, after a faint, switches to a living bench brainrot by team index.\n\nVIEW\nagentView shows roster/attacks during draft and both teams, active members, HP, switch needs, and last attack during battle. draftCounts are public; opponent picks are hidden until battle.\n\nWIN\nA player wins when every opposing brainrot has 0 HP."
+}

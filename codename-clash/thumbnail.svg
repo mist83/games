@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 154" role="img" aria-labelledby="title">
+  <title id="title">Codename Clash thumbnail</title>
+  <rect width="220" height="154" rx="14" fill="#101827"/>
+  <circle cx="110" cy="92" r="83" fill="#1f2a3d"/>
+  <circle cx="110" cy="92" r="61" fill="#334155"/>
+  <g stroke="#050505" stroke-width="4" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M66 151c5-42 21-65 44-65s39 23 44 65z" fill="#050505"/>
+    <path d="M85 88l25 33 25-33 15 63H70z" fill="#111827"/>
+    <path d="M92 94l18 17 18-17" fill="#f8fafc"/>
+    <path d="M110 110l-8 41h16z" fill="#b91c1c"/>
+    <circle cx="110" cy="66" r="27" fill="#111827"/>
+    <path d="M71 53h78l-13-25H84z" fill="#050505"/>
+    <path d="M62 56h96" fill="none"/>
+    <rect x="83" y="66" width="20" height="9" rx="3" fill="#f8fafc"/>
+    <rect x="117" y="66" width="20" height="9" rx="3" fill="#f8fafc"/>
+    <path d="M103 70h14" fill="none"/>
+  </g>
+  <g transform="translate(151 86) rotate(-13)" stroke="#050505" stroke-width="3" stroke-linejoin="round">
+    <rect x="0" y="0" width="48" height="38" rx="4" fill="#f8fafc"/>
+    <circle cx="24" cy="17" r="7" fill="none"/>
+    <path d="M24 24v8M20 32h8" stroke-linecap="round"/>
+    <path d="M9 8h30M9 13h30M9 29h10M30 29h9" stroke="#b91c1c" stroke-width="2" stroke-linecap="round"/>
+  </g>
+</svg>

@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 154" role="img" aria-labelledby="title">
+  <title id="title">Rentopoly thumbnail</title>
+  <rect width="220" height="154" rx="14" fill="#063b26"/>
+  <rect x="43" y="10" width="134" height="134" rx="8" fill="#f6f1df" stroke="#0f5132" stroke-width="5"/>
+  <rect x="73" y="40" width="74" height="74" fill="#bfe8c8" stroke="#0f5132" stroke-width="4"/>
+  <g fill="#f6f1df" stroke="#0f5132" stroke-width="3">
+    <rect x="43" y="10" width="30" height="30" rx="3"/>
+    <rect x="147" y="10" width="30" height="30" rx="3"/>
+    <rect x="43" y="114" width="30" height="30" rx="3"/>
+    <rect x="147" y="114" width="30" height="30" rx="3"/>
+    <rect x="73" y="10" width="19" height="30"/>
+    <rect x="92" y="10" width="18" height="30"/>
+    <rect x="110" y="10" width="18" height="30"/>
+    <rect x="128" y="10" width="19" height="30"/>
+    <rect x="73" y="114" width="19" height="30"/>
+    <rect x="92" y="114" width="18" height="30"/>
+    <rect x="110" y="114" width="18" height="30"/>
+    <rect x="128" y="114" width="19" height="30"/>
+    <rect x="43" y="40" width="30" height="19"/>
+    <rect x="43" y="59" width="30" height="18"/>
+    <rect x="43" y="77" width="30" height="18"/>
+    <rect x="43" y="95" width="30" height="19"/>
+    <rect x="147" y="40" width="30" height="19"/>
+    <rect x="147" y="59" width="30" height="18"/>
+    <rect x="147" y="77" width="30" height="18"/>
+    <rect x="147" y="95" width="30" height="19"/>
+  </g>
+  <g>
+    <rect x="75" y="13" width="15" height="8" fill="#f97316"/>
+    <rect x="94" y="13" width="14" height="8" fill="#f97316"/>
+    <rect x="112" y="13" width="14" height="8" fill="#dc2626"/>
+    <rect x="130" y="13" width="15" height="8" fill="#dc2626"/>
+    <rect x="75" y="133" width="15" height="8" fill="#93c5fd"/>
+    <rect x="94" y="133" width="14" height="8" fill="#93c5fd"/>
+    <rect x="112" y="133" width="14" height="8" fill="#7c3aed"/>
+    <rect x="130" y="133" width="15" height="8" fill="#7c3aed"/>
+    <rect x="46" y="42" width="8" height="15" fill="#f97316"/>
+    <rect x="46" y="61" width="8" height="14" fill="#f97316"/>
+    <rect x="46" y="79" width="8" height="14" fill="#d946ef"/>
+    <rect x="46" y="97" width="8" height="15" fill="#d946ef"/>
+    <rect x="166" y="42" width="8" height="15" fill="#22c55e"/>
+    <rect x="166" y="61" width="8" height="14" fill="#22c55e"/>
+    <rect x="166" y="79" width="8" height="14" fill="#1d4ed8"/>
+    <rect x="166" y="97" width="8" height="15" fill="#1d4ed8"/>
+  </g>
+  <path d="M159 129h10v10h-10z" fill="#ef4444"/>
+  <path d="M52 18h12v12H52z" fill="#f59e0b"/>
+  <g fill="#0f5132">
+    <circle cx="86" cy="77" r="6"/>
+    <rect x="103" y="65" width="14" height="24" rx="2"/>
+    <path d="M132 88l8 13h-16z"/>
+  </g>
+</svg>

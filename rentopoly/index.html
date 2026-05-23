@@ -1,0 +1,1898 @@
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  margin: 0;
+  overflow: hidden;
+  background: #07120f;
+  color: #f8fafc;
+  width: 100vw;
+  height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+#game-root { position: fixed; inset: 0; overflow: hidden; }
+#canvas-container { position: absolute; inset: 0; z-index: 1; }
+#dom-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+#top-hud {
+  pointer-events: none;
+  padding: max(10px, env(safe-area-inset-top)) 10px 0;
+  display: grid;
+}
+#status-bar {
+  margin: 0 auto;
+  width: min(720px, calc(100vw - 20px));
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 10px;
+  border: 1px solid rgba(246, 196, 83, 0.2);
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(10, 35, 30, 0.78), rgba(3, 10, 9, 0.74));
+  backdrop-filter: blur(10px);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.28);
+}
+.phase-copy { min-width: 0; }
+#phase-title {
+  font-size: clamp(13px, 3.4vw, 16px);
+  font-weight: 900;
+  letter-spacing: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#phase-sub {
+  margin-top: 2px;
+  font-size: 11px;
+  color: #b8c7bd;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#dice-box {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 54px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-weight: 900;
+}
+.die {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  display: grid;
+  place-items: center;
+  background: #f8fafc;
+  color: #06110f;
+  box-shadow: 0 5px 14px rgba(0, 0, 0, 0.28);
+}
+#bottom-ui {
+  width: 100%;
+  padding: 0 10px max(12px, env(safe-area-inset-bottom));
+  display: grid;
+  gap: 8px;
+}
+#info-panel {
+  pointer-events: none;
+  width: min(720px, calc(100vw - 20px));
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(248, 250, 252, 0.14);
+  background: rgba(3, 10, 9, 0.72);
+  backdrop-filter: blur(8px);
+}
+@media (min-width: 700px) {
+  #info-panel {
+    position: absolute;
+    left: var(--board-info-left, 50%);
+    top: var(--board-info-top, 20%);
+    width: var(--board-info-width, min(460px, 50vw));
+    margin: 0;
+    transform: none;
+    z-index: 5;
+  }
+}
+#tile-line {
+  min-height: 17px;
+  color: #f8fafc;
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#log-line {
+  min-height: 15px;
+  color: #b8c7bd;
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#action-tray {
+  pointer-events: auto;
+  width: min(720px, calc(100vw - 20px));
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+  gap: 8px;
+  max-height: 34vh;
+  overflow-y: auto;
+}
+.action-btn {
+  min-height: 50px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 900;
+  color: #06110f;
+  background: linear-gradient(180deg, #fff4b8, #f6c453);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+  cursor: pointer;
+}
+.action-btn.secondary { color: #f8fafc; background: rgba(22, 36, 33, 0.92); }
+.action-btn.money { background: linear-gradient(180deg, #bef7d5, #37d987); }
+.action-btn.warn { background: linear-gradient(180deg, #ffd0c0, #ff7a59); }
+.action-btn.danger { background: linear-gradient(180deg, #ffd1c5, #ff6f61); }
+.action-btn:active { transform: scale(0.985); }
+.empty-actions {
+  min-height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  color: #b8c7bd;
+  background: rgba(3, 10, 9, 0.55);
+  font-size: 13px;
+  font-weight: 700;
+}
+#player-container { display: none; }
+#center-board-panel {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(50vw, 390px);
+  max-height: min(54vh, 430px);
+  display: grid;
+  gap: 6px;
+  pointer-events: auto;
+  z-index: 3;
+  overflow: hidden;
+}
+.center-roster {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+  gap: 5px;
+}
+.mini-player {
+  appearance: none;
+  border-radius: 7px;
+  padding: 6px 7px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(235, 241, 232, 0.93));
+  color: #121212;
+  border: 2px solid #121212;
+  min-width: 0;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+.mini-player.active { outline: 3px solid #d83b2d; }
+.mini-player.selected { box-shadow: 0 0 0 4px rgba(246, 196, 83, 0.9), 0 10px 24px rgba(0,0,0,0.25); }
+.mini-player.out { opacity: 0.48; }
+.mini-name { font-size: 10px; font-weight: 900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mini-line { margin-top: 2px; font: 10px ui-monospace, SFMono-Regular, Menlo, monospace; color: #333; }
+.player-detail {
+  min-width: 0;
+  max-height: 260px;
+  overflow-y: auto;
+  border: 2px solid #121212;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #fffdf0, #e9f4df);
+  color: #121212;
+  padding: 9px;
+  box-shadow: 0 18px 50px rgba(0,0,0,0.32);
+}
+.detail-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: start;
+}
+.detail-name { font-size: 15px; font-weight: 950; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.detail-close {
+  width: 28px;
+  height: 28px;
+  border: 2px solid #121212;
+  border-radius: 6px;
+  background: #121212;
+  color: #fffdf0;
+  font: inherit;
+  font-weight: 950;
+  cursor: pointer;
+}
+.detail-stats {
+  margin-top: 7px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
+}
+.detail-stat {
+  min-width: 0;
+  border: 1px solid rgba(18,18,18,0.18);
+  border-radius: 6px;
+  padding: 5px;
+  background: rgba(255,255,255,0.66);
+}
+.detail-stat span { display: block; font-size: 9px; font-weight: 900; color: #48524c; text-transform: uppercase; }
+.detail-stat strong { display: block; margin-top: 2px; font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; }
+.detail-deeds { margin-top: 8px; display: grid; gap: 4px; }
+.detail-deed {
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr) auto;
+  gap: 6px;
+  align-items: center;
+  border-radius: 5px;
+  padding: 4px 5px;
+  background: rgba(255,255,255,0.58);
+  font-size: 10px;
+  font-weight: 850;
+}
+.detail-deed.mortgaged { opacity: 0.62; }
+.detail-deed .deed-swatch { width: 10px; height: 20px; }
+.detail-deed-name { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.detail-empty { margin-top: 8px; color: #48524c; font-size: 11px; font-weight: 850; }
+.trade-notice {
+  border-radius: 8px;
+  border: 2px solid #121212;
+  background: #fff7d6;
+  color: #121212;
+  padding: 8px;
+  box-shadow: 0 10px 26px rgba(0,0,0,0.25);
+}
+.trade-title { font-size: 12px; font-weight: 900; color: #d83b2d; }
+.trade-body { margin-top: 3px; font-size: 11px; line-height: 1.35; }
+#modal-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+  background: rgba(0,0,0,0.35);
+  pointer-events: auto;
+}
+#modal-layer.open { display: flex; }
+.deed-card {
+  width: min(360px, 92vw);
+  border: 3px solid #111;
+  background: linear-gradient(180deg, #fffaf0, #f5ebcf);
+  color: #111;
+  border-radius: 7px;
+  padding: 10px;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.48);
+}
+.deed-band {
+  min-height: 62px;
+  display: grid;
+  place-items: center;
+  border: 2px solid #111;
+  color: #111;
+  text-align: center;
+  padding: 8px;
+}
+.deed-title { font-size: 18px; font-weight: 900; text-transform: uppercase; }
+.deed-section { padding: 10px 6px 4px; font-size: 14px; }
+.deed-row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid rgba(0,0,0,0.12); }
+.deed-foot { margin-top: 8px; display: flex; justify-content: space-between; gap: 8px; font-size: 12px; font-weight: 800; }
+.debt-copy {
+  margin-top: 10px;
+  font-size: 13px;
+  line-height: 1.35;
+  font-weight: 800;
+}
+.debt-plan {
+  margin-top: 10px;
+  display: grid;
+  gap: 5px;
+}
+.debt-step {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  padding: 6px;
+  border-radius: 5px;
+  background: rgba(255,255,255,0.64);
+  border: 1px solid rgba(17,17,17,0.18);
+  font-size: 12px;
+  font-weight: 850;
+}
+.debt-step span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.modal-action.danger { background: linear-gradient(180deg, #ffd1c5, #ff7d6e); }
+.modal-close {
+  margin-top: 10px;
+  width: 100%;
+  min-height: 42px;
+  border: 2px solid #111;
+  border-radius: 4px;
+  background: #111;
+  color: #fff8df;
+  font: inherit;
+  font-weight: 900;
+}
+.modal-actions { margin-top: 10px; display: grid; gap: 6px; }
+.modal-action {
+  width: 100%;
+  min-height: 42px;
+  border: 2px solid #111;
+  border-radius: 5px;
+  background: linear-gradient(180deg, #bef7d5, #37d987);
+  color: #06110f;
+  font: inherit;
+  font-weight: 950;
+  cursor: pointer;
+}
+.mortgage-chip {
+  display: inline-grid;
+  place-items: center;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #121212;
+  color: #fff8df;
+  font-size: 10px;
+  font-weight: 950;
+}
+#trade-panel {
+  position: relative;
+  z-index: 7;
+  display: none;
+  pointer-events: auto;
+  width: min(720px, calc(100vw - 20px));
+  margin: 0 auto;
+  padding: 8px;
+  border-radius: 8px;
+  background: rgba(255, 248, 223, 0.96);
+  color: #111;
+  border: 2px solid #111;
+  gap: 8px;
+}
+#trade-panel.open { display: grid; }
+.trade-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(118px, 0.36fr) minmax(118px, 0.36fr);
+  gap: 6px;
+}
+.trade-money-row {
+  grid-template-columns: minmax(110px, 1fr) repeat(2, minmax(78px, 96px));
+  align-items: end;
+}
+.trade-card-row {
+  grid-template-columns: minmax(118px, 148px) minmax(0, 1fr);
+  align-items: end;
+}
+.trade-head label, .trade-side-label { display: grid; gap: 3px; font-size: 10px; font-weight: 900; text-transform: uppercase; }
+.trade-head input, .trade-head select {
+  min-height: 34px;
+  border: 1px solid #111;
+  border-radius: 4px;
+  padding: 6px;
+  font: 12px ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.trade-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.trade-side {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+.deed-list {
+  display: grid;
+  gap: 5px;
+  max-height: 124px;
+  overflow-y: auto;
+}
+.deed-option {
+  min-height: 34px;
+  display: grid;
+  grid-template-columns: 18px 12px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 6px;
+  border: 1px solid rgba(17, 17, 17, 0.28);
+  border-radius: 5px;
+  background: rgba(255,255,255,0.58);
+  font-size: 11px;
+  font-weight: 800;
+}
+.deed-option input { width: 16px; height: 16px; }
+.deed-option.disabled { opacity: 0.45; }
+.deed-swatch {
+  width: 10px;
+  height: 22px;
+  border: 1px solid rgba(17,17,17,0.45);
+  border-radius: 3px;
+}
+.deed-name { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.deed-meta { font: 10px ui-monospace, SFMono-Regular, Menlo, monospace; color: #333; }
+.empty-deeds {
+  min-height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px dashed rgba(17, 17, 17, 0.28);
+  border-radius: 5px;
+  color: #555;
+  font-size: 11px;
+  font-weight: 800;
+}
+.trade-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.auction-bid-panel {
+  pointer-events: auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px;
+  padding: 8px;
+  border-radius: 8px;
+  border: 2px solid #121212;
+  background: rgba(255, 248, 223, 0.96);
+  color: #121212;
+}
+.auction-bid-panel label {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+.auction-bid-panel input {
+  min-height: 38px;
+  border: 1px solid #121212;
+  border-radius: 5px;
+  padding: 7px;
+  font: 13px ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.auction-bid-panel button { min-height: 38px; align-self: end; }
+@media (max-width: 560px) {
+  #center-board-panel { width: 56vw; max-height: 34vh; overflow: hidden; }
+  .center-roster { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .mini-player { padding: 4px 5px; }
+  .mini-line { display: none; }
+  .player-detail { max-height: 150px; padding: 6px; }
+  .detail-stats { grid-template-columns: 1fr; }
+  .trade-head, .trade-columns { grid-template-columns: 1fr; }
+  .trade-money-row { grid-template-columns: minmax(86px, 1fr) repeat(2, minmax(72px, 84px)); }
+  .trade-card-row { grid-template-columns: minmax(112px, 138px) minmax(0, 1fr); }
+  .auction-bid-panel { grid-template-columns: 1fr; }
+  .deed-list { max-height: 86px; }
+}
+</style>
+
+<div id="game-root">
+  <div id="canvas-container" data-board></div>
+  <div id="dom-overlay">
+    <div id="top-hud">
+      <div id="status-bar" data-turn-phase>
+        <div class="phase-copy">
+          <div id="phase-title">Loading Rentopoly</div>
+          <div id="phase-sub">Preparing the board</div>
+        </div>
+        <div id="dice-box"><span class="die">-</span><span class="die">-</span></div>
+      </div>
+    </div>
+    <div id="bottom-ui">
+      <div id="info-panel">
+        <div id="tile-line" data-market></div>
+        <div id="log-line" data-resources></div>
+      </div>
+      <div id="trade-panel"></div>
+      <div id="action-tray"></div>
+    </div>
+  </div>
+  <div id="center-board-panel"></div>
+  <div id="modal-layer"></div>
+  <div id="player-container"></div>
+  <div id="board-landmarks" style="display:none" data-current-player="" data-move-history=""></div>
+</div>
+
+<script>
+(function() {
+  var E2E_GAME_SLUG = "rentopoly";
+  var E2E = window.__playgentE2EState || {
+    version: 1,
+    regions: [],
+    lastPhase: "loading",
+    lastStatus: "loading",
+    lastPlayerId: "",
+    lastCurrentPlayer: "",
+    lastLegalActionCount: 0,
+    lastVisibleLegalActionCount: 0,
+    lastActions: [],
+    lastRawActions: []
+  };
+  window.__playgentE2EState = E2E;
+
+  function setE2EAttr(el, name, value) {
+    if (!el) return;
+    el.setAttribute(name, value == null ? "" : String(value));
+  }
+
+  function unwrapE2EAction(option) {
+    if (option && typeof option === "object" && option.decision !== undefined) return option.decision;
+    if (option && typeof option === "object" && option.action !== undefined) return option.action;
+    return option;
+  }
+
+  function isVisibleE2EAction(action) {
+    action = unwrapE2EAction(action);
+    if (!action || typeof action !== "object") return false;
+    if (action.type === "advance_phase" || action.type === "system" || action.type === "noop") return false;
+    return true;
+  }
+
+  function getVisibleE2EActions(actions) {
+    var out = [];
+    for (var i = 0; actions && i < actions.length; i++) {
+      if (isVisibleE2EAction(actions[i])) out.push(unwrapE2EAction(actions[i]));
+    }
+    return out;
+  }
+
+  function ensureE2ETelemetry() {
+    var el = document.getElementById("e2e-telemetry");
+    if (!el) {
+      el = document.createElement("div");
+      el.id = "e2e-telemetry";
+      if (document.body) document.body.appendChild(el);
+    }
+    el.setAttribute("aria-hidden", "true");
+    el.style.cssText = "position:fixed;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;left:0;top:0;";
+    setE2EAttr(el, "data-game", E2E_GAME_SLUG);
+    setE2EAttr(el, "data-phase", E2E.lastPhase);
+    setE2EAttr(el, "data-status", E2E.lastStatus);
+    setE2EAttr(el, "data-player", E2E.lastPlayerId || "spectator");
+    return el;
+  }
+
+  function addUnique(list, el) {
+    if (!el) return;
+    for (var i = 0; i < list.length; i++) if (list[i] === el) return;
+    list.push(el);
+  }
+
+  function getE2ERoots() {
+    var roots = [];
+    addUnique(roots, ensureE2ETelemetry());
+    addUnique(roots, document.getElementById("telemetry"));
+    addUnique(roots, document.getElementById("game"));
+    addUnique(roots, document.getElementById("game-container"));
+    addUnique(roots, document.querySelector("[data-board]"));
+    return roots;
+  }
+
+  function getCurrentPlayerE2E(view) {
+    if (!view) return "";
+    return view.currentPlayer || view.currentPlayerId || view.currentActor || view.turn || "";
+  }
+
+  function updateE2EPlayers(players) {
+    var telemetry = ensureE2ETelemetry();
+    var host = document.getElementById("e2e-players");
+    if (!host) {
+      host = document.createElement("div");
+      host.id = "e2e-players";
+      telemetry.appendChild(host);
+    }
+    host.textContent = "";
+    for (var i = 0; players && i < players.length; i++) {
+      var p = players[i] || {};
+      var span = document.createElement("span");
+      setE2EAttr(span, "data-player", p.id || "");
+      setE2EAttr(span, "data-player-name", p.name || p.id || "");
+      span.textContent = p.name || p.id || "";
+      host.appendChild(span);
+    }
+  }
+
+  function updateE2ELandmarks(view, legalActions, context) {
+    var visibleActions = getVisibleE2EActions(legalActions || []);
+    var phase = context && context.gameOver ? "game-over" : (view && (view.phase || view.mode || view.stage) ? (view.phase || view.mode || view.stage) : "playing");
+    var status = context && context.gameOver ? "game-over" : (visibleActions.length > 0 ? "your-turn" : "waiting");
+    var playerId = context && context.myId ? context.myId : "spectator";
+    var currentPlayer = getCurrentPlayerE2E(view);
+    var roots = getE2ERoots();
+    E2E.lastPhase = phase;
+    E2E.lastStatus = status;
+    E2E.lastPlayerId = playerId;
+    E2E.lastCurrentPlayer = currentPlayer;
+    E2E.lastRawActions = legalActions || [];
+    E2E.lastActions = visibleActions;
+    E2E.lastLegalActionCount = (legalActions || []).length;
+    E2E.lastVisibleLegalActionCount = visibleActions.length;
+    for (var i = 0; i < roots.length; i++) {
+      setE2EAttr(roots[i], "data-game", E2E_GAME_SLUG);
+      setE2EAttr(roots[i], "data-phase", phase);
+      setE2EAttr(roots[i], "data-status", status);
+      setE2EAttr(roots[i], "data-player", playerId);
+      setE2EAttr(roots[i], "data-current-player", currentPlayer);
+      if (view && view.round != null) setE2EAttr(roots[i], "data-round", view.round);
+      if (view && view.turnNumber != null) setE2EAttr(roots[i], "data-turn", view.turnNumber);
+    }
+    updateE2EPlayers(context && context.players ? context.players : []);
+  }
+
+  function actionTypeForIndex(idx) {
+    var raw = E2E.lastRawActions && E2E.lastRawActions[idx] ? unwrapE2EAction(E2E.lastRawActions[idx]) : null;
+    return raw && raw.type ? raw.type : "choose";
+  }
+
+  function safeLabelFromNode(node) {
+    var label = node.getAttribute("data-action-label") || node.getAttribute("aria-label") || node.title || node.textContent || node.value || "";
+    return String(label).replace(/\s+/g, " ").trim().slice(0, 100);
+  }
+
+  function decorateE2EDOMControls() {
+    var nodes = document.querySelectorAll("[data-action-idx], [data-action], button, [role='button'], input[type='button'], input[type='submit'], input:not([type='hidden']), select, textarea, [data-cell], [data-card], [data-card-id], [data-option-id], [data-brainrot], canvas");
+    for (var i = 0; i < nodes.length; i++) {
+      var node = nodes[i];
+      if (node.hasAttribute("data-action") && !node.hasAttribute("data-action-idx")) {
+        node.setAttribute("data-action-idx", node.getAttribute("data-action"));
+      }
+      if (node.hasAttribute("data-action-idx")) {
+        var idx = parseInt(node.getAttribute("data-action-idx"), 10);
+        if (!isNaN(idx) && !node.hasAttribute("data-action-type")) node.setAttribute("data-action-type", actionTypeForIndex(idx));
+        if (!node.hasAttribute("data-action-label")) node.setAttribute("data-action-label", safeLabelFromNode(node));
+      }
+      if (node.hasAttribute("data-cell") && !node.getAttribute("aria-label")) {
+        node.setAttribute("aria-label", "cell " + node.getAttribute("data-cell"));
+      }
+      if ((node.hasAttribute("data-card") || node.hasAttribute("data-card-id")) && !node.getAttribute("aria-label")) {
+        node.setAttribute("aria-label", "card " + (node.getAttribute("data-card") || node.getAttribute("data-card-id")));
+      }
+      if (node.tagName === "CANVAS" && !node.getAttribute("aria-label")) {
+        node.setAttribute("aria-label", E2E_GAME_SLUG + " canvas");
+      }
+    }
+  }
+
+  function e2eBeginFrame(view, legalActions, context) {
+    E2E.regions = [];
+    updateE2ELandmarks(view || {}, legalActions || [], context || {});
+  }
+
+  function e2eAfterRender() {
+    decorateE2EDOMControls();
+  }
+
+  function isVisibleE2ENode(node) {
+    if (!node || !node.getBoundingClientRect) return false;
+    var rect = node.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return false;
+    if (rect.right <= 0 || rect.bottom <= 0 || rect.left >= window.innerWidth || rect.top >= window.innerHeight) return false;
+    var style = window.getComputedStyle ? window.getComputedStyle(node) : null;
+    if (style && (style.display === "none" || style.visibility === "hidden" || style.opacity === "0")) return false;
+    if (node.disabled || node.getAttribute("aria-disabled") === "true") return false;
+    return true;
+  }
+
+  function regionKindForNode(node) {
+    if (node.tagName === "CANVAS") return "canvas";
+    if (node.tagName === "INPUT" || node.tagName === "SELECT" || node.tagName === "TEXTAREA") return "input";
+    if (node.hasAttribute("data-cell")) return "cell";
+    if (node.hasAttribute("data-card") || node.hasAttribute("data-card-id")) return "card";
+    return "button";
+  }
+
+  function getDOMActionRegions() {
+    decorateE2EDOMControls();
+    var nodes = document.querySelectorAll("[data-action-idx], button, [role='button'], input[type='button'], input[type='submit'], input:not([type='hidden']), select, textarea, [data-cell], [data-card], [data-card-id], [data-option-id], [data-brainrot], canvas");
+    var out = [];
+    for (var i = 0; i < nodes.length; i++) {
+      var node = nodes[i];
+      if (!isVisibleE2ENode(node)) continue;
+      var r = clipE2ERect(node.getBoundingClientRect());
+      if (!r) continue;
+      var id = node.id || node.getAttribute("data-action-idx") || node.getAttribute("data-cell") || node.getAttribute("data-card") || node.getAttribute("data-card-id") || node.getAttribute("data-option-id") || node.getAttribute("data-brainrot") || ("control-" + i);
+      out.push({
+        id: String(id),
+        kind: regionKindForNode(node),
+        label: safeLabelFromNode(node),
+        actionType: node.getAttribute("data-action-type") || "",
+        selector: node.id ? ("#" + node.id) : "",
+        rect: { x: r.left, y: r.top, width: r.width, height: r.height },
+        center: { x: r.left + r.width / 2, y: r.top + r.height / 2 }
+      });
+    }
+    return out;
+  }
+
+  function clipE2ERect(rect) {
+    if (!rect) return null;
+    var x = Number(rect.x != null ? rect.x : rect.left) || 0;
+    var y = Number(rect.y != null ? rect.y : rect.top) || 0;
+    var width = Number(rect.width) || 0;
+    var height = Number(rect.height) || 0;
+    var left = Math.max(0, x);
+    var top = Math.max(0, y);
+    var right = Math.min(window.innerWidth, x + width);
+    var bottom = Math.min(window.innerHeight, y + height);
+    if (right - left <= 0 || bottom - top <= 0) return null;
+    return { x: left, y: top, width: right - left, height: bottom - top };
+  }
+
+  function e2eRegisterRegion(region) {
+    if (!region || !region.id || !region.rect) return;
+    var r = clipE2ERect(region.rect);
+    if (!r || r.width == null || r.height == null) return;
+    var item = {
+      id: String(region.id),
+      kind: region.kind || "button",
+      label: region.label || "",
+      actionType: region.actionType || "",
+      rect: { x: Number(r.x) || 0, y: Number(r.y) || 0, width: Number(r.width) || 0, height: Number(r.height) || 0 },
+      center: region.center || { x: (Number(r.x) || 0) + (Number(r.width) || 0) / 2, y: (Number(r.y) || 0) + (Number(r.height) || 0) / 2 }
+    };
+    for (var i = 0; i < E2E.regions.length; i++) {
+      if (E2E.regions[i].id === item.id) {
+        E2E.regions[i] = item;
+        return;
+      }
+    }
+    E2E.regions.push(item);
+  }
+
+  function e2eCanvasRect(localRect, app) {
+    var canvas = app && app.canvas ? app.canvas : document.querySelector("canvas");
+    var screen = app && app.screen ? app.screen : null;
+    if (!canvas || !localRect) return null;
+    var canvasRect = canvas.getBoundingClientRect();
+    var screenW = screen && screen.width ? screen.width : canvasRect.width;
+    var screenH = screen && screen.height ? screen.height : canvasRect.height;
+    var sx = canvasRect.width / (screenW || canvasRect.width || 1);
+    var sy = canvasRect.height / (screenH || canvasRect.height || 1);
+    return {
+      x: canvasRect.left + localRect.x * sx,
+      y: canvasRect.top + localRect.y * sy,
+      width: localRect.width * sx,
+      height: localRect.height * sy
+    };
+  }
+
+  function e2ePixiBounds(displayObject, app) {
+    if (!displayObject || !displayObject.getBounds) return null;
+    var b = displayObject.getBounds();
+    return e2eCanvasRect({ x: b.x, y: b.y, width: b.width, height: b.height }, app);
+  }
+
+  function getE2ECanvasInfo() {
+    var canvas = document.querySelector("canvas");
+    if (!canvas) return null;
+    var rect = canvas.getBoundingClientRect();
+    return { selector: "canvas", width: rect.width, height: rect.height };
+  }
+
+  function getAllE2ERegions() {
+    var out = E2E.regions.slice();
+    var dom = getDOMActionRegions();
+    var seen = {};
+    var merged = [];
+    for (var i = 0; i < out.length; i++) { seen[out[i].id] = true; merged.push(out[i]); }
+    for (var j = 0; j < dom.length; j++) {
+      if (!seen[dom[j].id]) merged.push(dom[j]);
+    }
+    return merged;
+  }
+
+  function runE2ELayoutChecks() {
+    var failures = [];
+    var regions = getAllE2ERegions();
+    var canvas = getE2ECanvasInfo();
+    if (E2E.lastVisibleLegalActionCount > 0 && regions.length === 0) {
+      failures.push({ severity: "error", message: "active legal actions did not create visible controls" });
+    }
+    if (canvas && (canvas.width <= 0 || canvas.height <= 0)) {
+      failures.push({ severity: "error", message: "canvas has empty bounds" });
+    }
+    for (var i = 0; i < regions.length; i++) {
+      var region = regions[i];
+      var r = region.rect;
+      if (!r) {
+        failures.push({ severity: "error", message: region.id + " has no rect" });
+        continue;
+      }
+      if (r.width <= 0 || r.height <= 0) failures.push({ severity: "error", message: region.id + " has empty bounds" });
+      if (r.x < -1 || r.y < -1 || r.x + r.width > window.innerWidth + 1 || r.y + r.height > window.innerHeight + 1) {
+        failures.push({ severity: "error", message: region.id + " is offscreen" });
+      }
+      if (region.kind !== "canvas" && (r.width < 36 || r.height < 36)) {
+        failures.push({ severity: "warning", message: region.id + " is a small touch target" });
+      }
+    }
+    return failures;
+  }
+
+  window.__playgentE2EBegin = e2eBeginFrame;
+  window.__playgentE2EAfterRender = e2eAfterRender;
+  window.__playgentE2ERegisterRegion = e2eRegisterRegion;
+  window.__playgentE2ECanvasRect = e2eCanvasRect;
+  window.__playgentE2EPixiBounds = e2ePixiBounds;
+  window.__playgentE2ERunLayoutChecks = runE2ELayoutChecks;
+  window.__playgentE2E = {
+    version: 1,
+    getSnapshot: function() {
+      return {
+        phase: E2E.lastPhase,
+        status: E2E.lastStatus,
+        playerId: E2E.lastPlayerId,
+        currentPlayer: E2E.lastCurrentPlayer,
+        legalActionCount: E2E.lastVisibleLegalActionCount,
+        regionCount: getAllE2ERegions().length,
+        canvas: getE2ECanvasInfo()
+      };
+    },
+    getInteractiveRegions: function() { return getAllE2ERegions(); },
+    checkLayout: function() { return runE2ELayoutChecks(); }
+  };
+
+  if (typeof window.__playgentCheckLayout !== "function") {
+    window.__playgentCheckLayout = function() { return runE2ELayoutChecks(); };
+  }
+
+  function patchPlaygentE2E() {
+    if (!window.playgent || !window.playgent.onStateChange || window.playgent.__e2ePatched) return false;
+    var original = window.playgent.onStateChange;
+    window.playgent.onStateChange = function(cb) {
+      return original.call(window.playgent, function(view, legalActions, context) {
+        e2eBeginFrame(view, legalActions, context || {});
+        var result = cb.apply(this, arguments);
+        e2eAfterRender();
+        return result;
+      });
+    };
+    window.playgent.__e2ePatched = true;
+    return true;
+  }
+
+  ensureE2ETelemetry();
+  decorateE2EDOMControls();
+  if (!patchPlaygentE2E()) {
+    var tries = 0;
+    var timer = setInterval(function() {
+      tries++;
+      if (patchPlaygentE2E() || tries > 80) clearInterval(timer);
+    }, 50);
+  }
+}());
+</script>
+
+<script>
+var BOARD_COLORS = {
+  brown: 0x955436,
+  lightBlue: 0xaae0fa,
+  pink: 0xd93a96,
+  orange: 0xf7941d,
+  red: 0xed1b24,
+  yellow: 0xfef200,
+  green: 0x1fb25a,
+  darkBlue: 0x0072bb
+};
+var BOARD_CSS = {
+  brown: "#955436",
+  lightBlue: "#aae0fa",
+  pink: "#d93a96",
+  orange: "#f7941d",
+  red: "#ed1b24",
+  yellow: "#fef200",
+  green: "#1fb25a",
+  darkBlue: "#0072bb"
+};
+var PLAYER_COLORS = [0xed1b24, 0x0072bb, 0xfef200, 0x1fb25a, 0xd93a96, 0xf7941d];
+var PLAYER_CSS = ["#ed1b24", "#0072bb", "#b8aa00", "#1fb25a", "#d93a96", "#f7941d"];
+var TYPE_COLORS = {
+  start: 0xf6c453,
+  property: 0xf8fafc,
+  chest: 0x6ac5ff,
+  chance: 0xff8d5c,
+  tax: 0xff5f57,
+  transit: 0x9aa6b2,
+  utility: 0x8be28b,
+  jail: 0xb690ff,
+  goToJail: 0xff5f57,
+  free: 0x57d0a6
+};
+var highlightedOwner = null;
+var selectedDetailPlayer = null;
+
+var _uiSeed = 1357911;
+function uiRandom() {
+  _uiSeed = (_uiSeed * 16807) % 2147483647;
+  return _uiSeed / 2147483647;
+}
+function esc(str) {
+  return String(str == null ? "" : str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+function money(n) {
+  return "$" + Math.floor(n || 0);
+}
+function playerName(id, context) {
+  var players = context && context.players ? context.players : [];
+  for (var i = 0; i < players.length; i++) if (players[i].id === id) return players[i].name || ("Player " + (i + 1));
+  if (typeof Renderer !== "undefined" && Renderer.currentView && Renderer.currentView.players) {
+    for (var r = 0; r < Renderer.currentView.players.length; r++) if (Renderer.currentView.players[r].id === id) return "Player " + (r + 1);
+  }
+  return id ? "Player" : "";
+}
+function formatLogLine(line, context) {
+  var out = String(line || "");
+  var players = context && context.players ? context.players : [];
+  for (var i = 0; i < players.length; i++) {
+    out = out.split(players[i].id).join(playerName(players[i].id, context));
+  }
+  if (typeof Renderer !== "undefined" && Renderer.currentView && Renderer.currentView.players) {
+    for (var p = 0; p < Renderer.currentView.players.length; p++) {
+      out = out.split(Renderer.currentView.players[p].id).join(playerName(Renderer.currentView.players[p].id, context));
+    }
+  }
+  return out;
+}
+function shortName(name) {
+  var words = String(name || "").split(" ");
+  if (words.length > 1) return (words[0][0] + words[1][0]).toUpperCase();
+  return String(name || "?").slice(0, 2).toUpperCase();
+}
+
+var Tween = {
+  _items: [],
+  to: function(target, props, duration, ease, done) {
+    if (!target) return;
+    var start = {};
+    var keys = Object.keys(props);
+    for (var i = 0; i < keys.length; i++) start[keys[i]] = target[keys[i]];
+    Tween._items.push({ target: target, props: props, start: start, keys: keys, elapsed: 0, duration: duration || 350, ease: ease || "easeOut", done: done || null });
+  },
+  update: function(ms) {
+    var keep = [];
+    for (var i = 0; i < Tween._items.length; i++) {
+      var tw = Tween._items[i];
+      tw.elapsed += ms;
+      var t = Math.min(1, tw.elapsed / tw.duration);
+      var e = Tween.ease(tw.ease, t);
+      for (var k = 0; k < tw.keys.length; k++) {
+        var key = tw.keys[k];
+        tw.target[key] = tw.start[key] + (tw.props[key] - tw.start[key]) * e;
+      }
+      if (t < 1) keep.push(tw);
+      else if (tw.done) tw.done();
+    }
+    Tween._items = keep;
+  },
+  ease: function(name, t) {
+    if (name === "linear") return t;
+    if (name === "backOut") {
+      var s = 1.70158;
+      return 1 + (s + 1) * Math.pow(t - 1, 3) + s * Math.pow(t - 1, 2);
+    }
+    if (name === "easeIn") return t * t;
+    return 1 - Math.pow(1 - t, 2);
+  }
+};
+
+var Renderer = {
+  app: null,
+  layers: {},
+  tileNodes: [],
+  tokenNodes: {},
+  particles: [],
+  prevView: null,
+  currentView: null,
+  currentLegalActions: [],
+  context: null,
+  layout: { w: 0, h: 0, cx: 0, cy: 0, size: 0, step: 0 },
+
+  init: function() {
+    var app = new PIXI.Application();
+    Renderer.app = app;
+    var container = document.getElementById("canvas-container");
+    return app.init({
+      resizeTo: container,
+      antialias: true,
+      resolution: Math.min(window.devicePixelRatio || 1, 2),
+      autoDensity: true,
+      background: "#06110f"
+    }).then(function() {
+      container.appendChild(app.canvas);
+      var bg = new PIXI.Container();
+      var board = new PIXI.Container();
+      var tokens = new PIXI.Container();
+      var fx = new PIXI.Container();
+      app.stage.addChild(bg, board, tokens, fx);
+      Renderer.layers = { bg: bg, board: board, tokens: tokens, fx: fx };
+      Renderer.makeParticles();
+      Renderer.resize(app.screen.width, app.screen.height);
+      app.renderer.on("resize", Renderer.resize);
+      app.ticker.add(function(ticker) {
+        Tween.update(ticker.deltaMS);
+        Renderer.tick(ticker.deltaMS);
+      });
+    });
+  },
+
+  resize: function(w, h) {
+    Renderer.layout.w = w;
+    Renderer.layout.h = h;
+    Renderer.layout.cx = w / 2;
+    Renderer.layout.cy = h > w ? h * 0.5 : h * 0.48;
+    Renderer.layout.size = Math.min(w * 0.94, h * (h > w ? 0.48 : 0.8));
+    Renderer.layout.step = Renderer.layout.size / 11;
+    var root = document.getElementById("game-root");
+    if (root) {
+      root.style.setProperty("--board-info-left", Math.round(Renderer.layout.cx - Renderer.layout.size * 0.28) + "px");
+      root.style.setProperty("--board-info-top", Math.round(Renderer.layout.cy - Renderer.layout.size * 0.5 + Renderer.layout.step + 8) + "px");
+      root.style.setProperty("--board-info-width", Math.round(Renderer.layout.size * 0.56) + "px");
+    }
+    Renderer.drawBackground();
+    if (Renderer.currentView) Renderer.render(Renderer.currentView, [], Renderer.context || {});
+  },
+
+  makeParticles: function() {
+    for (var i = 0; i < 90; i++) {
+      var p = new PIXI.Graphics().circle(0, 0, 1 + uiRandom() * 2.2).fill({ color: i % 3 === 0 ? 0xf6c453 : 0x7ee7c6, alpha: 0.65 });
+      p.x = uiRandom() * 1000;
+      p.y = uiRandom() * 1000;
+      p._vx = -0.015 - uiRandom() * 0.035;
+      p._vy = 0.01 + uiRandom() * 0.03;
+      p._baseAlpha = 0.18 + uiRandom() * 0.45;
+      Renderer.layers.fx.addChild(p);
+      Renderer.particles.push(p);
+    }
+  },
+
+  tick: function(ms) {
+    var w = Renderer.layout.w || 1;
+    var h = Renderer.layout.h || 1;
+    for (var i = 0; i < Renderer.particles.length; i++) {
+      var p = Renderer.particles[i];
+      p.x += p._vx * ms;
+      p.y += p._vy * ms;
+      if (p.x < -10) p.x = w + 10;
+      if (p.y > h + 10) p.y = -10;
+      p.alpha = p._baseAlpha * (0.65 + 0.35 * Math.sin((performance.now() / 500) + i));
+    }
+  },
+
+  drawBackground: function() {
+    var bg = Renderer.layers.bg;
+    bg.removeChildren();
+    var w = Renderer.layout.w, h = Renderer.layout.h;
+    var sky = new PIXI.Graphics()
+      .rect(0, 0, w, h)
+      .fill(0x06110f)
+      .rect(0, h * 0.18, w, h * 0.82)
+      .fill({ color: 0x0b2420, alpha: 0.78 });
+    bg.addChild(sky);
+    var glow = new PIXI.Graphics().circle(w * 0.5, h * 0.42, Math.min(w, h) * 0.46).fill({ color: 0x1f7a62, alpha: 0.16 });
+    bg.addChild(glow);
+    var skyline = new PIXI.Graphics();
+    for (var i = 0; i < 24; i++) {
+      var bw = w / 24;
+      var bh = h * (0.08 + (i % 5) * 0.024);
+      skyline.rect(i * bw, h * 0.22 - bh, bw * 0.76, bh).fill({ color: i % 2 ? 0x102f2b : 0x0d2623, alpha: 0.85 });
+      if (i % 3 === 0) skyline.rect(i * bw + bw * 0.2, h * 0.2 - bh, bw * 0.08, bh * 0.4).fill({ color: 0xf6c453, alpha: 0.55 });
+    }
+    bg.addChild(skyline);
+  },
+
+  tilePos: function(index) {
+    var L = Renderer.layout;
+    var half = L.size / 2;
+    var step = L.step;
+    if (index <= 10) return { x: L.cx + half - step / 2 - index * step, y: L.cy + half - step / 2 };
+    if (index <= 20) {
+      var leftOff = index - 10;
+      return { x: L.cx - half + step / 2, y: L.cy + half - step / 2 - leftOff * step };
+    }
+    if (index <= 30) {
+      var topOff = index - 20;
+      return { x: L.cx - half + step / 2 + topOff * step, y: L.cy - half + step / 2 };
+    }
+    var rightOff = index - 30;
+    return { x: L.cx + half - step / 2, y: L.cy - half + step / 2 + rightOff * step };
+  },
+
+  render: function(view, legalActions, context) {
+    Renderer.currentView = view;
+    Renderer.currentLegalActions = (legalActions || []).map(unwrapAction);
+    Renderer.context = context;
+    Renderer.drawBoard(view);
+    Renderer.drawTokens(view, context);
+    Renderer.prevView = JSON.parse(JSON.stringify(view));
+  },
+
+  drawBoard: function(view) {
+    var layer = Renderer.layers.board;
+    layer.removeChildren();
+    var L = Renderer.layout;
+    var table = new PIXI.Graphics()
+      .roundRect(L.cx - L.size / 2 - 8, L.cy - L.size / 2 - 8, L.size + 16, L.size + 16, 18)
+      .fill({ color: 0x0a1815, alpha: 0.86 })
+      .stroke({ color: 0xf6c453, width: 2, alpha: 0.72 });
+    layer.addChild(table);
+    var center = new PIXI.Graphics()
+      .roundRect(L.cx - L.size * 0.31, L.cy - L.size * 0.31, L.size * 0.62, L.size * 0.62, 18)
+      .fill({ color: 0x0e302a, alpha: 0.9 })
+      .stroke({ color: 0x3abf91, width: 1, alpha: 0.32 });
+    layer.addChild(center);
+    for (var i = 0; i < view.tiles.length; i++) {
+      var tile = view.tiles[i];
+      var pos = Renderer.tilePos(i);
+      var node = Renderer.makeTile(tile, pos, i);
+      layer.addChild(node);
+    }
+  },
+
+  makeTile: function(tile, pos, index) {
+    var L = Renderer.layout;
+    var s = Math.max(28, L.step * 0.9);
+    var box = new PIXI.Container();
+    box.x = pos.x;
+    box.y = pos.y;
+    var fill = TYPE_COLORS[tile.type] || 0xf8fafc;
+    var ownerColor = tile.owner ? PLAYER_COLORS[Renderer.playerIndex(tile.owner)] : null;
+    var highlighted = highlightedOwner && tile.owner === highlightedOwner;
+    var dimmed = highlightedOwner && tile.owner && tile.owner !== highlightedOwner;
+    var g = new PIXI.Graphics()
+      .roundRect(-s / 2, -s / 2, s, s, 7)
+      .fill({ color: tile.type === "property" ? 0xf8fafc : fill, alpha: dimmed ? 0.48 : 0.96 })
+      .stroke({ color: highlighted ? 0xf6c453 : ownerColor || 0x163d35, width: highlighted ? 5 : ownerColor ? 3 : 1, alpha: highlighted ? 1 : ownerColor ? 1 : 0.8 });
+    box.addChild(g);
+    if (highlighted) {
+      var glow = new PIXI.Graphics()
+        .roundRect(-s / 2 - 5, -s / 2 - 5, s + 10, s + 10, 10)
+        .stroke({ color: 0xf6c453, width: 3, alpha: 0.78 });
+      box.addChild(glow);
+    }
+    if (tile.type === "property") {
+      var band = new PIXI.Graphics().roundRect(-s / 2 + 3, -s / 2 + 3, s - 6, Math.max(5, s * 0.15), 4).fill(BOARD_COLORS[tile.color] || 0xcccccc);
+      box.addChild(band);
+    }
+    if (tile.houses > 0) {
+      for (var h = 0; h < tile.houses; h++) {
+        var pip = new PIXI.Graphics().roundRect(-s * 0.34 + h * s * 0.17, s * 0.26, s * 0.11, s * 0.11, 2).fill(h === 4 ? 0xf6c453 : 0x25d366);
+        box.addChild(pip);
+      }
+    }
+    if (tile.mortgaged) {
+      var stripe = new PIXI.Graphics()
+        .roundRect(-s * 0.38, s * 0.12, s * 0.76, s * 0.2, 4)
+        .fill({ color: 0x121212, alpha: 0.88 });
+      box.addChild(stripe);
+      var mtg = new PIXI.Text({ text: "MTG", style: { fontFamily: "Arial, sans-serif", fontSize: Math.max(7, s * 0.14), fill: 0xfff8df, fontWeight: "900" } });
+      mtg.anchor.set(0.5);
+      mtg.y = s * 0.22;
+      box.addChild(mtg);
+    }
+    var label = shortName(tile.name);
+    if (tile.type === "start") label = "GO";
+    if (tile.type === "jail") label = "JAIL";
+    if (tile.type === "goToJail") label = "LOCK";
+    if (tile.type === "tax") label = "TAX";
+    if (tile.type === "chance") label = "BEAT";
+    if (tile.type === "chest") label = "CHEST";
+    if (tile.type === "free") label = "FERRY";
+    var text = new PIXI.Text({ text: label, style: { fontFamily: "Arial, sans-serif", fontSize: Math.max(7, s * 0.16), fill: tile.type === "property" ? 0x07110f : 0x06110f, fontWeight: "900", align: "center", wordWrap: true, wordWrapWidth: s - 7 } });
+    text.anchor.set(0.5);
+    text.x = 0;
+    text.y = tile.type === "property" ? 2 : 0;
+    box.addChild(text);
+    box.eventMode = "static";
+    box.cursor = "pointer";
+    box.on("pointertap", function() { showPropertyCard(tile); });
+    if (window.__playgentE2ERegisterRegion && window.__playgentE2ECanvasRect) {
+      window.__playgentE2ERegisterRegion({
+        id: "tile-" + index,
+        kind: "cell",
+        label: tile.name || ("tile " + index),
+        actionType: "inspect-tile",
+        rect: window.__playgentE2ECanvasRect({ x: pos.x - s / 2, y: pos.y - s / 2, width: s, height: s }, Renderer.app)
+      });
+    }
+    return box;
+  },
+
+  playerIndex: function(id) {
+    var players = Renderer.currentView ? Renderer.currentView.players : [];
+    for (var i = 0; i < players.length; i++) if (players[i].id === id) return i;
+    return 0;
+  },
+
+  drawTokens: function(view, context) {
+    var layer = Renderer.layers.tokens;
+    var live = {};
+    for (var i = 0; i < view.players.length; i++) {
+      var p = view.players[i];
+      live[p.id] = true;
+      var node = Renderer.tokenNodes[p.id];
+      if (!node) {
+        node = Renderer.makeToken(p.id, i, context);
+        Renderer.tokenNodes[p.id] = node;
+        layer.addChild(node);
+      }
+      node.visible = !p.eliminated;
+      var base = Renderer.tilePos(p.position);
+      var dx = (i % 2 ? 1 : -1) * Renderer.layout.step * 0.16;
+      var dy = (i > 1 ? 1 : -1) * Renderer.layout.step * 0.16;
+      if (!node._placed) {
+        node.x = base.x + dx;
+        node.y = base.y + dy;
+        node._placed = true;
+      } else {
+        Tween.to(node, { x: base.x + dx, y: base.y + dy }, 520, "backOut");
+      }
+      var active = p.id === view.currentActor;
+      Tween.to(node.scale, { x: active ? 1.18 : 1, y: active ? 1.18 : 1 }, 260, "easeOut");
+    }
+    Object.keys(Renderer.tokenNodes).forEach(function(id) {
+      if (!live[id]) Renderer.tokenNodes[id].visible = false;
+    });
+  },
+
+  makeToken: function(id, index, context) {
+    var c = new PIXI.Container();
+    var r = Math.max(9, Renderer.layout.step * 0.17);
+    var shadow = new PIXI.Graphics().circle(2, 4, r + 2).fill({ color: 0x000000, alpha: 0.38 });
+    var body = new PIXI.Graphics().circle(0, 0, r).fill(PLAYER_COLORS[index % PLAYER_COLORS.length]).stroke({ color: 0xffffff, width: 2, alpha: 0.86 });
+    var label = new PIXI.Text({ text: String(index + 1), style: { fontFamily: "Arial, sans-serif", fontSize: Math.max(10, r), fill: 0x06110f, fontWeight: "900" } });
+    label.anchor.set(0.5);
+    c.addChild(shadow, body, label);
+    return c;
+  },
+
+  burst: function(x, y, color) {
+    for (var i = 0; i < 18; i++) {
+      var p = new PIXI.Graphics().circle(0, 0, 2 + (i % 3)).fill({ color: color || 0xf6c453, alpha: 0.9 });
+      p.x = x;
+      p.y = y;
+      var angle = (i / 18) * Math.PI * 2;
+      var dist = 26 + (i % 5) * 7;
+      Renderer.layers.fx.addChild(p);
+      Tween.to(p, { x: x + Math.cos(angle) * dist, y: y + Math.sin(angle) * dist, alpha: 0 }, 650, "easeOut", function() {
+        if (this && this.parent) this.parent.removeChild(this);
+      }.bind(p));
+    }
+  },
+
+  moneyBurst: function(x, y, amount, color) {
+    var tier = amount >= 200 ? 3 : amount >= 50 ? 2 : 1;
+    var count = tier === 3 ? 34 : tier === 2 ? 24 : 14;
+    var radius = tier === 3 ? 118 : tier === 2 ? 78 : 46;
+    var headline = new PIXI.Text({
+      text: "+" + money(amount),
+      style: {
+        fontFamily: "Arial, sans-serif",
+        fontSize: tier === 3 ? 30 : tier === 2 ? 23 : 17,
+        fill: 0xfff4b8,
+        stroke: { color: 0x06110f, width: 5 },
+        fontWeight: "900"
+      }
+    });
+    headline.anchor.set(0.5);
+    headline.x = x;
+    headline.y = y - Renderer.layout.step * 0.35;
+    Renderer.layers.fx.addChild(headline);
+    Tween.to(headline, { y: headline.y - 36, alpha: 0 }, 900, "easeOut", function() {
+      if (this && this.parent) this.parent.removeChild(this);
+    }.bind(headline));
+    for (var i = 0; i < count; i++) {
+      var glyph = i % 4 === 0 ? "$" : String((i % 9) + 1);
+      var chip = new PIXI.Text({
+        text: glyph,
+        style: {
+          fontFamily: "Arial, sans-serif",
+          fontSize: 12 + tier * 3 + (i % 3),
+          fill: i % 3 === 0 ? 0x37d987 : i % 3 === 1 ? 0xf6c453 : 0xffffff,
+          stroke: { color: 0x06110f, width: 3 },
+          fontWeight: "900"
+        }
+      });
+      chip.anchor.set(0.5);
+      chip.x = x + (uiRandom() - 0.5) * 14;
+      chip.y = y + (uiRandom() - 0.5) * 14;
+      chip.rotation = (uiRandom() - 0.5) * 0.7;
+      Renderer.layers.fx.addChild(chip);
+      var angle = uiRandom() * Math.PI * 2;
+      var dist = radius * (0.34 + uiRandom() * 0.72);
+      Tween.to(chip, { x: x + Math.cos(angle) * dist, y: y + Math.sin(angle) * dist - 18, alpha: 0, rotation: chip.rotation + (uiRandom() - 0.5) * 2.4 }, 620 + tier * 120, "easeOut", function() {
+        if (this && this.parent) this.parent.removeChild(this);
+      }.bind(chip));
+    }
+  }
+};
+
+function labelForAction(action, view) {
+  var tile = view.pendingTile != null ? view.tiles[view.pendingTile] : null;
+  if (action.type === "roll") return "Roll Dice";
+  if (action.type === "roll_jail") return "Roll for Doubles";
+  if (action.type === "pay_bail") return "Pay $50 Bail";
+  if (action.type === "use_jail_card") return "Use Detention Card";
+  if (action.type === "buy") return "Buy " + (tile ? money(tile.price) : "Property");
+  if (action.type === "pass") return view.phase === "auction" ? "Pass Auction" : "Send to Auction";
+  if (action.type === "bid") return "Bid " + money(action.amount);
+  if (action.type === "propose_trade") return "Propose Trade";
+  if (action.type === "accept_trade") return "Accept Trade";
+  if (action.type === "reject_trade") return "Reject Trade";
+  if (action.type === "raise_cash") return "Raise Cash";
+  if (action.type === "pay_debt") return "Pay Debt";
+  if (action.type === "declare_bankruptcy") return "Declare Bankruptcy";
+  if (action.type === "mortgage") return "Mortgage " + shortName(view.tiles[action.tile].name);
+  if (action.type === "unmortgage") return "Unmortgage " + shortName(view.tiles[action.tile].name);
+  if (action.type === "sell_building") return "Sell Building " + shortName(view.tiles[action.tile].name);
+  if (action.type === "build") {
+    var b = view.tiles[action.tile];
+    return "Build on " + shortName(b.name) + " " + money(b.houseCost);
+  }
+  if (action.type === "roll_again") return "Roll Again";
+  if (action.type === "end_turn") return "End Turn";
+  return action.type;
+}
+function classForAction(action) {
+  if (action.type === "buy" || action.type === "bid" || action.type === "build" || action.type === "mortgage" || action.type === "unmortgage") return "action-btn money";
+  if (action.type === "raise_cash" || action.type === "pay_debt") return "action-btn money";
+  if (action.type === "declare_bankruptcy") return "action-btn danger";
+  if (action.type === "sell_building") return "action-btn warn";
+  if (action.type === "pass" || action.type === "end_turn") return "action-btn secondary";
+  if (action.type === "pay_bail") return "action-btn warn";
+  if (action.type === "propose_trade") return "action-btn secondary";
+  return "action-btn";
+}
+function unwrapAction(option) {
+  if (option && typeof option === "object" && option.decision !== undefined) return option.decision;
+  if (option && typeof option === "object" && option.action !== undefined) return option.action;
+  return option;
+}
+function deedRows(tile) {
+  if (tile.type === "transit") {
+    return [
+      ["Rent", "$25"],
+      ["If 2 transit hubs owned", "$50"],
+      ["If 3 transit hubs owned", "$100"],
+      ["If 4 transit hubs owned", "$200"]
+    ];
+  }
+  if (tile.type === "utility") {
+    return [
+      ["If 1 utility owned", "4x dice"],
+      ["If 2 utilities owned", "10x dice"]
+    ];
+  }
+  if (!tile.rents) return [];
+  return [
+    ["Rent", "$" + tile.rents[0]],
+    ["With color set", "$" + tile.rents[0] * 2],
+    ["With 1 House", "$" + tile.rents[1]],
+    ["With 2 Houses", "$" + tile.rents[2]],
+    ["With 3 Houses", "$" + tile.rents[3]],
+    ["With 4 Houses", "$" + tile.rents[4]],
+    ["With Hotel", "$" + tile.rents[5]]
+  ];
+}
+function findLegalAction(type, tileIndex) {
+  var actions = Renderer.currentLegalActions || [];
+  for (var i = 0; i < actions.length; i++) {
+    if (actions[i].type === type && (tileIndex == null || actions[i].tile === tileIndex)) return actions[i];
+  }
+  return null;
+}
+function showPropertyCard(tile) {
+  var modal = document.getElementById("modal-layer");
+  if (!tile) return;
+  var context = Renderer.context || {};
+  var band = BOARD_CSS[tile.color] || (tile.type === "transit" ? "#d1d5db" : tile.type === "utility" ? "#b7e4a8" : "#ffe08a");
+  var rows = deedRows(tile);
+  var mortgageAction = tile.owner === context.myId ? findLegalAction("mortgage", tile.index) : null;
+  var buildAction = tile.owner === context.myId ? findLegalAction("build", tile.index) : null;
+  var unmortgageAction = tile.owner === context.myId ? findLegalAction("unmortgage", tile.index) : null;
+  var sellBuildingAction = tile.owner === context.myId ? findLegalAction("sell_building", tile.index) : null;
+  var html = '<div class="deed-card">';
+  html += '<div class="deed-band" style="background:' + band + '"><div class="deed-title">' + esc(tile.name) + '</div></div>';
+  html += '<div class="deed-section">';
+  if (tile.price) html += '<div class="deed-row"><span>Price</span><strong>' + money(tile.price) + '</strong></div>';
+  if (tile.mortgaged) html += '<div class="deed-row"><span>Status</span><strong><span class="mortgage-chip">Mortgaged</span></strong></div>';
+  for (var i = 0; i < rows.length; i++) html += '<div class="deed-row"><span>' + esc(rows[i][0]) + '</span><strong>' + esc(rows[i][1]) + '</strong></div>';
+  html += '</div>';
+  html += '<div class="deed-foot"><span>Mortgage ' + (tile.mortgage ? money(tile.mortgage) : "-") + '</span><span>Unmortgage ' + (tile.unmortgageCost ? money(tile.unmortgageCost) : "-") + '</span></div>';
+  html += '<div class="deed-foot"><span>House ' + (tile.houseCost ? money(tile.houseCost) : "-") + '</span><span>Sell building ' + (tile.houseCost ? money(Math.floor(tile.houseCost / 2)) : "-") + '</span></div>';
+  html += '<div class="deed-foot"><span>Owner: ' + esc(tile.owner ? playerName(tile.owner, context) : "Bank") + '</span><span>Buildings: ' + (tile.houses === 5 ? "Hotel" : tile.houses || 0) + '</span></div>';
+  html += '<div class="modal-actions">';
+  if (buildAction) html += '<button class="modal-action" id="build-property">' + (tile.houses >= 4 ? "Build Hotel" : "Build House") + ' for ' + money(tile.houseCost) + '</button>';
+  if (sellBuildingAction) html += '<button class="modal-action" id="sell-building">Sell Building for ' + money(Math.floor(tile.houseCost / 2)) + '</button>';
+  if (mortgageAction) html += '<button class="modal-action" id="mortgage-property">Mortgage for ' + money(tile.mortgage) + '</button>';
+  if (unmortgageAction) html += '<button class="modal-action" id="unmortgage-property">Unmortgage for ' + money(tile.unmortgageCost) + '</button>';
+  html += '<button class="modal-close" id="modal-close">Close</button></div></div>';
+  modal.innerHTML = html;
+  modal.setAttribute("data-modal-kind", "deed");
+  modal.classList.add("open");
+  if (buildAction) {
+    document.getElementById("build-property").addEventListener("click", function() {
+      playgent.submitAction(buildAction);
+      modal.classList.remove("open");
+    });
+  }
+  if (mortgageAction) {
+    document.getElementById("mortgage-property").addEventListener("click", function() {
+      playgent.submitAction(mortgageAction);
+      modal.classList.remove("open");
+    });
+  }
+  if (unmortgageAction) {
+    document.getElementById("unmortgage-property").addEventListener("click", function() {
+      playgent.submitAction(unmortgageAction);
+      modal.classList.remove("open");
+    });
+  }
+  if (sellBuildingAction) {
+    document.getElementById("sell-building").addEventListener("click", function() {
+      playgent.submitAction(sellBuildingAction);
+      modal.classList.remove("open");
+    });
+  }
+  document.getElementById("modal-close").addEventListener("click", function() {
+    modal.classList.remove("open");
+    modal.removeAttribute("data-modal-kind");
+  });
+}
+function findActionByType(actions, type) {
+  for (var i = 0; i < actions.length; i++) if (actions[i].type === type) return actions[i];
+  return null;
+}
+function renderDebtModal(view, legalActions, context) {
+  var modal = document.getElementById("modal-layer");
+  var debt = view.debt;
+  if (!debt || debt.playerId !== context.myId) {
+    if (modal.getAttribute("data-modal-kind") === "debt") {
+      modal.classList.remove("open");
+      modal.removeAttribute("data-modal-kind");
+      modal.innerHTML = "";
+    }
+    return;
+  }
+  var raiseAction = findActionByType(legalActions, "raise_cash");
+  var payAction = findActionByType(legalActions, "pay_debt");
+  var bankruptcyAction = findActionByType(legalActions, "declare_bankruptcy");
+  var html = '<div class="deed-card debt-card">';
+  html += '<div class="deed-band" style="background:#ffd0c0"><div class="deed-title">Cash Shortfall</div></div>';
+  html += '<div class="debt-copy">' + esc(playerName(debt.playerId, context)) + ' owes ' + money(debt.amount) + '. Cash on hand: ' + money(debt.cash) + '.</div>';
+  if (debt.note) html += '<div class="debt-copy">' + esc(formatLogLine(debt.note, context)) + '</div>';
+  if (debt.plan && debt.plan.length) {
+    html += '<div class="debt-plan">';
+    for (var i = 0; i < debt.plan.length; i++) {
+      html += '<div class="debt-step"><span>' + esc(debt.plan[i].label) + '</span><strong>' + money(debt.plan[i].value) + '</strong></div>';
+    }
+    html += '</div>';
+    html += '<div class="debt-copy">This raises ' + money(debt.raise) + ' and leaves ' + money(Math.max(0, debt.cashAfter)) + ' after payment.</div>';
+  } else if (!debt.canCover) {
+    html += '<div class="debt-copy">No legal mortgage or building sale plan covers the bill.</div>';
+  }
+  html += '<div class="modal-actions">';
+  if (raiseAction) html += '<button class="modal-action" id="raise-cash-now">Raise Cash and Pay</button>';
+  if (payAction) html += '<button class="modal-action" id="pay-debt-now">Pay Debt</button>';
+  if (bankruptcyAction) html += '<button class="modal-action danger" id="declare-bankruptcy-now">Declare Bankruptcy</button>';
+  html += '<button class="modal-close" id="modal-close">Review Board</button></div></div>';
+  modal.innerHTML = html;
+  modal.setAttribute("data-modal-kind", "debt");
+  modal.classList.add("open");
+  if (raiseAction) document.getElementById("raise-cash-now").addEventListener("click", function() {
+    playgent.submitAction(raiseAction);
+    modal.classList.remove("open");
+  });
+  if (payAction) document.getElementById("pay-debt-now").addEventListener("click", function() {
+    playgent.submitAction(payAction);
+    modal.classList.remove("open");
+  });
+  if (bankruptcyAction) document.getElementById("declare-bankruptcy-now").addEventListener("click", function() {
+    playgent.submitAction(bankruptcyAction);
+    modal.classList.remove("open");
+  });
+  document.getElementById("modal-close").addEventListener("click", function() {
+    modal.classList.remove("open");
+  });
+}
+function swatchForTile(tile) {
+  return BOARD_CSS[tile.color] || (tile.type === "transit" ? "#d1d5db" : tile.type === "utility" ? "#b7e4a8" : "#ffe08a");
+}
+function renderPlayerDetail(view, context, playerId) {
+  var player = null;
+  for (var p = 0; p < view.players.length; p++) if (view.players[p].id === playerId) player = view.players[p];
+  if (!player) return "";
+  var html = '<div class="player-detail">';
+  html += '<div class="detail-top"><div><div class="detail-name">' + esc(playerName(player.id, context)) + '</div>';
+  html += '<div class="mini-line">At ' + esc(view.tiles[player.position].name) + (player.inJail ? " - Detention" : "") + '</div></div>';
+  html += '<button class="detail-close" id="detail-close">x</button></div>';
+  html += '<div class="detail-stats">';
+  html += '<div class="detail-stat"><span>Cash</span><strong>' + money(player.cash) + '</strong></div>';
+  html += '<div class="detail-stat"><span>Net Worth</span><strong>' + money(player.netWorth) + '</strong></div>';
+  html += '<div class="detail-stat"><span>Deeds</span><strong>' + player.owned.length + '</strong></div>';
+  html += '<div class="detail-stat"><span>Cards</span><strong>' + player.jailCards + '</strong></div>';
+  html += '</div>';
+  if (player.owned.length) {
+    html += '<div class="detail-deeds">';
+    for (var i = 0; i < player.owned.length; i++) {
+      var tile = view.tiles[player.owned[i]];
+      html += '<div class="detail-deed' + (tile.mortgaged ? " mortgaged" : "") + '">';
+      html += '<span class="deed-swatch" style="background:' + swatchForTile(tile) + '"></span>';
+      html += '<span class="detail-deed-name">' + esc(tile.name) + '</span>';
+      html += '<span>' + (tile.mortgaged ? "MTG" : money(tile.price || 0)) + '</span></div>';
+    }
+    html += '</div>';
+  } else {
+    html += '<div class="detail-empty">No properties yet.</div>';
+  }
+  html += '</div>';
+  return html;
+}
+function renderCenterPanel(view, context) {
+  var panel = document.getElementById("center-board-panel");
+  var html = "";
+  if (view.tradeOffer) {
+    var offer = view.tradeOffer;
+    var give = [];
+    var get = [];
+    if (offer.offerCash > 0) give.push(money(offer.offerCash));
+    if (offer.offerJailCards > 0) give.push(offer.offerJailCards + " Detention card" + (offer.offerJailCards === 1 ? "" : "s"));
+    for (var i = 0; i < offer.offerTiles.length; i++) give.push(view.tiles[offer.offerTiles[i]].name);
+    if (offer.requestCash > 0) get.push(money(offer.requestCash));
+    for (var r = 0; r < offer.requestTiles.length; r++) get.push(view.tiles[offer.requestTiles[r]].name);
+    html += '<div class="trade-notice"><div class="trade-title">Trade Offer</div><div class="trade-body">' +
+      esc(playerName(offer.from, context)) + ' offers ' + esc(give.join(", ") || "nothing") +
+      ' for ' + esc(get.join(", ") || "nothing") + ' from ' + esc(playerName(offer.to, context)) + '.</div></div>';
+  }
+  if (selectedDetailPlayer) html += renderPlayerDetail(view, context, selectedDetailPlayer);
+  html += '<div class="center-roster">';
+  for (var p = 0; p < view.players.length; p++) {
+    var pl = view.players[p];
+    html += '<button class="mini-player' + (pl.id === view.currentActor ? " active" : "") + (highlightedOwner === pl.id ? " selected" : "") + (pl.eliminated ? " out" : "") + '" data-center-player="' + esc(pl.id) + '" style="border-color:' + PLAYER_CSS[p % PLAYER_CSS.length] + '">';
+    html += '<div class="mini-name">' + esc(playerName(pl.id, context)) + '</div>';
+    html += '<div class="mini-line">' + money(pl.cash) + ' cash</div><div class="mini-line">' + pl.owned.length + ' deeds / NW ' + money(pl.netWorth) + '</div></button>';
+  }
+  html += '</div>';
+  panel.innerHTML = html;
+  var close = document.getElementById("detail-close");
+  if (close) {
+    close.addEventListener("click", function() {
+      selectedDetailPlayer = null;
+      highlightedOwner = null;
+      renderCenterPanel(view, context);
+      if (Renderer.currentView) Renderer.drawBoard(Renderer.currentView);
+    });
+  }
+  var buttons = panel.querySelectorAll("[data-center-player]");
+  for (var b = 0; b < buttons.length; b++) {
+    buttons[b].addEventListener("click", function() {
+      var id = this.getAttribute("data-center-player");
+      if (selectedDetailPlayer === id) {
+        selectedDetailPlayer = null;
+        highlightedOwner = null;
+      } else {
+        selectedDetailPlayer = id;
+        highlightedOwner = id;
+      }
+      renderCenterPanel(view, context);
+      if (Renderer.currentView) Renderer.drawBoard(Renderer.currentView);
+    });
+  }
+}
+function tradeTileBlocked(tileIndex, view) {
+  var tile = view.tiles[tileIndex];
+  if (!tile || tile.type !== "property") return false;
+  for (var i = 0; i < view.tiles.length; i++) {
+    var peer = view.tiles[i];
+    if (peer.type === "property" && peer.color === tile.color && peer.houses > 0) return true;
+  }
+  return false;
+}
+function selectedTradeValues(kind) {
+  var nodes = document.querySelectorAll('[data-trade-tile="' + kind + '"]:checked');
+  var out = [];
+  for (var i = 0; i < nodes.length; i++) out.push(nodes[i].value);
+  return out;
+}
+function renderDeedOptions(view, ownerId, kind, selectedValues) {
+  var owner = null;
+  for (var p = 0; p < view.players.length; p++) if (view.players[p].id === ownerId) owner = view.players[p];
+  if (!owner || owner.owned.length === 0) return '<div class="empty-deeds">No deeds available</div>';
+  var selected = {};
+  for (var s = 0; s < selectedValues.length; s++) selected[selectedValues[s]] = true;
+  var html = "";
+  for (var i = 0; i < owner.owned.length; i++) {
+    var tileIndex = owner.owned[i];
+    var tile = view.tiles[tileIndex];
+    var blocked = tradeTileBlocked(tileIndex, view);
+    var swatch = BOARD_CSS[tile.color] || (tile.type === "transit" ? "#d1d5db" : "#b7e4a8");
+    html += '<label class="deed-option' + (blocked ? " disabled" : "") + '">';
+    html += '<input type="checkbox" data-trade-tile="' + kind + '" value="' + tileIndex + '"' + (selected[String(tileIndex)] ? " checked" : "") + (blocked ? " disabled" : "") + '>';
+    html += '<span class="deed-swatch" style="background:' + swatch + '"></span>';
+    html += '<span class="deed-name">' + esc(tile.name) + '</span>';
+    html += '<span class="deed-meta">' + money(tile.price || tile.mortgage * 2 || 0) + '</span>';
+    html += '</label>';
+  }
+  return html;
+}
+function renderTradePanel(view, legalActions, context) {
+  var panel = document.getElementById("trade-panel");
+  var tradeTemplate = null;
+  for (var i = 0; i < legalActions.length; i++) if (legalActions[i].type === "propose_trade") tradeTemplate = legalActions[i];
+  if (!tradeTemplate || panel.className.indexOf("open") === -1) {
+    if (!tradeTemplate) {
+      panel.classList.remove("open");
+      panel.innerHTML = "";
+    }
+    return;
+  }
+  var me = context.myId;
+  var my = null;
+  for (var p = 0; p < view.players.length; p++) if (view.players[p].id === me) my = view.players[p];
+  var targets = view.players.filter(function(p) { return p.id !== me && !p.eliminated; });
+  if (!targets.length) {
+    panel.classList.remove("open");
+    panel.innerHTML = "";
+    return;
+  }
+  var existingTarget = document.getElementById("trade-to");
+  var existingOfferCash = document.getElementById("trade-offer-cash");
+  var existingRequestCash = document.getElementById("trade-request-cash");
+  var existingOfferCards = document.getElementById("trade-offer-cards");
+  var targetId = existingTarget ? existingTarget.value : targets[0].id;
+  var validTarget = false;
+  for (var vt = 0; vt < targets.length; vt++) if (targets[vt].id === targetId) validTarget = true;
+  if (!validTarget) targetId = targets[0].id;
+  var offerSelected = selectedTradeValues("offer");
+  var requestSelected = selectedTradeValues("request");
+  var html = '<div style="font-weight:900;font-size:13px">Propose Trade</div>';
+  html += '<div class="trade-head trade-money-row"><label>To<select id="trade-to">';
+  for (var t = 0; t < targets.length; t++) html += '<option value="' + esc(targets[t].id) + '"' + (targets[t].id === targetId ? " selected" : "") + '>' + esc(playerName(targets[t].id, context)) + '</option>';
+  html += '</select></label><label>Offer Cash<input id="trade-offer-cash" type="number" min="0" max="' + (my ? my.cash : 0) + '" step="1" value="' + esc(existingOfferCash ? existingOfferCash.value : "0") + '"></label>';
+  var target = targets[0];
+  for (var tp = 0; tp < targets.length; tp++) if (targets[tp].id === targetId) target = targets[tp];
+  html += '<label>Request Cash<input id="trade-request-cash" type="number" min="0" max="' + target.cash + '" step="1" value="' + esc(existingRequestCash ? existingRequestCash.value : "0") + '"></label></div>';
+  if (my && my.jailCards > 0) {
+    html += '<div class="trade-head trade-card-row"><label>Offer Detention Cards<input id="trade-offer-cards" type="number" min="0" max="' + my.jailCards + '" step="1" value="' + esc(existingOfferCards ? existingOfferCards.value : "0") + '"></label><div></div></div>';
+  }
+  html += '<div class="trade-columns">';
+  html += '<div class="trade-side"><div class="trade-side-label">You Give</div><div class="deed-list">' + renderDeedOptions(view, me, "offer", offerSelected) + '</div></div>';
+  html += '<div class="trade-side"><div class="trade-side-label">You Receive</div><div class="deed-list">' + renderDeedOptions(view, targetId, "request", requestSelected) + '</div></div>';
+  html += '</div>';
+  html += '<div class="trade-actions"><button class="action-btn money" id="send-trade">Send Trade</button><button class="action-btn secondary" id="cancel-trade">Cancel</button></div>';
+  panel.innerHTML = html;
+  document.getElementById("trade-to").addEventListener("change", function() {
+    renderTradePanel(view, legalActions, context);
+  });
+  document.getElementById("cancel-trade").addEventListener("click", function() { panel.classList.remove("open"); panel.innerHTML = ""; });
+  document.getElementById("send-trade").addEventListener("click", function() {
+    var offerCardsInput = document.getElementById("trade-offer-cards");
+    playgent.submitAction({
+      type: "propose_trade",
+      to: document.getElementById("trade-to").value,
+      offerCash: parseInt(document.getElementById("trade-offer-cash").value || "0", 10),
+      requestCash: parseInt(document.getElementById("trade-request-cash").value || "0", 10),
+      offerJailCards: offerCardsInput ? parseInt(offerCardsInput.value || "0", 10) : 0,
+      offerTiles: selectedTradeValues("offer").join(","),
+      requestTiles: selectedTradeValues("request").join(",")
+    });
+    panel.classList.remove("open");
+  });
+}
+function phaseTitle(view, context) {
+  if (view.phase === "roll") return playerName(view.currentActor, context) + " to roll";
+  if (view.phase === "buy") return "Buy or auction";
+  if (view.phase === "auction") return "Fast auction";
+  if (view.phase === "trade") return "Trade proposal";
+  if (view.phase === "debt") return "Cash shortfall";
+  if (view.phase === "post_roll") return "Turn wrap-up";
+  if (view.phase === "gameover") return "Game over";
+  return view.phase;
+}
+function renderAuctionBidPanel(view, legalActions, context) {
+  if (!view.auction) return "";
+  var canBid = false;
+  for (var i = 0; i < legalActions.length; i++) if (legalActions[i].type === "bid") canBid = true;
+  if (!canBid) return "";
+  var bidder = null;
+  for (var p = 0; p < view.players.length; p++) if (view.players[p].id === context.myId) bidder = view.players[p];
+  var min = (view.auction.highBid || 0) + 1;
+  var max = bidder ? bidder.cash : min;
+  if (max < min) return "";
+  return '<div class="auction-bid-panel"><label>Custom Bid<input id="custom-bid-amount" type="number" min="' + min + '" max="' + max + '" data-min-bid="' + min + '" data-max-bid="' + max + '" step="1" value="' + min + '"></label><button class="action-btn money" id="custom-bid-button">Bid</button></div>';
+}
+function isTileFinanceAction(action) {
+  return action.type === "mortgage" || action.type === "unmortgage" || action.type === "sell_building" || action.type === "build";
+}
+function renderDom(view, legalActions, context) {
+  legalActions = (legalActions || []).map(unwrapAction);
+  var overlay = document.getElementById("dom-overlay");
+  overlay.setAttribute("data-phase", view.phase || "unknown");
+  overlay.setAttribute("data-status", legalActions.length ? "your-turn" : (context.gameOver ? "game-over" : "waiting"));
+  document.body.setAttribute("data-phase", view.phase || "unknown");
+  document.body.setAttribute("data-status", legalActions.length ? "your-turn" : "waiting");
+
+  document.getElementById("phase-title").textContent = phaseTitle(view, context);
+  var sub = "Round " + view.round + "/" + view.maxRound + " - " + (legalActions.length ? "your move" : "watching " + playerName(view.currentActor, context));
+  if (view.auction) sub = "High bid " + money(view.auction.highBid) + (view.auction.highBidder ? " by " + playerName(view.auction.highBidder, context) : "");
+  if (view.debt) sub = playerName(view.debt.playerId, context) + " needs " + money(view.debt.shortfall);
+  document.getElementById("phase-sub").textContent = sub;
+  var dice = view.lastRoll ? [view.lastRoll.d1, view.lastRoll.d2] : ["-", "-"];
+  document.getElementById("dice-box").innerHTML = '<span class="die">' + dice[0] + '</span><span class="die">' + dice[1] + '</span>';
+
+  var tileLine = "";
+  if (view.pendingTile != null) {
+    var tile = view.tiles[view.pendingTile];
+    tileLine = tile.name + (tile.owner ? " - owned by " + playerName(tile.owner, context) : tile.price ? " - " + money(tile.price) : "");
+  } else if (view.phase === "roll") {
+    var actor = view.players.filter(function(p) { return p.id === view.currentActor; })[0];
+    tileLine = actor ? "At " + view.tiles[actor.position].name : "";
+  }
+  document.getElementById("tile-line").textContent = tileLine;
+  document.getElementById("log-line").textContent = view.log && view.log.length ? formatLogLine(view.log[view.log.length - 1], context) : "";
+  renderCenterPanel(view, context);
+
+  var tray = document.getElementById("action-tray");
+  if (legalActions.length === 0) {
+    tray.innerHTML = '<div class="empty-actions">Waiting for the next city move</div>';
+  } else {
+    var html = renderAuctionBidPanel(view, legalActions, context);
+    for (var a = 0; a < legalActions.length; a++) {
+      if (isTileFinanceAction(legalActions[a])) continue;
+      html += '<button class="' + classForAction(legalActions[a]) + '" data-action="' + a + '">' + esc(labelForAction(legalActions[a], view)) + '</button>';
+    }
+    tray.innerHTML = html || '<div class="empty-actions">Click one of your deeds to manage it</div>';
+    var customBidButton = document.getElementById("custom-bid-button");
+    if (customBidButton) {
+      customBidButton.addEventListener("click", function() {
+        var input = document.getElementById("custom-bid-amount");
+        var minBid = parseInt(input.getAttribute("data-min-bid") || "0", 10);
+        var maxBid = parseInt(input.getAttribute("data-max-bid") || "0", 10);
+        var amount = parseInt(input.value || "0", 10);
+        if (Number.isNaN(amount)) amount = minBid;
+        amount = Math.max(minBid, Math.min(maxBid, amount));
+        input.value = String(amount);
+        playgent.submitAction({ type: "bid", amount: amount });
+      });
+    }
+    var buttons = tray.querySelectorAll("[data-action]");
+    for (var b = 0; b < buttons.length; b++) {
+      buttons[b].addEventListener("click", function() {
+        var idx = parseInt(this.getAttribute("data-action"), 10);
+        if (!legalActions[idx]) return;
+        if (legalActions[idx].type === "propose_trade") {
+          var tradePanel = document.getElementById("trade-panel");
+          tradePanel.classList.add("open");
+          renderTradePanel(view, legalActions, context);
+          return;
+        }
+        playgent.submitAction(legalActions[idx]);
+      });
+    }
+  }
+  renderTradePanel(view, legalActions, context);
+  renderDebtModal(view, legalActions, context);
+
+  var playerContainer = document.getElementById("player-container");
+  playerContainer.innerHTML = "";
+  for (var pc = 0; pc < view.players.length; pc++) {
+    var span = document.createElement("span");
+    span.setAttribute("data-player", playerName(view.players[pc].id, context));
+    span.textContent = playerName(view.players[pc].id, context);
+    playerContainer.appendChild(span);
+  }
+  var landmarks = document.getElementById("board-landmarks");
+  landmarks.setAttribute("data-current-player", playerName(view.currentActor, context));
+  landmarks.setAttribute("data-move-history", view.log ? view.log.map(function(line) { return formatLogLine(line, context); }).join(" | ") : "");
+  landmarks.innerHTML = "";
+  for (var cell = 0; cell < view.tiles.length; cell++) {
+    var marker = document.createElement("span");
+    marker.setAttribute("data-cell", String(cell));
+    marker.textContent = view.tiles[cell].name;
+    landmarks.appendChild(marker);
+  }
+  var patternCell = document.createElement("span");
+  patternCell.setAttribute("data-cell", "r,c");
+  patternCell.textContent = "board graph cells";
+  landmarks.appendChild(patternCell);
+}
+
+(function boot() {
+  var pending = null;
+  var ready = false;
+  function handle(view, legalActions, context) {
+    if (!ready) {
+      pending = { view: view, legalActions: legalActions, context: context };
+      return;
+    }
+    var prev = Renderer.currentView;
+    renderDom(view, legalActions, context || {});
+    Renderer.render(view, legalActions, context || {});
+    if (prev && prev.players && view.players) {
+      var moved = false;
+      for (var c = 0; c < view.players.length; c++) {
+        var now = view.players[c];
+        var before = null;
+        for (var bp = 0; bp < prev.players.length; bp++) if (prev.players[bp].id === now.id) before = prev.players[bp];
+        if (before && now.position !== before.position) moved = true;
+        if (before && now.cash > before.cash) {
+          var gain = now.cash - before.cash;
+          var cashPos = Renderer.tilePos(now.position);
+          Renderer.moneyBurst(cashPos.x, cashPos.y, gain, PLAYER_COLORS[Renderer.playerIndex(now.id)]);
+          if (playgent.sound) playgent.sound(gain >= 100 ? "coin.sell" : "coin.pickup");
+        }
+        if (before && !before.eliminated && now.eliminated && playgent.sound) {
+          playgent.sound("negative.sting");
+        }
+      }
+      if (moved && playgent.sound) playgent.sound("board.move");
+    }
+    if (prev && view.log && prev.log && view.log.length > 0 && view.log[view.log.length - 1] !== prev.log[prev.log.length - 1]) {
+      var actor = view.currentActor || view.currentPlayer;
+      var pp = null;
+      for (var i = 0; i < view.players.length; i++) if (view.players[i].id === actor) pp = view.players[i];
+      if (pp) {
+        var pos = Renderer.tilePos(pp.position);
+        Renderer.burst(pos.x, pos.y, PLAYER_COLORS[Renderer.playerIndex(pp.id)]);
+      }
+      var newestLog = view.log[view.log.length - 1] || "";
+      if (playgent.sound && newestLog.indexOf("drew:") !== -1) playgent.sound("card.draw");
+      if (playgent.sound && newestLog.indexOf("needs $") !== -1 && newestLog.indexOf("stay solvent") !== -1) playgent.sound("negative.warning");
+      if (playgent.sound && newestLog.indexOf("won ") !== -1 && newestLog.indexOf(" at auction") !== -1) playgent.sound("board.place");
+      if (playgent.sound && newestLog.indexOf("bought ") !== -1) playgent.sound("board.place");
+    }
+    if (prev && prev.phase !== "gameover" && view.phase === "gameover" && playgent.sound) {
+      if (view.winner && context && view.winner === context.myId) playgent.sound("game.victory");
+      else if (view.winner) playgent.sound("game.defeat");
+      else playgent.sound("game.over");
+    }
+    if (prev && prev.currentActor !== view.currentActor && view.currentActor && context && view.currentActor === context.myId && playgent.sound) {
+      playgent.sound("turn.start");
+    }
+  }
+  playgent.onStateChange(handle);
+  if (playgent.onAction) {
+    playgent.onAction(function(action) {
+      if (action.type === "buy" || action.type === "bid" || action.type === "build" || action.type === "unmortgage") playgent.sound && playgent.sound("coin.purchase");
+      if (action.type === "sell_building" || action.type === "mortgage") playgent.sound && playgent.sound("coin.sell");
+      if (action.type === "roll" || action.type === "roll_jail" || action.type === "roll_again") playgent.sound && playgent.sound("dice.roll");
+      if (action.type === "pay_bail") playgent.sound && playgent.sound("coin.purchase");
+      if (action.type === "use_jail_card") playgent.sound && playgent.sound("card.place");
+      if (action.type === "raise_cash") playgent.sound && playgent.sound("coin.sell");
+      if (action.type === "pay_debt") playgent.sound && playgent.sound("coin.purchase");
+      if (action.type === "declare_bankruptcy") playgent.sound && playgent.sound("negative.sting");
+      if (action.type === "accept_trade") playgent.sound && playgent.sound("ui.success");
+      if (action.type === "reject_trade" || action.type === "pass" || action.type === "end_turn") playgent.sound && playgent.sound("ui.cancel");
+      if (action.type === "propose_trade") playgent.sound && playgent.sound("ui.confirm");
+    });
+  }
+  function start() {
+    if (typeof PIXI === "undefined") { setTimeout(start, 40); return; }
+    Renderer.init().then(function() {
+      ready = true;
+      if (pending) {
+        handle(pending.view, pending.legalActions, pending.context);
+        pending = null;
+      }
+    });
+  }
+  start();
+})();
+</script>

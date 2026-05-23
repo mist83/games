@@ -1,0 +1,21 @@
+{
+  "slug": "detonating-puppies",
+  "name": "Detonating Puppies",
+  "description": "A bright, chaotic puppy-card survival game about dodging surprise booms, burning favors, and being the last handler standing.",
+  "minPlayers": 2,
+  "maxPlayers": 5,
+  "version": "1.0.0",
+  "tags": ["cards", "party", "hidden-info", "elimination", "puppies"],
+  "thumbnail": "thumbnail.svg",
+  "privateFields": [
+    "hands",
+    "drawPile",
+    "rng",
+    "peeks",
+    "buried",
+    "pending",
+    "pendingGive",
+    "drawnPuppy"
+  ],
+  "rules": "OVERVIEW\nDetonating Puppies is a hidden-hand draw-and-survive card game. Players take turns playing any number of cards, then draw to end each turn. Drawing a Detonating Puppy eliminates you unless you spend a Safety Squeak to tuck that Puppy secretly back into the draw pile. In 2-3 player games, about one third of the non-Puppy draw pile is secretly removed before the Detonating Puppies are shuffled in. The last live handler wins.\n\nVISIBLE STATE\nPlayers see the active handler, live/eliminated status, face-up Detonating Puppy markers for eliminated players, cards left in the draw pile, public discard history, response windows, hand counts, and their own hand. Nose the Future privately shows only that viewer the top three draw cards. Spectators get a full god view.\n\nACTIONS\nDraw ends one owed turn. Roll Over ends one owed turn without drawing. Double Dog Dare ends your current obligation and makes the next live player take two turns, or stacks on an active dare by passing remaining owed turns plus two. Yard Shake shuffles the draw pile. Nose the Future privately peeks at the top three. Fetch Favor makes a target choose one card to give you. Nah may be played during the response window to toggle whether the pending action happens. Matching pairs steal one random card from a target. Matching triples name a card type from a target and take it if present.\n\nWIN\nWhen all but one player have been eliminated, the sole live player wins."
+}

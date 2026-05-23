@@ -1,0 +1,17 @@
+{
+  "slug": "diplomacy",
+  "name": "Diplomacy",
+  "description": "4-player territory control where negotiation is the core mechanic. Whisper private deals, then simultaneously reveal orders. Watch who kept their promises and who betrayed their allies.",
+  "minPlayers": 4,
+  "maxPlayers": 4,
+  "version": "1.0.0",
+  "tags": [
+    "strategy",
+    "negotiation",
+    "simultaneous-turns",
+    "territory-control",
+    "bluffing"
+  ],
+  "thumbnail": "thumbnail.svg",
+  "rules": "OVERVIEW\nFour-player territory control on an 18-territory grid. Players negotiate, then secretly issue simultaneous army orders. First to 5 of 8 supply centers wins; after round 10, most supply centers wins, then army count breaks ties.\n\nPHASES\nNegotiate: no game actions; deals are non-binding.\nOrders: each player orders one army at a time until all owned armies have orders. hold defends, move attacks an adjacent territory, support adds +1 to an adjacent hold or move and is cut if attacked.\nResolve: orders reveal, highest unique strength wins contested territories, ties bounce, dislodged armies auto-retreat or disband.\nReinforce: every 2 rounds, armies adjust to supply center count.\n\nVIEW\nagentView shows the map, armies, supply centers, counts, and your pending orders."
+}

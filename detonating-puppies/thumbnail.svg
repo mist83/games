@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Detonating Puppies</title>
+  <desc id="desc">A puppy card with a fuse and bright tabletop colors.</desc>
+  <rect width="512" height="512" rx="48" fill="#183044"/>
+  <path d="M0 0h512v212C387 166 283 165 193 209 116 247 52 246 0 218Z" fill="#1b4540"/>
+  <path d="M0 366c112-49 215-43 309 18 68 44 136 53 203 27v101H0Z" fill="#141019"/>
+  <path d="M72 396c78 42 294 44 368 0 28-17 28-47 0-64-75-44-290-42-368 0-29 16-29 48 0 64Z" fill="#0b2027" opacity=".64"/>
+  <g transform="translate(154 72) rotate(-7 104 176)">
+    <rect x="0" y="0" width="208" height="318" rx="24" fill="#ffc65a" stroke="#fff8df" stroke-width="11"/>
+    <path d="M12 12h184v108C148 91 92 91 12 132Z" fill="#fff4d7" opacity=".58"/>
+    <path d="M49 127c0-49 25-82 55-82s55 33 55 82c0 58-29 96-55 96s-55-38-55-96Z" fill="#2a1f20"/>
+    <path d="M48 102 22 58c-7-12 0-26 14-27 28-1 45 21 52 46Z" fill="#5b362e"/>
+    <path d="m160 102 26-44c7-12 0-26-14-27-28-1-45 21-52 46Z" fill="#5b362e"/>
+    <circle cx="83" cy="118" r="10" fill="#fff4d7"/>
+    <circle cx="125" cy="118" r="10" fill="#fff4d7"/>
+    <path d="M96 145c9 8 18 8 27 0" fill="none" stroke="#fff4d7" stroke-width="9" stroke-linecap="round"/>
+    <path d="M104 132c13 0 20 5 20 12s-7 12-20 12-20-5-20-12 7-12 20-12Z" fill="#ff5a45"/>
+    <rect x="42" y="240" width="124" height="34" rx="17" fill="#141019"/>
+    <text x="104" y="264" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" font-weight="900" fill="#ffd34d">DP</text>
+  </g>
+  <path d="M338 116c38-54 84-52 94-19 8 25-15 41-7 60 5 13 22 19 40 16" fill="none" stroke="#ffd34d" stroke-width="15" stroke-linecap="round"/>
+  <path d="M452 167 479 142M457 184l34 9M438 153l8-34" stroke="#ff5a45" stroke-width="12" stroke-linecap="round"/>
+</svg>

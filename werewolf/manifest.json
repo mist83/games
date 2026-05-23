@@ -1,0 +1,26 @@
+{
+  "slug": "werewolf",
+  "name": "Werewolf",
+  "description": "Social deduction: villagers hunt hidden werewolves by day while wolves secretly kill by night. Bluff, accuse, and survive.",
+  "minPlayers": 5,
+  "maxPlayers": 10,
+  "version": "1.0.0",
+  "tags": [
+    "social-deduction",
+    "bluffing",
+    "simultaneous-turns",
+    "hidden-roles"
+  ],
+  "thumbnail": "thumbnail.svg",
+  "libraries": ["pixi"],
+  "files": [
+    "constants.js",
+    "tween.js",
+    "atmosphere.js",
+    "effects.js",
+    "player-circle.js",
+    "vote-lines.js",
+    "scene-director.js"
+  ],
+  "rules": "OVERVIEW\nHidden-role social deduction. Werewolves try to reach parity with non-wolves; village wins by eliminating all werewolves.\n\nROLES\nwerewolf knows fellow wolves and votes at night to kill a living non-wolf. seer investigates one living player at night and keeps results. doctor protects one living player at night, may self-protect, and cannot repeat the previous target. villager has no night action.\n\nPHASES\nroleReveal shows private role. day_discussion is chat-only. day_vote uses day_vote(target) or skip; majority eliminates, ties eliminate nobody. night lets wolves, seer, and doctor act; villagers wait. Result phases reveal eliminations/kills and auto-advance.\n\nVIEW\nagentView shows alive/dead players, your role and known info, vote progress, revealed votes, night results, and known roles when your view allows them."
+}

@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 288" role="img" aria-label="Muay ThAI fighters in stance">
+  <rect width="512" height="288" fill="#05070d"/>
+  <rect y="198" width="512" height="90" fill="#111827"/>
+
+  <g stroke="#18304a" stroke-width="1" opacity=".45">
+    <path d="M0 58h512M0 84h512M0 110h512M0 136h512M0 162h512M0 188h512"/>
+    <path d="M216 52 66 288M232 52 150 288M248 52 234 288M264 52 318 288M280 52 402 288M296 52 512 288"/>
+    <path d="M186 58h140M168 84h176M144 116h224M112 158h288M72 210h368"/>
+  </g>
+
+  <path d="M69 34 185 246H15Z" fill="#4fdcff" opacity=".075"/>
+  <path d="M443 34 497 246H327Z" fill="#ff4f87" opacity=".075"/>
+  <path d="M0 225h512" stroke="#4fdcff" stroke-width="2" opacity=".72"/>
+
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <ellipse cx="204" cy="234" rx="58" ry="10" fill="#02050a" opacity=".7" stroke="none"/>
+    <ellipse cx="308" cy="234" rx="58" ry="10" fill="#02050a" opacity=".7" stroke="none"/>
+
+    <g stroke="#4fdcff" stroke-width="12">
+      <ellipse cx="221" cy="133" rx="17" ry="23" fill="#4fdcff" stroke="#4fdcff"/>
+      <path d="M215 155 204 181 207 203"/>
+      <path d="M207 203 190 214 170 224"/>
+      <path d="M207 203 232 214 254 224"/>
+      <path d="M212 165 236 174 259 166"/>
+      <path d="M208 170 198 183 218 159"/>
+    </g>
+    <g fill="#4fdcff" stroke="#4fdcff" stroke-width="7">
+      <circle cx="259" cy="166" r="8"/>
+      <circle cx="218" cy="159" r="8"/>
+    </g>
+    <g stroke="#4fdcff" stroke-width="10">
+      <path d="M160 224h22"/>
+      <path d="M246 224h18"/>
+    </g>
+
+    <g stroke="#ff4f87" stroke-width="12">
+      <ellipse cx="291" cy="133" rx="17" ry="23" fill="#ff4f87" stroke="#ff4f87"/>
+      <path d="M297 155 308 181 305 203"/>
+      <path d="M305 203 322 214 342 224"/>
+      <path d="M305 203 280 214 258 224"/>
+      <path d="M300 165 276 174 253 166"/>
+      <path d="M304 170 314 183 294 159"/>
+    </g>
+    <g fill="#ff4f87" stroke="#ff4f87" stroke-width="7">
+      <circle cx="253" cy="166" r="8"/>
+      <circle cx="294" cy="159" r="8"/>
+    </g>
+    <g stroke="#ff4f87" stroke-width="10">
+      <path d="M330 224h22"/>
+      <path d="M248 224h18"/>
+    </g>
+
+  </g>
+</svg>

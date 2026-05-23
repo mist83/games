@@ -1,0 +1,12 @@
+{
+  "slug": "codename-clash",
+  "name": "Codename Clash",
+  "description": "A cinematic spy word-grid team game with secret spymaster keys, tense guesses, and explosive reveal effects.",
+  "minPlayers": 4,
+  "maxPlayers": 8,
+  "version": "1.0.0",
+  "tags": ["word", "teams", "hidden-info", "party", "strategy"],
+  "thumbnail": "thumbnail.svg",
+  "privateFields": ["cards"],
+  "rules": "OVERVIEW\nTwo teams race on a 5x5 word grid. Red has 9 agents, Blue has 8, plus neutral bystanders and one assassin. Spymasters know the hidden key; operatives see only words and revealed identities.\n\nPHASES\nClue: current spymaster submits clue(word,count), where count is 1-5.\nGuess: active operative chooses unrevealed card indexes. Correct team cards continue until count is reached. Neutral, opponent, assassin, or pass after at least one guess ends the turn.\n\nVIEW\nagentView shows the grid. Key marks are R/B/N/X for spymasters and spectators; operatives see ? until reveal.\n\nWIN\nReveal all team agents, or make the other team reveal the assassin."
+}

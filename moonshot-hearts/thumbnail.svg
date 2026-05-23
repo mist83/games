@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 154" role="img" aria-labelledby="title">
+  <title id="title">Moonshot Hearts thumbnail</title>
+  <rect width="220" height="154" rx="14" fill="#12372a"/>
+  <ellipse cx="110" cy="127" rx="93" ry="18" fill="#0b231b" opacity="0.55"/>
+  <g stroke="#7f1d1d" stroke-width="1.5" stroke-linejoin="round">
+    <g transform="rotate(-36 43 132)">
+      <rect x="28" y="72" width="30" height="60" rx="5" fill="#fff7ed"/>
+      <path d="M43 99c-4-6-14-3-14 5 0 8 14 17 14 17s14-9 14-17c0-8-10-11-14-5z" fill="#e11d48" stroke="none"/>
+    </g>
+    <g transform="rotate(-30 56 126)">
+      <rect x="41" y="66" width="30" height="60" rx="5" fill="#fff7ed"/>
+      <path d="M56 93c-4-6-14-3-14 5 0 8 14 17 14 17s14-9 14-17c0-8-10-11-14-5z" fill="#e11d48" stroke="none"/>
+    </g>
+    <g transform="rotate(-24 69 121)">
+      <rect x="54" y="61" width="30" height="60" rx="5" fill="#fff7ed"/>
+      <path d="M69 88c-4-6-14-3-14 5 0 8 14 17 14 17s14-9 14-17c0-8-10-11-14-5z" fill="#e11d48" stroke="none"/>
+    </g>
+    <g transform="rotate(-18 82 117)">
+      <rect x="67" y="57" width="30" height="60" rx="5" fill="#fff7ed"/>
+      <path d="M82 84c-4-6-14-3-14 5 0 8 14 17 14 17s14-9 14-17c0-8-10-11-14-5z" fill="#e11d48" stroke="none"/>
+    </g>
+    <g transform="rotate(-12 95 114)">
+      <rect x="80" y="54" width="30" height="60" rx="5" fill="#fff7ed"/>
+      <path d="M95 81c-4-6-14-3-14 5 0 8 14 17 14 17s14-9 14-17c0-8-10-11-14-5z" fill="#e11d48" stroke="none"/>
+    </g>
+    <g transform="rotate(-6 108 112)">
+      <rect x="93" y="52" width="30" height="60" rx="5" fill="#fff7ed"/>
+      <path d="M108 79c-4-6-14-3-14 5 0 8 14 17 14 17s14-9 14-17c0-8-10-11-14-5z" fill="#e11d48" stroke="none"/>
+    </g>
+    <g>
+      <rect x="105" y="51" width="30" height="60" rx="5" fill="#fff7ed"/>
+      <path d="M120 78c-4-6-14-3-14 5 0 8 14 17 14 17s14-9 14-17c0-8-10-11-14-5z" fill="#e11d48" stroke="none"/>
+    </g>
+    <g transform="rotate(6 132 112)">
+      <rect x="117" y="52" width="30" height="60" rx="5" fill="#fff7ed"/>
+      <path d="M132 79c-4-6-14-3-14 5 0 8 14 17 14 17s14-9 14-17c0-8-10-11-14-5z" fill="#e11d48" stroke="none"/>
+    </g>
+    <g transform="rotate(12 145 114)">
+      <rect x="130" y="54" width="30" height="60" rx="5" fill="#fff7ed"/>
+      <path d="M145 81c-4-6-14-3-14 5 0 8 14 17 14 17s14-9 14-17c0-8-10-11-14-5z" fill="#e11d48" stroke="none"/>
+    </g>
+    <g transform="rotate(18 158 117)">
+      <rect x="143" y="57" width="30" height="60" rx="5" fill="#fff7ed"/>
+      <path d="M158 84c-4-6-14-3-14 5 0 8 14 17 14 17s14-9 14-17c0-8-10-11-14-5z" fill="#e11d48" stroke="none"/>
+    </g>
+    <g transform="rotate(24 171 121)">
+      <rect x="156" y="61" width="30" height="60" rx="5" fill="#fff7ed"/>
+      <path d="M171 88c-4-6-14-3-14 5 0 8 14 17 14 17s14-9 14-17c0-8-10-11-14-5z" fill="#e11d48" stroke="none"/>
+    </g>
+    <g transform="rotate(30 184 126)">
+      <rect x="169" y="66" width="30" height="60" rx="5" fill="#fff7ed"/>
+      <path d="M184 93c-4-6-14-3-14 5 0 8 14 17 14 17s14-9 14-17c0-8-10-11-14-5z" fill="#e11d48" stroke="none"/>
+    </g>
+    <g transform="rotate(36 197 132)">
+      <rect x="182" y="72" width="30" height="60" rx="5" fill="#fff7ed"/>
+      <path d="M197 99c-4-6-14-3-14 5 0 8 14 17 14 17s14-9 14-17c0-8-10-11-14-5z" fill="#e11d48" stroke="none"/>
+    </g>
+  </g>
+  <path d="M110 23c-8-12-27-6-27 10 0 18 27 36 27 36s27-18 27-36c0-16-19-22-27-10z" fill="#e11d48" stroke="#fff7ed" stroke-width="4" stroke-linejoin="round"/>
+</svg>

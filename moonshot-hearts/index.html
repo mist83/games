@@ -1,0 +1,1902 @@
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+<style>
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #08111a;
+    color: #f7fbff;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  button { font: inherit; }
+  #game {
+    position: fixed;
+    inset: 0;
+    min-width: 320px;
+    background:
+      radial-gradient(circle at 18% 18%, rgba(65, 214, 195, 0.28), transparent 28%),
+      radial-gradient(circle at 85% 15%, rgba(247, 211, 90, 0.2), transparent 25%),
+      radial-gradient(circle at 78% 84%, rgba(244, 63, 94, 0.24), transparent 28%),
+      linear-gradient(145deg, #08111a 0%, #111827 45%, #23111d 100%);
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+  }
+  #game > * {
+    min-width: 0;
+  }
+  #game::before {
+    content: "";
+    position: absolute;
+    inset: -18%;
+    pointer-events: none;
+    background:
+      linear-gradient(110deg, transparent 0%, rgba(255,255,255,0.07) 42%, transparent 57%),
+      repeating-linear-gradient(90deg, rgba(255,255,255,0.035) 0 1px, transparent 1px 84px);
+    opacity: 0.35;
+    animation: drift 18s linear infinite;
+  }
+  @keyframes drift {
+    from { transform: translate3d(-3%, -2%, 0) rotate(0deg); }
+    to { transform: translate3d(3%, 2%, 0) rotate(1deg); }
+  }
+  .topbar {
+    position: relative;
+    z-index: 5;
+    width: 100%;
+    min-width: 0;
+    display: grid;
+    grid-template-columns: minmax(170px, 0.7fr) minmax(220px, 1.3fr);
+    gap: 12px;
+    padding: max(12px, env(safe-area-inset-top)) 16px 8px;
+    align-items: start;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+  }
+  .brand-mark {
+    width: 42px;
+    height: 42px;
+    border-radius: 13px;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(135deg, #f43f5e, #f7d35a);
+    color: #160b12;
+    font-size: 22px;
+    font-weight: 950;
+    box-shadow: 0 12px 34px rgba(244, 63, 94, 0.28);
+  }
+  .brand-title {
+    min-width: 0;
+  }
+  .brand-title h1 {
+    margin: 0;
+    font-size: clamp(19px, 2.2vw, 30px);
+    line-height: 1.02;
+    letter-spacing: 0;
+  }
+  .brand-title p {
+    margin: 4px 0 0;
+    color: #aac0c7;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  .scorebar {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(96px, 1fr));
+    gap: 8px;
+    min-width: 0;
+  }
+  .score-chip {
+    min-width: 0;
+    border: 1px solid rgba(255,255,255,0.14);
+    background: rgba(8, 17, 26, 0.58);
+    backdrop-filter: blur(16px);
+    border-radius: 8px;
+    padding: 8px 10px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.07);
+  }
+  .score-chip.me {
+    border-color: rgba(65, 214, 195, 0.65);
+    box-shadow: 0 0 0 1px rgba(65,214,195,0.12), 0 12px 24px rgba(65,214,195,0.08);
+  }
+  .score-chip.current {
+    border-color: rgba(247, 211, 90, 0.78);
+  }
+  .score-name {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    min-width: 0;
+    color: #d7edf2;
+    font-size: 12px;
+    font-weight: 850;
+  }
+  .score-name span:first-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .score-total {
+    font-size: 25px;
+    font-weight: 950;
+    line-height: 1;
+    margin-top: 5px;
+  }
+  .score-round {
+    color: #ffc7d1;
+    font-size: 11px;
+    font-weight: 800;
+    margin-top: 3px;
+  }
+  .table-wrap {
+    position: relative;
+    z-index: 2;
+    min-height: 0;
+    display: grid;
+    place-items: center;
+    padding: 0 14px;
+  }
+  .table {
+    position: relative;
+    width: min(82vw, 820px);
+    height: min(52vh, 450px);
+    min-height: 250px;
+    border-radius: 999px;
+    background:
+      radial-gradient(circle at 50% 45%, rgba(65,214,195,0.16), transparent 32%),
+      linear-gradient(135deg, rgba(17, 70, 67, 0.94), rgba(12, 42, 49, 0.96) 54%, rgba(52, 29, 42, 0.94));
+    border: 1px solid rgba(255,255,255,0.18);
+    box-shadow:
+      inset 0 0 0 13px rgba(255,255,255,0.035),
+      inset 0 0 80px rgba(0,0,0,0.32),
+      0 30px 90px rgba(0,0,0,0.36);
+  }
+  .table::after {
+    content: "";
+    position: absolute;
+    inset: 12%;
+    border-radius: 999px;
+    border: 1px solid rgba(247, 211, 90, 0.18);
+    pointer-events: none;
+  }
+  .center-status {
+    position: absolute;
+    left: 50%;
+    top: 48%;
+    transform: translate(-50%, -50%);
+    width: min(74%, 430px);
+    text-align: center;
+    z-index: 2;
+    pointer-events: none;
+  }
+  #game[data-trick="active"] .center-status {
+    top: 62%;
+  }
+  .phase-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 100%;
+    min-height: 30px;
+    padding: 7px 11px;
+    border-radius: 999px;
+    background: rgba(8, 17, 26, 0.72);
+    border: 1px solid rgba(255,255,255,0.14);
+    color: #d9eef3;
+    font-size: 12px;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+  .status-main {
+    margin-top: 10px;
+    font-size: clamp(24px, 4.4vw, 56px);
+    line-height: 0.98;
+    font-weight: 950;
+    text-shadow: 0 12px 34px rgba(0,0,0,0.38);
+  }
+  #game[data-trick="active"] .status-main {
+    font-size: clamp(22px, 3.4vw, 44px);
+  }
+  #game[data-trick="active"] .status-sub {
+    font-size: clamp(11px, 1.3vw, 14px);
+  }
+  .status-sub {
+    margin-top: 8px;
+    color: #b5cbd3;
+    font-size: clamp(12px, 1.6vw, 16px);
+    font-weight: 760;
+  }
+  .seats {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+  }
+  .seat {
+    position: absolute;
+    width: clamp(118px, 18vw, 172px);
+    min-height: 78px;
+    border-radius: 8px;
+    padding: 10px;
+    background: rgba(8, 17, 26, 0.66);
+    border: 1px solid rgba(255,255,255,0.13);
+    box-shadow: 0 14px 36px rgba(0,0,0,0.24);
+    backdrop-filter: blur(14px);
+    transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+  }
+  .seat.current {
+    border-color: #f7d35a;
+    box-shadow: 0 0 0 1px rgba(247,211,90,0.16), 0 18px 42px rgba(247,211,90,0.13);
+    animation: seatPulse 1.2s ease-in-out infinite;
+  }
+  @keyframes seatPulse {
+    0%, 100% { transform: translate3d(0,0,0) scale(1); }
+    50% { transform: translate3d(0,-2px,0) scale(1.025); }
+  }
+  .seat.me {
+    border-color: rgba(65, 214, 195, 0.66);
+  }
+  .seat.top { top: -6px; left: 50%; transform: translateX(-50%); }
+  .seat.bottom { bottom: -14px; left: 50%; transform: translateX(-50%); }
+  .seat.left { left: -34px; top: 50%; transform: translateY(-50%); }
+  .seat.right { right: -34px; top: 50%; transform: translateY(-50%); }
+  .seat.current.top { animation-name: seatPulseTop; }
+  .seat.current.bottom { animation-name: seatPulseBottom; }
+  .seat.current.left { animation-name: seatPulseLeft; }
+  .seat.current.right { animation-name: seatPulseRight; }
+  @keyframes seatPulseTop {
+    0%,100% { transform: translateX(-50%) scale(1); }
+    50% { transform: translateX(-50%) translateY(-2px) scale(1.025); }
+  }
+  @keyframes seatPulseBottom {
+    0%,100% { transform: translateX(-50%) scale(1); }
+    50% { transform: translateX(-50%) translateY(2px) scale(1.025); }
+  }
+  @keyframes seatPulseLeft {
+    0%,100% { transform: translateY(-50%) scale(1); }
+    50% { transform: translateY(-50%) translateX(-2px) scale(1.025); }
+  }
+  @keyframes seatPulseRight {
+    0%,100% { transform: translateY(-50%) scale(1); }
+    50% { transform: translateY(-50%) translateX(2px) scale(1.025); }
+  }
+  .seat-row {
+    display: grid;
+    grid-template-columns: 38px minmax(0, 1fr);
+    gap: 9px;
+    align-items: center;
+  }
+  .avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    color: #08111a;
+    background: linear-gradient(135deg, #41d6c3, #f7d35a);
+    font-size: 17px;
+    font-weight: 950;
+  }
+  .seat-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #f7fbff;
+    font-size: 13px;
+    font-weight: 900;
+  }
+  .seat-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 5px;
+  }
+  .mini-pill {
+    min-height: 20px;
+    padding: 3px 6px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.08);
+    color: #c5d7dd;
+    font-size: 10px;
+    font-weight: 850;
+  }
+  .mini-pill.points { color: #ffc7d1; background: rgba(244,63,94,0.13); }
+  .mini-pill.leader { color: #fff1b8; background: rgba(247,211,90,0.15); }
+  .trick {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    pointer-events: none;
+  }
+  .played-card {
+    position: absolute;
+    width: clamp(48px, 8vw, 72px);
+    height: calc(clamp(48px, 8vw, 72px) * 1.38);
+    animation: cardLand 430ms cubic-bezier(.2, .9, .2, 1.15) both;
+  }
+  .played-card.bottom { left: 50%; bottom: 23%; transform: translateX(-50%); }
+  .played-card.top { left: 50%; top: 18%; transform: translateX(-50%); }
+  .played-card.left { left: 34%; top: 50%; transform: translateY(-50%) rotate(-7deg); }
+  .played-card.right { right: 34%; top: 50%; transform: translateY(-50%) rotate(7deg); }
+  .played-card.settled { opacity: 0.72; filter: saturate(0.9); }
+  @keyframes cardLand {
+    from { opacity: 0; scale: 0.72; filter: blur(4px); }
+    to { opacity: 1; scale: 1; filter: blur(0); }
+  }
+  .card-face {
+    width: 100%;
+    height: 100%;
+    border-radius: 10px;
+    border: 1px solid rgba(19, 30, 42, 0.18);
+    background:
+      linear-gradient(145deg, rgba(255,255,255,0.98), rgba(255,242,226,0.96)),
+      radial-gradient(circle at 30% 20%, rgba(255,255,255,0.8), transparent 45%);
+    color: #132033;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    padding: 7px;
+    box-shadow: 0 12px 22px rgba(0,0,0,0.24), inset 0 0 0 1px rgba(255,255,255,0.7);
+    position: relative;
+    overflow: hidden;
+  }
+  .card-face.red { color: #c51f3d; }
+  .card-face.poison {
+    background:
+      linear-gradient(145deg, #1b2331, #101622),
+      radial-gradient(circle at 55% 22%, rgba(244,63,94,0.36), transparent 38%);
+    color: #f7fbff;
+    border-color: rgba(244,63,94,0.42);
+    box-shadow: 0 15px 30px rgba(244,63,94,0.2), inset 0 0 0 1px rgba(255,255,255,0.08);
+  }
+  .rank {
+    font-size: clamp(16px, 2.4vw, 22px);
+    line-height: 1;
+    font-weight: 950;
+  }
+  .suit {
+    align-self: center;
+    justify-self: center;
+    font-size: clamp(25px, 4.6vw, 44px);
+    line-height: 1;
+    font-weight: 950;
+  }
+  .corner {
+    justify-self: end;
+    transform: rotate(180deg);
+    font-size: 12px;
+    font-weight: 950;
+  }
+  .hand-panel {
+    position: relative;
+    z-index: 6;
+    padding: 8px 16px max(14px, env(safe-area-inset-bottom));
+    display: grid;
+    gap: 9px;
+  }
+  .prompt-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+  }
+  .prompt {
+    min-width: 0;
+  }
+  .prompt strong {
+    display: block;
+    font-size: clamp(16px, 2vw, 22px);
+    line-height: 1.05;
+  }
+  .prompt span {
+    display: block;
+    margin-top: 4px;
+    color: #aac0c7;
+    font-size: 12px;
+    font-weight: 750;
+  }
+  .heart-state {
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 999px;
+    padding: 7px 10px;
+    color: #ffc7d1;
+    background: rgba(244,63,94,0.12);
+    font-size: 12px;
+    font-weight: 900;
+    white-space: nowrap;
+  }
+  .hand-scroll {
+    width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 6px 4px 11px;
+    scrollbar-width: thin;
+  }
+  .hand {
+    width: 100%;
+    display: flex;
+    align-items: flex-end;
+    gap: clamp(5px, 0.8vw, 10px);
+    min-height: clamp(100px, 17vh, 142px);
+  }
+  .hand-card {
+    width: clamp(50px, 8.2vw, 78px);
+    height: calc(clamp(50px, 8.2vw, 78px) * 1.38);
+    flex: 0 0 auto;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    transform-origin: bottom center;
+    transition: transform 160ms ease, filter 160ms ease, opacity 160ms ease;
+  }
+  .hand-card.legal {
+    filter: drop-shadow(0 0 12px rgba(65,214,195,0.34));
+  }
+  .hand-card.legal:hover {
+    transform: translateY(-13px) rotate(-1deg);
+  }
+  .hand-card.selected {
+    transform: translateY(-18px) rotate(-1deg);
+    filter: drop-shadow(0 0 16px rgba(247,211,90,0.72)) drop-shadow(0 16px 24px rgba(0,0,0,0.38));
+  }
+  .hand-card.selected .card-face {
+    box-shadow: inset 0 0 0 3px rgba(247,211,90,0.92), 0 0 0 2px rgba(65,214,195,0.72);
+  }
+  .hand-card.unplayable {
+    opacity: 0.44;
+    cursor: default;
+    filter: grayscale(0.4);
+  }
+  .hand-card:active {
+    transform: translateY(-6px) scale(0.97);
+  }
+  .hand-card.bump {
+    animation: bump 230ms ease;
+  }
+  @keyframes bump {
+    0%,100% { transform: translateX(0); }
+    30% { transform: translateX(-5px); }
+    65% { transform: translateX(5px); }
+  }
+  .pass-slots {
+    display: flex;
+    gap: 6px;
+    min-height: 44px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .pass-slot {
+    min-width: 42px;
+    height: 28px;
+    border-radius: 8px;
+    border: 1px dashed rgba(255,255,255,0.2);
+    display: grid;
+    place-items: center;
+    color: #aac0c7;
+    font-size: 11px;
+    font-weight: 900;
+    background: rgba(255,255,255,0.05);
+  }
+  .pass-slot.filled {
+    border-style: solid;
+    color: #08111a;
+    background: linear-gradient(135deg, #41d6c3, #f7d35a);
+  }
+  .pass-submit {
+    height: 44px;
+    min-width: 108px;
+    border: 0;
+    border-radius: 8px;
+    color: #08111a;
+    background: linear-gradient(135deg, #f7d35a, #41d6c3);
+    font-size: 11px;
+    font-weight: 950;
+    cursor: pointer;
+    box-shadow: 0 10px 24px rgba(65,214,195,0.18);
+    transition: transform 150ms ease, opacity 150ms ease, filter 150ms ease;
+  }
+  .pass-submit:not(:disabled):hover {
+    transform: translateY(-2px);
+    filter: brightness(1.05);
+  }
+  .pass-submit:disabled {
+    opacity: 0.42;
+    cursor: default;
+    box-shadow: none;
+  }
+  .spectator-hands {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(160px, 1fr));
+    gap: 8px;
+    overflow-x: auto;
+  }
+  .spectator-hand {
+    min-width: 160px;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 8px;
+    background: rgba(8,17,26,0.58);
+    padding: 8px;
+  }
+  .spectator-hand h3 {
+    margin: 0 0 6px;
+    color: #d7edf2;
+    font-size: 12px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .mini-cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+  }
+  .mini-card {
+    border-radius: 5px;
+    background: rgba(255,255,255,0.92);
+    color: #132033;
+    min-width: 26px;
+    padding: 3px 4px;
+    text-align: center;
+    font-size: 10px;
+    font-weight: 950;
+  }
+  .mini-card.red { color: #c51f3d; }
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: 22vh;
+    transform: translateX(-50%) translateY(16px);
+    z-index: 20;
+    opacity: 0;
+    pointer-events: none;
+    border-radius: 999px;
+    padding: 10px 14px;
+    background: rgba(8,17,26,0.82);
+    border: 1px solid rgba(255,255,255,0.18);
+    color: #f7fbff;
+    font-size: 13px;
+    font-weight: 900;
+    box-shadow: 0 16px 42px rgba(0,0,0,0.35);
+    transition: opacity 170ms ease, transform 170ms ease;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  .burst-layer {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 30;
+    overflow: hidden;
+  }
+  .burst {
+    position: absolute;
+    left: 50%;
+    top: 45%;
+    width: min(86vw, 560px);
+    transform: translate(-50%, -50%) scale(0.85);
+    text-align: center;
+    opacity: 0;
+    animation: burstPop 1350ms cubic-bezier(.18, .9, .25, 1) forwards;
+  }
+  .burst h2 {
+    margin: 0;
+    font-size: clamp(42px, 8vw, 86px);
+    line-height: 0.94;
+    letter-spacing: 0;
+    font-weight: 1000;
+    text-shadow: 0 18px 42px rgba(0,0,0,0.44);
+  }
+  .burst p {
+    margin: 10px 0 0;
+    color: #e6f7fb;
+    font-size: clamp(15px, 2.2vw, 22px);
+    font-weight: 900;
+    text-shadow: 0 8px 24px rgba(0,0,0,0.45);
+  }
+  .burst.good h2 { color: #7ef9d8; }
+  .burst.bad h2 { color: #ff5a78; }
+  .burst.gold h2 { color: #f7d35a; }
+  @keyframes burstPop {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.72); filter: blur(8px); }
+    14% { opacity: 1; transform: translate(-50%, -50%) scale(1.06); filter: blur(0); }
+    72% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -58%) scale(0.96); }
+  }
+  .particle {
+    position: absolute;
+    left: 50%;
+    top: 45%;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--color);
+    opacity: 0;
+    animation: particleFly 920ms ease-out forwards;
+  }
+  @keyframes particleFly {
+    0% { opacity: 1; transform: translate(-50%, -50%) scale(0.8); }
+    100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0.1); }
+  }
+  #game.shake .table-wrap {
+    animation: shake 360ms ease;
+  }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    20% { transform: translateX(-8px); }
+    45% { transform: translateX(7px); }
+    70% { transform: translateX(-4px); }
+  }
+  @media (max-width: 760px) {
+    .topbar {
+      grid-template-columns: 1fr;
+      gap: 8px;
+      padding-left: 10px;
+      padding-right: 10px;
+    }
+    .scorebar {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      overflow: visible;
+      padding-bottom: 0;
+    }
+    .score-chip { padding: 7px 8px; }
+    .score-total { font-size: 21px; }
+    .table-wrap { padding: 0 8px; }
+    .table {
+      width: min(96vw, 620px);
+      height: min(44vh, 360px);
+      min-height: 235px;
+    }
+    .seat {
+      width: 112px;
+      min-height: 66px;
+      padding: 7px;
+    }
+    .seat.top { top: -4px; }
+    .seat.bottom { bottom: -10px; }
+    .seat.left { left: 4px; }
+    .seat.right { right: 4px; }
+    .seat-row {
+      grid-template-columns: 30px minmax(0, 1fr);
+      gap: 6px;
+    }
+    .avatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 10px;
+      font-size: 14px;
+    }
+    .seat-name { font-size: 11px; }
+    .mini-pill { font-size: 9px; padding: 2px 5px; }
+    .played-card.left { left: 26%; }
+    .played-card.right { right: 26%; }
+    .hand-panel { padding-left: 9px; padding-right: 9px; }
+    .prompt-row { grid-template-columns: 1fr; gap: 5px; }
+    .heart-state { width: fit-content; }
+    .hand-scroll {
+      overflow: visible;
+      padding: 3px 0 4px;
+    }
+    .hand {
+      min-height: 126px;
+      flex-wrap: wrap;
+      align-content: flex-end;
+      justify-content: center;
+      gap: 5px;
+    }
+    .hand-card {
+      width: clamp(42px, calc((100vw - 58px) / 7), 52px);
+    }
+    .spectator-hands { grid-template-columns: repeat(4, 160px); }
+  }
+  @media (max-height: 650px) {
+    .brand-mark { width: 34px; height: 34px; border-radius: 10px; font-size: 18px; }
+    .score-total { font-size: 20px; }
+    .table { height: min(40vh, 330px); min-height: 210px; }
+    .hand { min-height: 86px; }
+    .hand-card { width: clamp(45px, 7vw, 64px); }
+  }
+</style>
+
+<div id="game" data-phase="loading" data-status="loading" data-player="">
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark">H</div>
+      <div class="brand-title">
+        <h1>Moonshot Hearts</h1>
+        <p id="round-label">Loading table</p>
+      </div>
+    </div>
+    <div class="scorebar" id="scorebar"></div>
+  </div>
+
+  <main class="table-wrap">
+    <section class="table" aria-label="Hearts table">
+      <div class="center-status">
+        <div class="phase-pill" id="phase-pill">Starting</div>
+        <div class="status-main" id="status-main">Shuffling</div>
+        <div class="status-sub" id="status-sub">Cards are almost on the felt.</div>
+      </div>
+      <div class="trick" id="trick"></div>
+      <div class="seats" id="seats"></div>
+    </section>
+  </main>
+
+  <section class="hand-panel">
+    <div class="prompt-row">
+      <div class="prompt">
+        <strong id="hand-title">Your hand</strong>
+        <span id="hand-subtitle">Legal cards glow.</span>
+      </div>
+      <div class="heart-state" id="heart-state">Hearts locked</div>
+    </div>
+    <div class="pass-slots" id="pass-slots"></div>
+    <div class="hand-scroll">
+      <div class="hand" id="hand"></div>
+      <div class="spectator-hands" id="spectator-hands" hidden></div>
+    </div>
+  </section>
+
+  <div class="toast" id="toast"></div>
+  <div class="burst-layer" id="burst-layer"></div>
+</div>
+
+<script>
+(function() {
+  var E2E_GAME_SLUG = "moonshot-hearts";
+  var E2E = window.__playgentE2EState || {
+    version: 1,
+    regions: [],
+    lastPhase: "loading",
+    lastStatus: "loading",
+    lastPlayerId: "",
+    lastCurrentPlayer: "",
+    lastLegalActionCount: 0,
+    lastVisibleLegalActionCount: 0,
+    lastActions: [],
+    lastRawActions: []
+  };
+  window.__playgentE2EState = E2E;
+
+  function setE2EAttr(el, name, value) {
+    if (!el) return;
+    el.setAttribute(name, value == null ? "" : String(value));
+  }
+
+  function unwrapE2EAction(option) {
+    if (option && typeof option === "object" && option.decision !== undefined) return option.decision;
+    if (option && typeof option === "object" && option.action !== undefined) return option.action;
+    return option;
+  }
+
+  function isVisibleE2EAction(action) {
+    action = unwrapE2EAction(action);
+    if (!action || typeof action !== "object") return false;
+    if (action.type === "advance_phase" || action.type === "system" || action.type === "noop") return false;
+    return true;
+  }
+
+  function getVisibleE2EActions(actions) {
+    var out = [];
+    for (var i = 0; actions && i < actions.length; i++) {
+      if (isVisibleE2EAction(actions[i])) out.push(unwrapE2EAction(actions[i]));
+    }
+    return out;
+  }
+
+  function ensureE2ETelemetry() {
+    var el = document.getElementById("e2e-telemetry");
+    if (!el) {
+      el = document.createElement("div");
+      el.id = "e2e-telemetry";
+      if (document.body) document.body.appendChild(el);
+    }
+    el.setAttribute("aria-hidden", "true");
+    el.style.cssText = "position:fixed;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;left:0;top:0;";
+    setE2EAttr(el, "data-game", E2E_GAME_SLUG);
+    setE2EAttr(el, "data-phase", E2E.lastPhase);
+    setE2EAttr(el, "data-status", E2E.lastStatus);
+    setE2EAttr(el, "data-player", E2E.lastPlayerId || "spectator");
+    return el;
+  }
+
+  function addUnique(list, el) {
+    if (!el) return;
+    for (var i = 0; i < list.length; i++) if (list[i] === el) return;
+    list.push(el);
+  }
+
+  function getE2ERoots() {
+    var roots = [];
+    addUnique(roots, ensureE2ETelemetry());
+    addUnique(roots, document.getElementById("telemetry"));
+    addUnique(roots, document.getElementById("game"));
+    addUnique(roots, document.getElementById("game-container"));
+    addUnique(roots, document.querySelector("[data-board]"));
+    return roots;
+  }
+
+  function getCurrentPlayerE2E(view) {
+    if (!view) return "";
+    return view.currentPlayer || view.currentPlayerId || view.currentActor || view.turn || "";
+  }
+
+  function updateE2EPlayers(players) {
+    var telemetry = ensureE2ETelemetry();
+    var host = document.getElementById("e2e-players");
+    if (!host) {
+      host = document.createElement("div");
+      host.id = "e2e-players";
+      telemetry.appendChild(host);
+    }
+    host.textContent = "";
+    for (var i = 0; players && i < players.length; i++) {
+      var p = players[i] || {};
+      var span = document.createElement("span");
+      setE2EAttr(span, "data-player", p.id || "");
+      setE2EAttr(span, "data-player-name", p.name || p.id || "");
+      span.textContent = p.name || p.id || "";
+      host.appendChild(span);
+    }
+  }
+
+  function updateE2ELandmarks(view, legalActions, context) {
+    var visibleActions = getVisibleE2EActions(legalActions || []);
+    var phase = context && context.gameOver ? "game-over" : (view && (view.phase || view.mode || view.stage) ? (view.phase || view.mode || view.stage) : "playing");
+    var status = context && context.gameOver ? "game-over" : (visibleActions.length > 0 ? "your-turn" : "waiting");
+    var playerId = context && context.myId ? context.myId : "spectator";
+    var currentPlayer = getCurrentPlayerE2E(view);
+    var roots = getE2ERoots();
+    E2E.lastPhase = phase;
+    E2E.lastStatus = status;
+    E2E.lastPlayerId = playerId;
+    E2E.lastCurrentPlayer = currentPlayer;
+    E2E.lastRawActions = legalActions || [];
+    E2E.lastActions = visibleActions;
+    E2E.lastLegalActionCount = (legalActions || []).length;
+    E2E.lastVisibleLegalActionCount = visibleActions.length;
+    for (var i = 0; i < roots.length; i++) {
+      setE2EAttr(roots[i], "data-game", E2E_GAME_SLUG);
+      setE2EAttr(roots[i], "data-phase", phase);
+      setE2EAttr(roots[i], "data-status", status);
+      setE2EAttr(roots[i], "data-player", playerId);
+      setE2EAttr(roots[i], "data-current-player", currentPlayer);
+      if (view && view.round != null) setE2EAttr(roots[i], "data-round", view.round);
+      if (view && view.turnNumber != null) setE2EAttr(roots[i], "data-turn", view.turnNumber);
+    }
+    updateE2EPlayers(context && context.players ? context.players : []);
+  }
+
+  function actionTypeForIndex(idx) {
+    var raw = E2E.lastRawActions && E2E.lastRawActions[idx] ? unwrapE2EAction(E2E.lastRawActions[idx]) : null;
+    return raw && raw.type ? raw.type : "choose";
+  }
+
+  function safeLabelFromNode(node) {
+    var label = node.getAttribute("data-action-label") || node.getAttribute("aria-label") || node.title || node.textContent || node.value || "";
+    return String(label).replace(/\s+/g, " ").trim().slice(0, 100);
+  }
+
+  function decorateE2EDOMControls() {
+    var nodes = document.querySelectorAll("[data-action-idx], [data-action], button, [role='button'], input[type='button'], input[type='submit'], input:not([type='hidden']), select, textarea, [data-cell], [data-card], [data-card-id], [data-option-id], [data-brainrot], canvas");
+    for (var i = 0; i < nodes.length; i++) {
+      var node = nodes[i];
+      if (node.hasAttribute("data-action") && !node.hasAttribute("data-action-idx")) {
+        node.setAttribute("data-action-idx", node.getAttribute("data-action"));
+      }
+      if (node.hasAttribute("data-action-idx")) {
+        var idx = parseInt(node.getAttribute("data-action-idx"), 10);
+        if (!isNaN(idx) && !node.hasAttribute("data-action-type")) node.setAttribute("data-action-type", actionTypeForIndex(idx));
+        if (!node.hasAttribute("data-action-label")) node.setAttribute("data-action-label", safeLabelFromNode(node));
+      }
+      if (node.hasAttribute("data-cell") && !node.getAttribute("aria-label")) {
+        node.setAttribute("aria-label", "cell " + node.getAttribute("data-cell"));
+      }
+      if ((node.hasAttribute("data-card") || node.hasAttribute("data-card-id")) && !node.getAttribute("aria-label")) {
+        node.setAttribute("aria-label", "card " + (node.getAttribute("data-card") || node.getAttribute("data-card-id")));
+      }
+      if (node.tagName === "CANVAS" && !node.getAttribute("aria-label")) {
+        node.setAttribute("aria-label", E2E_GAME_SLUG + " canvas");
+      }
+    }
+  }
+
+  function e2eBeginFrame(view, legalActions, context) {
+    E2E.regions = [];
+    updateE2ELandmarks(view || {}, legalActions || [], context || {});
+  }
+
+  function e2eAfterRender() {
+    decorateE2EDOMControls();
+  }
+
+  function isVisibleE2ENode(node) {
+    if (!node || !node.getBoundingClientRect) return false;
+    var rect = node.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return false;
+    if (rect.right <= 0 || rect.bottom <= 0 || rect.left >= window.innerWidth || rect.top >= window.innerHeight) return false;
+    var style = window.getComputedStyle ? window.getComputedStyle(node) : null;
+    if (style && (style.display === "none" || style.visibility === "hidden" || style.opacity === "0")) return false;
+    if (node.disabled || node.getAttribute("aria-disabled") === "true") return false;
+    return true;
+  }
+
+  function regionKindForNode(node) {
+    if (node.tagName === "CANVAS") return "canvas";
+    if (node.tagName === "INPUT" || node.tagName === "SELECT" || node.tagName === "TEXTAREA") return "input";
+    if (node.hasAttribute("data-cell")) return "cell";
+    if (node.hasAttribute("data-card") || node.hasAttribute("data-card-id")) return "card";
+    return "button";
+  }
+
+  function getDOMActionRegions() {
+    decorateE2EDOMControls();
+    var nodes = document.querySelectorAll("[data-action-idx], button, [role='button'], input[type='button'], input[type='submit'], input:not([type='hidden']), select, textarea, [data-cell], [data-card], [data-card-id], [data-option-id], [data-brainrot], canvas");
+    var out = [];
+    for (var i = 0; i < nodes.length; i++) {
+      var node = nodes[i];
+      if (!isVisibleE2ENode(node)) continue;
+      var r = clipE2ERect(node.getBoundingClientRect());
+      if (!r) continue;
+      var id = node.id || node.getAttribute("data-action-idx") || node.getAttribute("data-cell") || node.getAttribute("data-card") || node.getAttribute("data-card-id") || node.getAttribute("data-option-id") || node.getAttribute("data-brainrot") || ("control-" + i);
+      out.push({
+        id: String(id),
+        kind: regionKindForNode(node),
+        label: safeLabelFromNode(node),
+        actionType: node.getAttribute("data-action-type") || "",
+        selector: node.id ? ("#" + node.id) : "",
+        rect: { x: r.left, y: r.top, width: r.width, height: r.height },
+        center: { x: r.left + r.width / 2, y: r.top + r.height / 2 }
+      });
+    }
+    return out;
+  }
+
+  function clipE2ERect(rect) {
+    if (!rect) return null;
+    var x = Number(rect.x != null ? rect.x : rect.left) || 0;
+    var y = Number(rect.y != null ? rect.y : rect.top) || 0;
+    var width = Number(rect.width) || 0;
+    var height = Number(rect.height) || 0;
+    var left = Math.max(0, x);
+    var top = Math.max(0, y);
+    var right = Math.min(window.innerWidth, x + width);
+    var bottom = Math.min(window.innerHeight, y + height);
+    if (right - left <= 0 || bottom - top <= 0) return null;
+    return { x: left, y: top, width: right - left, height: bottom - top };
+  }
+
+  function e2eRegisterRegion(region) {
+    if (!region || !region.id || !region.rect) return;
+    var r = clipE2ERect(region.rect);
+    if (!r || r.width == null || r.height == null) return;
+    var item = {
+      id: String(region.id),
+      kind: region.kind || "button",
+      label: region.label || "",
+      actionType: region.actionType || "",
+      rect: { x: Number(r.x) || 0, y: Number(r.y) || 0, width: Number(r.width) || 0, height: Number(r.height) || 0 },
+      center: region.center || { x: (Number(r.x) || 0) + (Number(r.width) || 0) / 2, y: (Number(r.y) || 0) + (Number(r.height) || 0) / 2 }
+    };
+    for (var i = 0; i < E2E.regions.length; i++) {
+      if (E2E.regions[i].id === item.id) {
+        E2E.regions[i] = item;
+        return;
+      }
+    }
+    E2E.regions.push(item);
+  }
+
+  function e2eCanvasRect(localRect, app) {
+    var canvas = app && app.canvas ? app.canvas : document.querySelector("canvas");
+    var screen = app && app.screen ? app.screen : null;
+    if (!canvas || !localRect) return null;
+    var canvasRect = canvas.getBoundingClientRect();
+    var screenW = screen && screen.width ? screen.width : canvasRect.width;
+    var screenH = screen && screen.height ? screen.height : canvasRect.height;
+    var sx = canvasRect.width / (screenW || canvasRect.width || 1);
+    var sy = canvasRect.height / (screenH || canvasRect.height || 1);
+    return {
+      x: canvasRect.left + localRect.x * sx,
+      y: canvasRect.top + localRect.y * sy,
+      width: localRect.width * sx,
+      height: localRect.height * sy
+    };
+  }
+
+  function e2ePixiBounds(displayObject, app) {
+    if (!displayObject || !displayObject.getBounds) return null;
+    var b = displayObject.getBounds();
+    return e2eCanvasRect({ x: b.x, y: b.y, width: b.width, height: b.height }, app);
+  }
+
+  function getE2ECanvasInfo() {
+    var canvas = document.querySelector("canvas");
+    if (!canvas) return null;
+    var rect = canvas.getBoundingClientRect();
+    return { selector: "canvas", width: rect.width, height: rect.height };
+  }
+
+  function getAllE2ERegions() {
+    var out = E2E.regions.slice();
+    var dom = getDOMActionRegions();
+    var seen = {};
+    var merged = [];
+    for (var i = 0; i < out.length; i++) { seen[out[i].id] = true; merged.push(out[i]); }
+    for (var j = 0; j < dom.length; j++) {
+      if (!seen[dom[j].id]) merged.push(dom[j]);
+    }
+    return merged;
+  }
+
+  function runE2ELayoutChecks() {
+    var failures = [];
+    var regions = getAllE2ERegions();
+    var canvas = getE2ECanvasInfo();
+    if (E2E.lastVisibleLegalActionCount > 0 && regions.length === 0) {
+      failures.push({ severity: "error", message: "active legal actions did not create visible controls" });
+    }
+    if (canvas && (canvas.width <= 0 || canvas.height <= 0)) {
+      failures.push({ severity: "error", message: "canvas has empty bounds" });
+    }
+    for (var i = 0; i < regions.length; i++) {
+      var region = regions[i];
+      var r = region.rect;
+      if (!r) {
+        failures.push({ severity: "error", message: region.id + " has no rect" });
+        continue;
+      }
+      if (r.width <= 0 || r.height <= 0) failures.push({ severity: "error", message: region.id + " has empty bounds" });
+      if (r.x < -1 || r.y < -1 || r.x + r.width > window.innerWidth + 1 || r.y + r.height > window.innerHeight + 1) {
+        failures.push({ severity: "error", message: region.id + " is offscreen" });
+      }
+      if (region.kind !== "canvas" && (r.width < 36 || r.height < 36)) {
+        failures.push({ severity: "warning", message: region.id + " is a small touch target" });
+      }
+    }
+    return failures;
+  }
+
+  window.__playgentE2EBegin = e2eBeginFrame;
+  window.__playgentE2EAfterRender = e2eAfterRender;
+  window.__playgentE2ERegisterRegion = e2eRegisterRegion;
+  window.__playgentE2ECanvasRect = e2eCanvasRect;
+  window.__playgentE2EPixiBounds = e2ePixiBounds;
+  window.__playgentE2ERunLayoutChecks = runE2ELayoutChecks;
+  window.__playgentE2E = {
+    version: 1,
+    getSnapshot: function() {
+      return {
+        phase: E2E.lastPhase,
+        status: E2E.lastStatus,
+        playerId: E2E.lastPlayerId,
+        currentPlayer: E2E.lastCurrentPlayer,
+        legalActionCount: E2E.lastVisibleLegalActionCount,
+        regionCount: getAllE2ERegions().length,
+        canvas: getE2ECanvasInfo()
+      };
+    },
+    getInteractiveRegions: function() { return getAllE2ERegions(); },
+    checkLayout: function() { return runE2ELayoutChecks(); }
+  };
+
+  if (typeof window.__playgentCheckLayout !== "function") {
+    window.__playgentCheckLayout = function() { return runE2ELayoutChecks(); };
+  }
+
+  function patchPlaygentE2E() {
+    if (!window.playgent || !window.playgent.onStateChange || window.playgent.__e2ePatched) return false;
+    var original = window.playgent.onStateChange;
+    window.playgent.onStateChange = function(cb) {
+      return original.call(window.playgent, function(view, legalActions, context) {
+        e2eBeginFrame(view, legalActions, context || {});
+        var result = cb.apply(this, arguments);
+        e2eAfterRender();
+        return result;
+      });
+    };
+    window.playgent.__e2ePatched = true;
+    return true;
+  }
+
+  ensureE2ETelemetry();
+  decorateE2EDOMControls();
+  if (!patchPlaygentE2E()) {
+    var tries = 0;
+    var timer = setInterval(function() {
+      tries++;
+      if (patchPlaygentE2E() || tries > 80) clearInterval(timer);
+    }, 50);
+  }
+}());
+</script>
+
+<script>
+var RANKS = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"];
+var CODES = ["2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A"];
+var SUITS = ["C", "D", "S", "H"];
+var SUIT_SYMBOLS = ["♣", "♦", "♠", "♥"];
+var lastView = null;
+var lastContext = null;
+var lastNames = {};
+var toastTimer = null;
+var recentKeys = {};
+var selectedPassCards = [];
+var passSelectionHandKey = "";
+var passSubmitPending = false;
+var activeView = null;
+var activeActions = [];
+var activeMyId = null;
+var lastLocalActionKey = "";
+var lastLocalActionAt = 0;
+var dealtHandSoundKey = "";
+
+function esc(value) {
+  return String(value == null ? "" : value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function playerName(id) {
+  return lastNames[id] || id || "Player";
+}
+
+function shortName(id) {
+  var name = playerName(id);
+  return name ? name.slice(0, 1).toUpperCase() : "?";
+}
+
+function cardInfo(card) {
+  var suit = Math.floor(card / 13);
+  var rank = card % 13;
+  return {
+    rank: RANKS[rank],
+    code: CODES[rank] + SUITS[suit],
+    suit: SUIT_SYMBOLS[suit],
+    suitCode: SUITS[suit],
+    red: suit === 1 || suit === 3,
+    poison: card === 36,
+    points: suit === 3 ? 1 : (card === 36 ? 13 : 0)
+  };
+}
+
+function playHeartSound(name) {
+  try {
+    if (typeof playgent !== "undefined" && typeof playgent.sound === "function") {
+      playgent.sound(name);
+    }
+  } catch (e) {}
+}
+
+function actionSound(action) {
+  if (!action || !action.type) return "ui.click";
+  if (action.type === "pass") return "card.pass";
+  if (action.type === "play") {
+    var info = cardInfo(action.card);
+    if (info.poison) return "combat.heavy";
+    if (info.points > 0) return "combat.damage";
+    return "card.flip";
+  }
+  return "ui.click";
+}
+
+function unwrapAction(option) {
+  if (option && typeof option === "object" && option.decision !== undefined) return option.decision;
+  if (option && typeof option === "object" && option.action !== undefined) return option.action;
+  return option;
+}
+
+function cardFace(card) {
+  var c = cardInfo(card);
+  var cls = "card-face" + (c.red ? " red" : "") + (c.poison ? " poison" : "");
+  return '<div class="' + cls + '">' +
+    '<div class="rank">' + esc(c.rank) + '</div>' +
+    '<div class="suit">' + esc(c.suit) + '</div>' +
+    '<div class="corner">' + esc(c.rank) + esc(c.suit) + '</div>' +
+    '</div>';
+}
+
+function miniCard(card) {
+  var c = cardInfo(card);
+  return '<span class="mini-card' + (c.red ? " red" : "") + '">' + esc(c.code) + '</span>';
+}
+
+function updateNames(context) {
+  lastNames = {};
+  var players = (context && context.players) || [];
+  for (var i = 0; i < players.length; i++) {
+    lastNames[players[i].id] = players[i].name || players[i].id;
+  }
+}
+
+function getMyId(view, context) {
+  if (view && view.myId) return view.myId;
+  if (context && context.myId) return context.myId;
+  if (context && context.playerId) return context.playerId;
+  return null;
+}
+
+function orderedIds(view, myId) {
+  var ids = [];
+  for (var i = 0; i < view.players.length; i++) ids.push(view.players[i].id);
+  var idx = ids.indexOf(myId);
+  if (idx === -1) return ids;
+  return [ids[idx], ids[(idx + 1) % 4], ids[(idx + 2) % 4], ids[(idx + 3) % 4]];
+}
+
+function playerById(view, id) {
+  for (var i = 0; i < view.players.length; i++) {
+    if (view.players[i].id === id) return view.players[i];
+  }
+  return null;
+}
+
+function cardsKey(cards) {
+  return (cards || []).slice().sort(function(a, b) {
+    return parseInt(a, 10) - parseInt(b, 10);
+  }).join(",");
+}
+
+function wallNow() {
+  if (window.performance && typeof window.performance.now === "function") return window.performance.now();
+  return new Date().getTime();
+}
+
+function actionKey(action) {
+  if (!action || !action.type) return "";
+  if (action.type === "play") return "play|" + action.card;
+  if (action.type === "pass") return "pass|" + cardsKey(action.cards || []);
+  return action.type;
+}
+
+function markLocalAction(action) {
+  lastLocalActionKey = actionKey(action);
+  lastLocalActionAt = wallNow();
+}
+
+function isRecentLocalAction(action) {
+  return actionKey(action) && actionKey(action) === lastLocalActionKey && wallNow() - lastLocalActionAt < 900;
+}
+
+function passReadyCount(view) {
+  var ready = 0;
+  for (var i = 0; i < view.players.length; i++) {
+    if ((view.players[i].passedCount || 0) >= 3) ready++;
+  }
+  return ready;
+}
+
+function reconcilePassSelection(view) {
+  if (!view || view.phase !== "passing" || !view.myId || (view.myPassed && view.myPassed.length >= 3)) {
+    selectedPassCards = [];
+    passSelectionHandKey = "";
+    passSubmitPending = false;
+    return;
+  }
+  var key = view.handNumber + "|" + view.passDirection + "|" + (view.myHand || []).join(",");
+  if (key !== passSelectionHandKey) {
+    selectedPassCards = [];
+    passSelectionHandKey = key;
+    passSubmitPending = false;
+  }
+  var inHand = {};
+  for (var i = 0; i < (view.myHand || []).length; i++) inHand[String(view.myHand[i])] = true;
+  selectedPassCards = selectedPassCards.filter(function(card) {
+    return inHand[String(card)];
+  });
+}
+
+function cardSlideSound() {
+  playHeartSound("card.slide");
+}
+
+function cardPlaceSound(delay) {
+  setTimeout(function() {
+    playHeartSound("card.place");
+  }, delay == null ? 60 : delay);
+}
+
+function playDealSequence(view) {
+  var count;
+  var key;
+  var i;
+  if (!view || !view.myId || !view.myHand || view.myHand.length === 0) return;
+  key = view.myId + "|" + view.handNumber + "|" + view.passDirection;
+  if (dealtHandSoundKey === key) return;
+  dealtHandSoundKey = key;
+  count = Math.min(13, view.myHand.length);
+  playHeartSound("card.shuffle");
+  for (i = 0; i < count; i++) {
+    (function(delay) {
+      setTimeout(function() {
+        playHeartSound("card.deal.fast");
+      }, delay);
+    })(110 + i * 42);
+  }
+}
+
+function trickPointProfile(trick) {
+  var profile = { hearts: 0, queen: false, points: trick && trick.points ? trick.points : 0 };
+  var cards = trick && trick.cards ? trick.cards : [];
+  for (var i = 0; i < cards.length; i++) {
+    var info = cardInfo(cards[i].card);
+    if (info.suitCode === "H") profile.hearts += 1;
+    if (info.poison) profile.queen = true;
+  }
+  return profile;
+}
+
+function findPassAction(actions, selected) {
+  var target = cardsKey(selected);
+  for (var i = 0; i < actions.length; i++) {
+    if (actions[i].type === "pass" && actions[i].cards && cardsKey(actions[i].cards) === target) {
+      return actions[i];
+    }
+  }
+  return null;
+}
+
+function syncPassSelectionUi() {
+  if (!activeView) return;
+  renderStatus(activeView, activeActions, activeMyId);
+  renderPassSlots(activeView, activeActions);
+  var hand = document.getElementById("hand");
+  var buttons = hand.querySelectorAll(".hand-card");
+  for (var i = 0; i < buttons.length; i++) {
+    var card = parseInt(buttons[i].getAttribute("data-card"), 10);
+    buttons[i].classList.toggle("selected", selectedPassCards.indexOf(card) !== -1);
+  }
+}
+
+function togglePassCard(button, card) {
+  var idx = selectedPassCards.indexOf(card);
+  if (idx !== -1) {
+    selectedPassCards.splice(idx, 1);
+    cardSlideSound();
+    syncPassSelectionUi();
+    return;
+  }
+  if (selectedPassCards.length >= 3) {
+    nudgeCard(button, "Three cards are already selected");
+    return;
+  }
+  selectedPassCards.push(card);
+  cardSlideSound();
+  syncPassSelectionUi();
+}
+
+function submitSelectedPass(actions) {
+  var action;
+  if (selectedPassCards.length !== 3) {
+    playHeartSound("ui.error");
+    showToast("Select three cards first");
+    return;
+  }
+  if (passSubmitPending) return;
+  action = findPassAction(actions, selectedPassCards) || {
+    type: "pass",
+    cards: selectedPassCards.slice()
+  };
+  passSubmitPending = true;
+  submitAction(action);
+  syncPassSelectionUi();
+  setTimeout(function() {
+    passSubmitPending = false;
+    syncPassSelectionUi();
+  }, 900);
+}
+
+function renderScorebar(view, myId) {
+  var bar = document.getElementById("scorebar");
+  var html = "";
+  for (var i = 0; i < view.players.length; i++) {
+    var p = view.players[i];
+    var cls = "score-chip" + (p.id === myId ? " me" : "") + (p.isCurrent ? " current" : "");
+    html += '<div class="' + cls + '" data-player="' + esc(p.id) + '">' +
+      '<div class="score-name"><span>' + esc(playerName(p.id)) + '</span><span>' + esc(p.handCount) + '</span></div>' +
+      '<div class="score-total">' + esc(p.score) + '</div>' +
+      '<div class="score-round">+' + esc(p.roundPoints || 0) + ' this hand</div>' +
+      '</div>';
+  }
+  bar.innerHTML = html;
+}
+
+function renderSeats(view, myId) {
+  var seats = document.getElementById("seats");
+  var ids = orderedIds(view, myId);
+  var positions = ["bottom", "left", "top", "right"];
+  var html = "";
+  for (var i = 0; i < ids.length; i++) {
+    var p = playerById(view, ids[i]);
+    if (!p) continue;
+    var cls = "seat " + positions[i] + (p.id === myId ? " me" : "") + (p.isCurrent ? " current" : "");
+    html += '<div class="' + cls + '" data-player="' + esc(p.id) + '">' +
+      '<div class="seat-row">' +
+      '<div class="avatar">' + esc(shortName(p.id)) + '</div>' +
+      '<div style="min-width:0">' +
+      '<div class="seat-name">' + esc(playerName(p.id)) + '</div>' +
+      '<div class="seat-meta">' +
+      '<span class="mini-pill">' + esc(p.handCount) + ' cards</span>' +
+      '<span class="mini-pill points">+' + esc(p.roundPoints || 0) + '</span>' +
+      (p.isLeader ? '<span class="mini-pill leader">Lead</span>' : '') +
+      '</div></div></div></div>';
+  }
+  seats.innerHTML = html;
+}
+
+function positionMap(view, myId) {
+  var ids = orderedIds(view, myId);
+  var positions = ["bottom", "left", "top", "right"];
+  var map = {};
+  for (var i = 0; i < ids.length; i++) map[ids[i]] = positions[i];
+  return map;
+}
+
+function renderTrick(view, myId) {
+  var trick = document.getElementById("trick");
+  var map = positionMap(view, myId);
+  var cards = view.trick && view.trick.length ? view.trick : (view.lastTrick ? view.lastTrick.cards : []);
+  var settled = !(view.trick && view.trick.length);
+  var html = "";
+  for (var i = 0; i < cards.length; i++) {
+    var play = cards[i];
+    var pos = map[play.playerId] || "top";
+    html += '<div class="played-card ' + pos + (settled ? " settled" : "") + '" title="' + esc(playerName(play.playerId)) + '">' +
+      cardFace(play.card) +
+      '</div>';
+  }
+  trick.innerHTML = html;
+}
+
+function statusFor(view, actions, myId) {
+  var current = view.currentPlayer ? playerName(view.currentPlayer) : "";
+  if (view.phase === "gameover") {
+    var won = view.gameWinners && view.gameWinners.indexOf(myId) !== -1;
+    return {
+      pill: "Final scores",
+      main: won ? "You win" : "Game over",
+      sub: "Winner: " + (view.gameWinner ? playerName(view.gameWinner) : "lowest score")
+    };
+  }
+  if (view.phase === "roundEnd") {
+    return {
+      pill: "Hand scored",
+      main: "Score splash",
+      sub: view.roundSummary && view.roundSummary.moonShooter
+        ? playerName(view.roundSummary.moonShooter) + " shot the moon"
+        : "Next hand is about to deal"
+    };
+  }
+  if (view.phase === "passing") {
+    var ready = passReadyCount(view);
+    var locked = view.myPassed && view.myPassed.length >= 3;
+    if (actions.length > 0) {
+      var picked = selectedPassCards.length;
+      return {
+        pill: "Pass " + view.passDirection,
+        main: picked === 3 ? "Ready to pass" : "Pick " + (3 - picked),
+        sub: picked > 0 ? picked + " of 3 selected" : "Choose 3 cards to send " + view.passDirection
+      };
+    }
+    if (locked) {
+      return { pill: "Pass " + view.passDirection, main: "Cards locked", sub: ready + " of " + view.players.length + " players ready" };
+    }
+    return { pill: "Pass " + view.passDirection, main: "Waiting on passes", sub: ready + " of " + view.players.length + " players ready" };
+  }
+  if (view.phase === "playing") {
+    if (actions.length > 0) {
+      return {
+        pill: view.trick && view.trick.length ? "Follow suit" : "Lead trick",
+        main: view.trick && view.trick.length ? "Your play" : "Your lead",
+        sub: actions.length + " legal card" + (actions.length === 1 ? "" : "s") + " available"
+      };
+    }
+    return { pill: view.heartsBroken ? "Hearts broken" : "Hearts locked", main: "Watch", sub: current + " is on turn" };
+  }
+  return { pill: "Table", main: "Moonshot Hearts", sub: "Avoid points. Own the tempo." };
+}
+
+function renderStatus(view, actions, myId) {
+  var status = statusFor(view, actions, myId);
+  document.getElementById("round-label").textContent = "Hand " + view.handNumber + " of " + view.targetScore;
+  document.getElementById("phase-pill").textContent = status.pill;
+  document.getElementById("status-main").textContent = status.main;
+  document.getElementById("status-sub").textContent = status.sub;
+  document.getElementById("heart-state").textContent = view.heartsBroken ? "Hearts broken" : "Hearts locked";
+}
+
+function renderPassSlots(view, actions) {
+  var slots = document.getElementById("pass-slots");
+  if (view.phase !== "passing" || !view.myId) {
+    slots.innerHTML = "";
+    return;
+  }
+  var locked = view.myPassed && view.myPassed.length >= 3;
+  var picked = locked ? view.myPassed : selectedPassCards;
+  var canSubmit = actions.length > 0 && !locked && selectedPassCards.length === 3 && !passSubmitPending;
+  var html = "";
+  for (var i = 0; i < 3; i++) {
+    if (picked && picked[i] != null) {
+      html += '<div class="pass-slot filled">' + esc(cardInfo(picked[i]).code) + '</div>';
+    } else {
+      html += '<div class="pass-slot">' + (i + 1) + '</div>';
+    }
+  }
+  if (actions.length > 0 && !locked) {
+    html += '<button type="button" class="pass-submit" id="pass-submit" ' + (canSubmit ? "" : "disabled") + '>' +
+      (passSubmitPending ? "Passing" : (selectedPassCards.length === 3 ? "Pass cards" : "Select 3")) +
+      '</button>';
+  } else {
+    html += '<button type="button" class="pass-submit" disabled>' + (locked ? "Locked" : "Waiting") + '</button>';
+  }
+  slots.innerHTML = html;
+  var button = document.getElementById("pass-submit");
+  if (button && canSubmit) {
+    button.addEventListener("click", function() {
+      submitSelectedPass(actions);
+    });
+  }
+}
+
+function submitAction(action) {
+  if (typeof playgent !== "undefined" && playgent.submitAction) {
+    var sound = actionSound(action);
+    markLocalAction(action);
+    if (action && action.type === "play") {
+      cardSlideSound();
+      if (sound && sound !== "card.slide") {
+        setTimeout(function() {
+          playHeartSound(sound);
+        }, 70);
+      }
+    } else if (action && action.type === "pass") {
+      playHeartSound(sound);
+    } else {
+      playHeartSound(sound);
+    }
+    playgent.submitAction(action);
+  }
+}
+
+function nudgeCard(button, message) {
+  playHeartSound("ui.error");
+  button.classList.remove("bump");
+  void button.offsetWidth;
+  button.classList.add("bump");
+  showToast(message);
+}
+
+function renderHand(view, actions) {
+  var hand = document.getElementById("hand");
+  var spectator = document.getElementById("spectator-hands");
+  var title = document.getElementById("hand-title");
+  var subtitle = document.getElementById("hand-subtitle");
+  var legal = {};
+  var passMode = view.phase === "passing" && actions.length > 0 && !(view.myPassed && view.myPassed.length >= 3);
+  for (var i = 0; i < actions.length; i++) {
+    if (actions[i].card != null) legal[String(actions[i].card)] = actions[i];
+  }
+
+  if (view.isSpectator && view.hands) {
+    hand.innerHTML = "";
+    hand.hidden = true;
+    spectator.hidden = false;
+    title.textContent = "Spectator view";
+    subtitle.textContent = "All hands are visible from the rail.";
+    var sh = "";
+    for (var p = 0; p < view.players.length; p++) {
+      var id = view.players[p].id;
+      var cards = view.hands[id] || [];
+      sh += '<div class="spectator-hand" data-player="' + esc(id) + '"><h3>' + esc(playerName(id)) + '</h3><div class="mini-cards">';
+      for (var c = 0; c < cards.length; c++) sh += miniCard(cards[c]);
+      sh += '</div></div>';
+    }
+    spectator.innerHTML = sh;
+    return;
+  }
+
+  hand.hidden = false;
+  spectator.hidden = true;
+  spectator.innerHTML = "";
+  if (view.phase === "passing") {
+    if (passMode) {
+      title.textContent = "Select 3 cards";
+      subtitle.textContent = selectedPassCards.length + " of 3 selected";
+    } else if (view.myPassed && view.myPassed.length >= 3) {
+      title.textContent = "Cards locked";
+      subtitle.textContent = passReadyCount(view) + " of " + view.players.length + " players ready";
+    } else {
+      title.textContent = "Waiting on passes";
+      subtitle.textContent = passReadyCount(view) + " of " + view.players.length + " players ready";
+    }
+  } else if (view.phase === "playing") {
+    title.textContent = actions.length > 0 ? "Your legal plays" : "Your hand";
+    subtitle.textContent = actions.length > 0 ? "Glowing cards are live." : "Waiting for the trick to come around.";
+  } else {
+    title.textContent = "Your hand";
+    subtitle.textContent = view.phase === "gameover" ? "Final table." : "Scoring the hand.";
+  }
+
+  var cards = view.myHand || [];
+  var html = "";
+  for (var j = 0; j < cards.length; j++) {
+    var card = cards[j];
+    var action = legal[String(card)];
+    var playable = passMode || action;
+    var cls = "hand-card " + (playable ? "legal" : "unplayable") + (passMode && selectedPassCards.indexOf(card) !== -1 ? " selected" : "");
+    html += '<button type="button" class="' + cls + '" data-card="' + esc(card) + '" aria-disabled="' + (playable ? "false" : "true") + '">' + cardFace(card) + '</button>';
+  }
+  hand.innerHTML = html;
+
+  var buttons = hand.querySelectorAll(".hand-card");
+  for (var b = 0; b < buttons.length; b++) {
+    (function(btn) {
+      var card = parseInt(btn.getAttribute("data-card"), 10);
+      var action = legal[String(card)];
+      btn.addEventListener("click", function() {
+        if (passMode) {
+          togglePassCard(btn, card);
+          return;
+        }
+        if (action) {
+          submitAction(action);
+        } else {
+          nudgeCard(btn, view.phase === "playing" ? "That card is not legal right now" : "Wait for your turn");
+        }
+      });
+    })(buttons[b]);
+  }
+}
+
+function showToast(message) {
+  var toast = document.getElementById("toast");
+  toast.textContent = message;
+  toast.classList.add("show");
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(function() {
+    toast.classList.remove("show");
+  }, 1200);
+}
+
+function burst(title, sub, kind) {
+  var layer = document.getElementById("burst-layer");
+  var wrap = document.createElement("div");
+  wrap.className = "burst " + (kind || "gold");
+  wrap.innerHTML = "<h2>" + esc(title) + "</h2><p>" + esc(sub || "") + "</p>";
+  layer.appendChild(wrap);
+  particles(kind || "gold", 34);
+  setTimeout(function() {
+    if (wrap.parentNode) wrap.parentNode.removeChild(wrap);
+  }, 1500);
+}
+
+function particles(kind, count) {
+  var layer = document.getElementById("burst-layer");
+  var colors = kind === "bad"
+    ? ["#ff5a78", "#f7d35a", "#ffffff"]
+    : (kind === "good" ? ["#41d6c3", "#7ef9d8", "#f7d35a"] : ["#f7d35a", "#ff5a78", "#ffffff"]);
+  for (var i = 0; i < count; i++) {
+    var p = document.createElement("i");
+    var angle = (i / count) * Math.PI * 2;
+    var wobble = Math.sin(i * 7.31) * 24;
+    var dist = 90 + (i % 7) * 18 + Math.abs(Math.sin(i * 2.17)) * 60;
+    p.className = "particle";
+    p.style.setProperty("--dx", (Math.cos(angle) * dist + wobble) + "px");
+    p.style.setProperty("--dy", (Math.sin(angle) * dist - 28 + Math.cos(i * 1.9) * 18) + "px");
+    p.style.setProperty("--color", colors[i % colors.length]);
+    p.style.animationDelay = ((i % 6) * 18) + "ms";
+    layer.appendChild(p);
+    (function(node) {
+      setTimeout(function() {
+        if (node.parentNode) node.parentNode.removeChild(node);
+      }, 1200);
+    })(p);
+  }
+}
+
+function shake() {
+  var game = document.getElementById("game");
+  game.classList.remove("shake");
+  void game.offsetWidth;
+  game.classList.add("shake");
+  setTimeout(function() { game.classList.remove("shake"); }, 420);
+}
+
+function once(key) {
+  if (recentKeys[key]) return false;
+  recentKeys[key] = true;
+  return true;
+}
+
+function animateChanges(prev, view, myId) {
+  if (!prev) {
+    playDealSequence(view);
+    return;
+  }
+  if (view.handNumber !== prev.handNumber) {
+    playDealSequence(view);
+  }
+  if (view.lastAction && view.lastAction.type === "play" &&
+      (!prev.lastAction || prev.lastAction.type !== "play" || prev.lastAction.playerId !== view.lastAction.playerId || prev.lastAction.card !== view.lastAction.card)) {
+    if (!isRecentLocalAction(view.lastAction)) {
+      playHeartSound("card.slide");
+    }
+    cardPlaceSound(isRecentLocalAction(view.lastAction) ? 35 : 80);
+  }
+  if (!prev.heartsBroken && view.heartsBroken) {
+    setTimeout(function() {
+      playHeartSound("negative.warning");
+    }, 120);
+  }
+  if (view.lastTrick && (!prev.lastTrick || prev.lastTrick.trickNumber !== view.lastTrick.trickNumber)) {
+    var trick = view.lastTrick;
+    var mine = myId && trick.winner === myId;
+    var profile = trickPointProfile(trick);
+    playHeartSound("card.collect");
+    if (trick.points > 0 && mine) {
+      setTimeout(function() {
+        playHeartSound(profile.queen ? "negative.sting" : "negative.light");
+      }, 130);
+      if (profile.queen && profile.hearts > 0) {
+        setTimeout(function() {
+          playHeartSound("negative.light");
+        }, 320);
+      }
+      shake();
+      burst("Ouch +" + trick.points, "Those points are yours now", "bad");
+    } else if (trick.points > 0 && myId) {
+      setTimeout(function() {
+        playHeartSound("positive.clean");
+      }, 130);
+      burst("Clean dodge", playerName(trick.winner) + " caught +" + trick.points, "good");
+    } else if (trick.points === 0 && mine) {
+      setTimeout(function() {
+        playHeartSound("positive.clean");
+      }, 120);
+      burst("Clean trick", "You lead the next one", "good");
+    } else if (trick.points > 0) {
+      setTimeout(function() {
+        playHeartSound(profile.queen ? "negative.sting" : "negative.light");
+      }, 130);
+      burst("Point splash", playerName(trick.winner) + " takes +" + trick.points, "gold");
+    }
+  }
+  if (view.lastAction && view.lastAction.type === "pass_complete" && prev.phase === "passing" && view.phase === "playing") {
+    playHeartSound("card.receive");
+    burst("Cards passed", "Find the angle", "gold");
+  }
+  if (view.roundSummary && (!prev.roundSummary || prev.roundSummary.handNumber !== view.roundSummary.handNumber)) {
+    var summary = view.roundSummary;
+    if (summary.moonShooter) {
+      if (summary.moonShooter === myId) {
+        playHeartSound("game.victory");
+        burst("Moonshot", "Everyone else takes 26", "gold");
+      }
+      else {
+        playHeartSound("combat.heavy");
+        shake();
+        burst("Moonshot hit", playerName(summary.moonShooter) + " gave you 26", "bad");
+      }
+    } else if (myId && summary.deltas) {
+      var delta = summary.deltas[myId] || 0;
+      if (delta === 0) {
+        playHeartSound("magic.shield");
+        burst("Perfect hand", "Zero points. Delicious.", "good");
+      }
+      else if (delta >= 13) {
+        playHeartSound("combat.heavy");
+        shake();
+        burst("Heavy hand +" + delta, "Shake it off", "bad");
+      } else {
+        playHeartSound("score.tick");
+        setTimeout(function() {
+          playHeartSound("combat.damage");
+        }, 120);
+        burst("Round +" + delta, "Still in the hunt", "gold");
+      }
+    }
+  }
+  if (view.phase === "gameover" && prev.phase !== "gameover") {
+    if (view.gameWinners && view.gameWinners.indexOf(myId) !== -1) {
+      playHeartSound("game.victory");
+      burst("You win", "Lowest score owns the table", "good");
+    }
+    else {
+      playHeartSound(myId ? "game.defeat" : "game.over");
+      burst("Final table", playerName(view.gameWinner) + " wins", "gold");
+    }
+  }
+}
+
+function render(view, legalActions, context) {
+  context = context || {};
+  legalActions = (legalActions || []).map(unwrapAction);
+  updateNames(context);
+  var myId = getMyId(view, context);
+  activeView = view;
+  activeActions = legalActions;
+  activeMyId = myId;
+  reconcilePassSelection(view);
+  var root = document.getElementById("game");
+  root.setAttribute("data-phase", view.phase || "unknown");
+  root.setAttribute("data-status", legalActions.length > 0 ? "your-turn" : (view.phase === "gameover" ? "game-over" : "waiting"));
+  root.setAttribute("data-player", myId || "spectator");
+  root.setAttribute("data-current-player", view.currentPlayer || "");
+  root.setAttribute("data-trick", view.trick && view.trick.length ? "active" : "idle");
+
+  renderScorebar(view, myId);
+  renderSeats(view, myId);
+  renderTrick(view, myId);
+  renderStatus(view, legalActions, myId);
+  renderPassSlots(view, legalActions);
+  renderHand(view, legalActions);
+  animateChanges(lastView, view, myId);
+  lastView = JSON.parse(JSON.stringify(view));
+  lastContext = context;
+}
+
+function demoRender() {
+  var demo = {
+    phase: "playing",
+    players: [
+      { id: "p1", score: 12, roundPoints: 0, handCount: 9, passedCount: 0, takenTricks: 2, isCurrent: false, isLeader: false },
+      { id: "p2", score: 24, roundPoints: 9, handCount: 9, passedCount: 0, takenTricks: 1, isCurrent: true, isLeader: true },
+      { id: "p3", score: 18, roundPoints: 0, handCount: 9, passedCount: 0, takenTricks: 3, isCurrent: false, isLeader: false },
+      { id: "p4", score: 31, roundPoints: 4, handCount: 9, passedCount: 0, takenTricks: 0, isCurrent: false, isLeader: false }
+    ],
+    myId: "p1",
+    currentPlayer: "p2",
+    leader: "p2",
+    handNumber: 3,
+    trickNumber: 4,
+    targetScore: 50,
+    passDirection: "across",
+    heartsBroken: true,
+    firstTrick: false,
+    trick: [{ playerId: "p2", card: 23 }, { playerId: "p3", card: 25 }],
+    lastTrick: null,
+    roundSummary: null,
+    lastAction: null,
+    gameWinner: null,
+    gameWinners: [],
+    isSpectator: false,
+    myHand: [1, 5, 12, 14, 20, 29, 36, 39, 43],
+    myPassed: []
+  };
+  var actions = [{ type: "play", card: 29, cardText: "5S" }, { type: "play", card: 36, cardText: "QS" }];
+  render(demo, actions, { myId: "p1", players: [
+    { id: "p1", name: "You" },
+    { id: "p2", name: "North" },
+    { id: "p3", name: "Echo" },
+    { id: "p4", name: "West" }
+  ]});
+}
+
+if (typeof playgent !== "undefined" && playgent.onStateChange) {
+  playgent.onStateChange(function(view, legalActions, context) {
+    render(view, legalActions, context);
+  });
+  if (playgent.onAction) {
+    playgent.onAction(function(action) {
+      if (action && action.type !== "play" && action.type !== "pass") playHeartSound(actionSound(action));
+    });
+  }
+} else {
+  demoRender();
+}
+</script>
