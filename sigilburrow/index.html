@@ -1,0 +1,1046 @@
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #0d0820; color: #f5e9ff; font-family: 'Menlo', 'Consolas', 'Courier New', monospace; }
+  body {
+    width: 100vw;
+    min-height: 100vh;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow-x: hidden;
+  }
+  .frame {
+    width: 100%;
+    max-width: 980px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .panel {
+    background: #1a1230;
+    border: 1px solid #3d2a5c;
+    border-radius: 8px;
+    padding: 8px 10px;
+    min-width: 0;
+  }
+  .panel.compact { padding: 6px 10px; }
+  .panel h2 {
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: #c4b5fd;
+    margin-bottom: 6px;
+    font-family: 'Cinzel', Georgia, serif;
+    font-weight: 700;
+  }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .title {
+    font-family: 'Cinzel', Georgia, serif;
+    font-weight: 900;
+    font-size: 18px;
+    letter-spacing: 2px;
+    color: #f9fafb;
+  }
+  .subtitle {
+    font-size: 10px;
+    color: #facc15;
+    letter-spacing: 3px;
+  }
+  .badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: #2a1a4a;
+    border: 1px solid #4c1d95;
+    font-size: 11px;
+    color: #ddd6fe;
+    letter-spacing: 1px;
+  }
+  .badge.warn { background: #422006; border-color: #b45309; color: #fde68a; }
+  .badge.ok { background: #064e3b; border-color: #16a34a; color: #bbf7d0; }
+  .badge.bad { background: #450a0a; border-color: #b91c1c; color: #fecaca; }
+  .biome {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  @media (min-width: 720px) {
+    .biome { grid-template-columns: 1.4fr 1fr; }
+  }
+  .biome-name {
+    font-family: 'Cinzel', Georgia, serif;
+    font-weight: 700;
+    font-size: 18px;
+    letter-spacing: 2px;
+    color: #fcd34d;
+    margin-bottom: 4px;
+  }
+  .biome-blurb { color: #ddd6fe; font-size: 13px; margin-bottom: 8px; }
+  .biome-threat {
+    background: #0d0820;
+    border: 1px solid #4c1d95;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 12px;
+    margin-bottom: 6px;
+  }
+  .tide-row { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; }
+  .tide-byte {
+    background: #2a1a4a;
+    border: 1px solid #4c1d95;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    color: #fde68a;
+    min-width: 28px;
+    text-align: center;
+  }
+  .boon-list { list-style: none; font-size: 12px; color: #e9d5ff; margin-top: 4px; }
+  .boon-list li { padding: 2px 0; }
+  .boon-list li:before { content: "\2756 "; color: #facc15; }
+  .colonies {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  @media (min-width: 720px) {
+    .colonies { grid-template-columns: repeat(2, 1fr); }
+  }
+  .colony {
+    background: #0d0820;
+    border: 1px solid #3d2a5c;
+    border-radius: 8px;
+    padding: 8px 10px;
+    min-width: 0;
+  }
+  .colony.me { border-color: #facc15; }
+  .colony.dead { opacity: 0.5; border-color: #b91c1c; }
+  .colony-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+  .colony-name { font-weight: 700; color: #f5e9ff; font-size: 13px; word-break: break-word; }
+  .colony-stats {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+    font-size: 11px;
+    color: #c4b5fd;
+  }
+  .stat-chip {
+    background: #1a1230;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid #2a1a4a;
+  }
+  .stat-chip.score { color: #facc15; border-color: #b45309; }
+  .stat-chip.pop { color: #bbf7d0; border-color: #15803d; }
+  .stat-chip.morale { color: #fbcfe8; border-color: #be185d; }
+  .stock-grid {
+    margin-top: 6px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 3px;
+    font-size: 10px;
+    color: #c4b5fd;
+  }
+  .stock-cell { background: #1a1230; padding: 2px 4px; border-radius: 3px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .compose textarea {
+    width: 100%;
+    min-height: 56px;
+    height: 60px;
+    background: #0d0820;
+    color: #fde68a;
+    border: 1px solid #4c1d95;
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-family: 'Menlo', 'Consolas', monospace;
+    font-size: 13px;
+    resize: vertical;
+  }
+  .compose .meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+    font-size: 12px;
+    color: #c4b5fd;
+  }
+  .compose .meta .len { color: #fde68a; }
+  .compose .meta .prime { color: #bbf7d0; }
+  .compose .meta .nonprime { color: #c4b5fd; }
+  .compose .meta .err { color: #fecaca; }
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+  button.action {
+    background: #4c1d95;
+    border: 1px solid #7c3aed;
+    color: #f5e9ff;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: 'Menlo', monospace;
+    font-size: 12px;
+    min-height: 38px;
+    min-width: 40px;
+    transition: background 0.15s, transform 0.05s;
+  }
+  button.action:hover:not(:disabled) { background: #6d28d9; }
+  button.action:active:not(:disabled) { transform: translateY(1px); }
+  button.action:disabled { opacity: 0.4; cursor: not-allowed; }
+  button.action.primary { background: #b45309; border-color: #facc15; color: #fef3c7; }
+  button.action.primary:hover:not(:disabled) { background: #d97706; }
+  .presets {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    margin-bottom: 6px;
+  }
+  @media (min-width: 540px) {
+    .presets { grid-template-columns: 1fr 1fr 1fr; }
+  }
+  .preset {
+    text-align: left;
+    background: #2a1a4a;
+    border: 1px solid #4c1d95;
+    color: #f5e9ff;
+    padding: 4px 6px;
+    border-radius: 5px;
+    font-size: 11px;
+    cursor: pointer;
+    min-height: 38px;
+    line-height: 1.2;
+    overflow: hidden;
+  }
+  .preset:hover:not(:disabled) { background: #3d2a5c; }
+  .preset:disabled { opacity: 0.4; cursor: not-allowed; }
+  .preset .prog {
+    display: block;
+    margin-top: 4px;
+    color: #fde68a;
+    word-break: break-all;
+    font-size: 11px;
+  }
+  .preset .prog-empty { color: #94a3b8; font-style: italic; }
+  .history { max-height: 320px; overflow-y: auto; min-width: 0; }
+  .history-round {
+    background: #0d0820;
+    border: 1px solid #3d2a5c;
+    border-radius: 6px;
+    padding: 8px;
+    margin-bottom: 8px;
+  }
+  .history-round h3 {
+    font-size: 12px;
+    color: #fcd34d;
+    margin-bottom: 4px;
+    letter-spacing: 1px;
+  }
+  .reveal {
+    border-top: 1px dashed #3d2a5c;
+    padding: 6px 0;
+    font-size: 11px;
+    color: #c4b5fd;
+  }
+  .reveal:first-of-type { border-top: none; }
+  .reveal .who { color: #f5e9ff; font-weight: 700; }
+  .reveal .prog {
+    display: block;
+    color: #fde68a;
+    word-break: break-all;
+    margin: 3px 0;
+    background: #1a1230;
+    padding: 4px 6px;
+    border-radius: 3px;
+    font-size: 11px;
+  }
+  .reveal .summary { color: #c4b5fd; }
+  .reveal .summary .met { color: #bbf7d0; }
+  .reveal .summary .missed { color: #fecaca; }
+  .reveal .summary .boon { color: #facc15; }
+  .gameover {
+    text-align: center;
+    padding: 16px;
+  }
+  .gameover h2 {
+    font-family: 'Cinzel', Georgia, serif;
+    font-size: 20px;
+    letter-spacing: 3px;
+    color: #facc15;
+    margin-bottom: 8px;
+  }
+  .reference {
+    font-size: 11px;
+    color: #c4b5fd;
+    line-height: 1.5;
+  }
+  .reference code {
+    background: #2a1a4a;
+    color: #fde68a;
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-family: 'Menlo', monospace;
+  }
+  .reference ul { list-style: none; }
+  .reference li { padding: 1px 0; }
+  .footer {
+    text-align: center;
+    font-size: 10px;
+    color: #6d28d9;
+    letter-spacing: 2px;
+    margin-top: 4px;
+  }
+  .waiting {
+    color: #fde68a;
+    font-size: 13px;
+    text-align: center;
+    padding: 10px;
+  }
+  .actor-status {
+    font-size: 11px;
+    color: #c4b5fd;
+    margin-top: 4px;
+  }
+  .spectator-banner {
+    background: #2a1a4a;
+    border: 1px solid #4c1d95;
+    color: #ddd6fe;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    text-align: center;
+  }
+</style>
+
+<div class="frame"
+  id="sb-root"
+  data-game="sigilburrow"
+  data-phase="loading"
+  data-status="loading"
+  data-player="spectator"
+  data-current-player="">
+  <div class="panel header">
+    <div>
+      <div class="title">SIGILBURROW</div>
+      <div class="subtitle" id="sb-subtitle">RUNE-LOOP HOLDFAST</div>
+    </div>
+    <div>
+      <span class="badge" id="sb-round-badge">round —</span>
+      <span class="badge" id="sb-phase-badge">awaiting state</span>
+    </div>
+  </div>
+
+  <div class="panel" id="sb-actor-panel">
+    <h2 id="sb-actor-title">YOUR TURN</h2>
+    <div id="sb-actor-body">
+      <div class="spectator-banner">Loading scroll deck…</div>
+    </div>
+  </div>
+
+  <div class="panel" id="sb-biome-panel" data-status="empty">
+    <h2>THIS ROUND'S BIOME</h2>
+    <div class="biome">
+      <div>
+        <div class="biome-name" id="sb-biome-name">—</div>
+        <div class="biome-blurb" id="sb-biome-blurb">Waiting for the burrow to wake.</div>
+        <div class="biome-threat" id="sb-biome-threat"></div>
+        <div style="font-size:11px;color:#c4b5fd;letter-spacing:1px;">TIDE BYTES (read with <code style="background:#2a1a4a;color:#fde68a;padding:1px 4px;border-radius:3px;">,</code>)</div>
+        <div class="tide-row" id="sb-tide"></div>
+      </div>
+      <div>
+        <div style="font-size:11px;color:#c4b5fd;letter-spacing:1px;margin-bottom:4px;">PRIME-LENGTH BOON POOL</div>
+        <ul class="boon-list" id="sb-boons"></ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>COLONIES</h2>
+    <div class="colonies" id="sb-colonies"></div>
+  </div>
+
+  <div class="panel" id="sb-history-panel" style="display:none">
+    <h2>SCROLL CRYPT</h2>
+    <div class="history" id="sb-history"></div>
+  </div>
+
+  <div class="panel reference">
+    <h2>LOOPGLYPH PRIMER</h2>
+    <ul>
+      <li><code>&gt;</code> step right · <code>&lt;</code> step left · <code>+</code> raise cell · <code>-</code> lower cell</li>
+      <li><code>.</code> emit byte (its value mod 8 = a directive) · <code>,</code> read one tide byte into the cell</li>
+      <li><code>[</code> ... <code>]</code> loop while the cell is non-zero. Brackets must match.</li>
+      <li>Directive map: 0 Dig · 1 Plant · 2 Harvest · 3 Build · 4 Forge · 5 Scout · 6 Pray · 7 Sleep</li>
+      <li>Prime total character length triggers a random biome boon. Padding (spaces, anything that isn't an instruction) still counts toward the total.</li>
+    </ul>
+  </div>
+
+  <div class="footer">8 SYMBOLS &middot; 6 BIOMES &middot; 1 BURROW</div>
+</div>
+
+<div id="player-container" style="display:none"></div>
+
+<script>
+(function(){
+  var SLUG = "sigilburrow";
+  var E2E = window.__playgentE2EState || {
+    regions: [],
+    lastPhase: "loading",
+    lastStatus: "loading",
+    lastPlayerId: "",
+    lastCurrentPlayer: "",
+    lastVisibleLegalActionCount: 0,
+    lastActions: [],
+    lastRawActions: []
+  };
+  window.__playgentE2EState = E2E;
+
+  function unwrap(option){
+    if (option && typeof option === "object" && option.decision !== undefined) return option.decision;
+    if (option && typeof option === "object" && option.action !== undefined) return option.action;
+    return option;
+  }
+  function isVisibleAction(action){
+    var a = unwrap(action);
+    if (!a || typeof a !== "object") return false;
+    if (a.type === "advance_phase" || a.type === "system" || a.type === "noop") return false;
+    return true;
+  }
+  function visibleActions(arr){
+    var out = [];
+    for (var i = 0; arr && i < arr.length; i++){
+      if (isVisibleAction(arr[i])) out.push(unwrap(arr[i]));
+    }
+    return out;
+  }
+  function setAttr(el, name, value){
+    if (!el) return;
+    el.setAttribute(name, value == null ? "" : String(value));
+  }
+  function applyLandmarks(view, legalActions, context){
+    var vis = visibleActions(legalActions || []);
+    var phase = context && context.gameOver ? "game-over"
+      : (view && view.phase) ? view.phase
+      : "playing";
+    var status = context && context.gameOver ? "game-over"
+      : (vis.length > 0 ? "your-turn" : "waiting");
+    var playerId = context && context.myId ? context.myId : "spectator";
+    var currentPlayer = "";
+    if (view && view.players && Array.isArray(view.players) && view.submissionStatus){
+      for (var i = 0; i < view.players.length; i++){
+        var pid = view.players[i];
+        if (view.alive && view.alive[pid] === false) continue;
+        if (!view.submissionStatus[pid]){
+          currentPlayer = pid;
+          break;
+        }
+      }
+    }
+    E2E.lastPhase = phase;
+    E2E.lastStatus = status;
+    E2E.lastPlayerId = playerId;
+    E2E.lastCurrentPlayer = currentPlayer;
+    E2E.lastRawActions = legalActions || [];
+    E2E.lastActions = vis;
+    E2E.lastVisibleLegalActionCount = vis.length;
+    var roots = [document.getElementById("sb-root"), telemetryEl()];
+    for (var r = 0; r < roots.length; r++){
+      setAttr(roots[r], "data-game", SLUG);
+      setAttr(roots[r], "data-phase", phase);
+      setAttr(roots[r], "data-status", status);
+      setAttr(roots[r], "data-player", playerId);
+      setAttr(roots[r], "data-current-player", currentPlayer);
+      if (view && view.round != null) setAttr(roots[r], "data-round", view.round);
+    }
+    var playerContainer = document.getElementById("player-container");
+    playerContainer.innerHTML = "";
+    var players = (context && context.players) ? context.players : [];
+    for (var p = 0; p < players.length; p++){
+      var span = document.createElement("span");
+      setAttr(span, "data-player", players[p].id || "");
+      setAttr(span, "data-player-name", players[p].name || players[p].id || "");
+      span.textContent = players[p].name || players[p].id || "";
+      playerContainer.appendChild(span);
+    }
+  }
+  function telemetryEl(){
+    var el = document.getElementById("sb-telemetry");
+    if (!el){
+      el = document.createElement("div");
+      el.id = "sb-telemetry";
+      el.setAttribute("aria-hidden", "true");
+      el.style.cssText = "position:fixed;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;left:0;top:0;";
+      document.body.appendChild(el);
+    }
+    return el;
+  }
+  function decorateControls(){
+    var nodes = document.querySelectorAll("button[data-action-idx], button[data-cell], textarea[data-action-target]");
+    for (var i = 0; i < nodes.length; i++){
+      var node = nodes[i];
+      if (node.hasAttribute("data-action-idx") && !node.hasAttribute("data-action-type")){
+        var idx = parseInt(node.getAttribute("data-action-idx"), 10);
+        var raw = (!isNaN(idx) && E2E.lastRawActions && E2E.lastRawActions[idx]) ? unwrap(E2E.lastRawActions[idx]) : null;
+        node.setAttribute("data-action-type", raw && raw.type ? raw.type : "choose");
+      }
+      if (!node.hasAttribute("data-action-label")){
+        var label = (node.getAttribute("aria-label") || node.textContent || node.value || "").replace(/\s+/g, " ").trim().slice(0, 100);
+        node.setAttribute("data-action-label", label);
+      }
+    }
+  }
+  function clipRect(rect){
+    if (!rect) return null;
+    var x = Number(rect.x != null ? rect.x : rect.left) || 0;
+    var y = Number(rect.y != null ? rect.y : rect.top) || 0;
+    var w = Number(rect.width) || 0;
+    var h = Number(rect.height) || 0;
+    var left = Math.max(0, x);
+    var top = Math.max(0, y);
+    var right = Math.min(window.innerWidth, x + w);
+    var bottom = Math.min(window.innerHeight, y + h);
+    if (right - left <= 0 || bottom - top <= 0) return null;
+    return { x: left, y: top, width: right - left, height: bottom - top };
+  }
+  function isVisibleNode(node){
+    if (!node || !node.getBoundingClientRect) return false;
+    var rect = node.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return false;
+    if (rect.right <= 0 || rect.bottom <= 0 || rect.left >= window.innerWidth || rect.top >= window.innerHeight) return false;
+    var style = window.getComputedStyle ? window.getComputedStyle(node) : null;
+    if (style && (style.display === "none" || style.visibility === "hidden" || style.opacity === "0")) return false;
+    if (node.disabled || node.getAttribute("aria-disabled") === "true") return false;
+    return true;
+  }
+  function regionKind(node){
+    if (node.tagName === "TEXTAREA") return "input";
+    if (node.tagName === "INPUT") return "input";
+    if (node.tagName === "SELECT") return "input";
+    if (node.hasAttribute("data-cell")) return "cell";
+    return "button";
+  }
+  function getRegions(){
+    decorateControls();
+    var nodes = document.querySelectorAll("button[data-action-idx], button[data-cell], button.action, textarea[data-action-target]");
+    var out = [];
+    var seen = {};
+    for (var i = 0; i < nodes.length; i++){
+      var node = nodes[i];
+      if (!isVisibleNode(node)) continue;
+      var r = clipRect(node.getBoundingClientRect());
+      if (!r) continue;
+      var id = node.id || node.getAttribute("data-action-idx") || node.getAttribute("data-cell") || node.getAttribute("data-action-label") || ("control-" + i);
+      if (seen[id]) id = id + "-" + i;
+      seen[id] = true;
+      var label = (node.getAttribute("data-action-label") || node.getAttribute("aria-label") || node.textContent || node.value || "").replace(/\s+/g, " ").trim().slice(0, 100);
+      out.push({
+        id: String(id),
+        kind: regionKind(node),
+        label: label,
+        actionType: node.getAttribute("data-action-type") || "",
+        selector: node.id ? ("#" + node.id) : "",
+        rect: { x: r.x, y: r.y, width: r.width, height: r.height },
+        center: { x: r.x + r.width / 2, y: r.y + r.height / 2 }
+      });
+    }
+    return out;
+  }
+  function runLayoutChecks(){
+    var failures = [];
+    var regions = getRegions();
+    if (E2E.lastVisibleLegalActionCount > 0 && regions.length === 0){
+      failures.push({ severity: "error", message: "active legal actions did not create visible controls" });
+    }
+    for (var i = 0; i < regions.length; i++){
+      var region = regions[i];
+      var r = region.rect;
+      if (!r){ failures.push({ severity: "error", message: region.id + " has no rect" }); continue; }
+      if (r.width <= 0 || r.height <= 0){ failures.push({ severity: "error", message: region.id + " has empty bounds" }); }
+      if (r.x < -1 || r.y < -1 || r.x + r.width > window.innerWidth + 1 || r.y + r.height > window.innerHeight + 1){
+        failures.push({ severity: "error", message: region.id + " is offscreen" });
+      }
+      if (region.kind !== "input" && (r.width < 36 || r.height < 36)){
+        failures.push({ severity: "warning", message: region.id + " is a small touch target" });
+      }
+    }
+    return failures;
+  }
+  window.__playgentE2E = {
+    version: 1,
+    getSnapshot: function(){
+      return {
+        phase: E2E.lastPhase,
+        status: E2E.lastStatus,
+        playerId: E2E.lastPlayerId,
+        currentPlayer: E2E.lastCurrentPlayer,
+        legalActionCount: E2E.lastVisibleLegalActionCount,
+        regionCount: getRegions().length
+      };
+    },
+    getInteractiveRegions: getRegions,
+    checkLayout: runLayoutChecks
+  };
+  if (typeof window.__playgentCheckLayout !== "function"){
+    window.__playgentCheckLayout = runLayoutChecks;
+  }
+
+  // ----- Rendering -----
+  function isPrime(n){
+    if (n < 2) return false;
+    if (n < 4) return true;
+    if (n % 2 === 0) return false;
+    for (var i = 3; i * i <= n; i += 2){
+      if (n % i === 0) return false;
+    }
+    return true;
+  }
+  function bracketsBalanced(s){
+    var d = 0;
+    for (var i = 0; i < s.length; i++){
+      if (s.charAt(i) === "[") d++;
+      else if (s.charAt(i) === "]"){
+        d--;
+        if (d < 0) return false;
+      }
+    }
+    return d === 0;
+  }
+
+  var lastView = null;
+  var lastContext = null;
+  var lastLegalActions = [];
+  var draftBuffer = "";
+  var lastRound = 0;
+  var lastSubmittedSoundKey = "";
+  var lastOutcomeSoundKey = "";
+  var DIRECTIVE_NAMES = ["Dig","Plant","Harvest","Build","Forge","Scout","Pray","Sleep"];
+
+  function findSubmitOpportunityIdx(legalActions){
+    var arr = legalActions || [];
+    for (var i = 0; i < arr.length; i++){
+      var raw = unwrap(arr[i]);
+      if (raw && raw.type === "submit") return i;
+    }
+    return -1;
+  }
+
+  function renderHeader(view){
+    var roundBadge = document.getElementById("sb-round-badge");
+    var phaseBadge = document.getElementById("sb-phase-badge");
+    if (view.phase === "ended"){
+      roundBadge.textContent = "round " + view.maxRounds + "/" + view.maxRounds;
+      phaseBadge.textContent = "the burrow rests";
+      phaseBadge.className = "badge ok";
+    } else {
+      roundBadge.textContent = "round " + view.round + "/" + view.maxRounds;
+      phaseBadge.textContent = "scrolls drafting";
+      phaseBadge.className = "badge";
+    }
+    var sub = document.getElementById("sb-subtitle");
+    if (view.biome){
+      sub.textContent = "BIOME: " + view.biome.name.toUpperCase();
+    } else {
+      sub.textContent = "RUNE-LOOP HOLDFAST";
+    }
+  }
+
+  function renderBiome(view){
+    var panel = document.getElementById("sb-biome-panel");
+    var biome = view.biome;
+    if (!biome){
+      panel.style.display = "none";
+      return;
+    }
+    panel.style.display = "";
+    document.getElementById("sb-biome-name").textContent = biome.name;
+    document.getElementById("sb-biome-blurb").textContent = biome.blurb;
+    var threatEl = document.getElementById("sb-biome-threat");
+    threatEl.innerHTML = "";
+    var threat = document.createElement("div");
+    threat.innerHTML = "<strong style=\"color:#fde68a;\">Threat:</strong> " +
+      escapeHtml(biome.threatName) +
+      " &mdash; needs <strong style=\"color:#bbf7d0;\">" + biome.threshold + "+</strong> " +
+      "<strong style=\"color:#fcd34d;\">" + escapeHtml(biome.directiveName) + "</strong> directives " +
+      "(<code style=\"color:#fde68a;\">cell mod 8 == " + biome.directiveIdx + "</code>)";
+    threatEl.appendChild(threat);
+    var tideEl = document.getElementById("sb-tide");
+    tideEl.innerHTML = "";
+    for (var i = 0; i < biome.tide.length; i++){
+      var span = document.createElement("span");
+      span.className = "tide-byte";
+      span.textContent = String(biome.tide[i]);
+      tideEl.appendChild(span);
+    }
+    var boonEl = document.getElementById("sb-boons");
+    boonEl.innerHTML = "";
+    for (var b = 0; b < biome.boons.length; b++){
+      var li = document.createElement("li");
+      li.textContent = biome.boons[b].label;
+      boonEl.appendChild(li);
+    }
+  }
+
+  function renderColonies(view, context){
+    var host = document.getElementById("sb-colonies");
+    host.innerHTML = "";
+    var players = view.players || [];
+    var myId = context && context.myId ? context.myId : null;
+    for (var i = 0; i < players.length; i++){
+      var pid = players[i];
+      var population = (view.population && view.population[pid]) || 0;
+      var moraleN = (view.morale && view.morale[pid]) || 0;
+      var score = (view.scores && view.scores[pid]) || 0;
+      var shield = (view.shield && view.shield[pid]) || 0;
+      var stone = (view.stoneStock && view.stoneStock[pid]) || 0;
+      var grain = (view.grainStock && view.grainStock[pid]) || 0;
+      var wall = (view.wallStock && view.wallStock[pid]) || 0;
+      var weapon = (view.weaponStock && view.weaponStock[pid]) || 0;
+      var intel = (view.intelStock && view.intelStock[pid]) || 0;
+      var stamina = (view.staminaStock && view.staminaStock[pid]) || 0;
+      var alive = view.alive ? view.alive[pid] !== false : true;
+      var submitted = view.submissionStatus ? !!view.submissionStatus[pid] : false;
+      var div = document.createElement("div");
+      div.className = "colony" + (pid === myId ? " me" : "") + (alive ? "" : " dead");
+      div.setAttribute("data-player", pid);
+      var name = (view.playerNames && view.playerNames[pid]) || pid;
+      var statusLabel = alive ? (submitted ? "sealed" : "drafting") : "fallen";
+      var statusColor = alive ? (submitted ? "ok" : "") : "bad";
+      div.innerHTML =
+        '<div class="colony-head">' +
+          '<span class="colony-name">' + escapeHtml(name) + (pid === myId ? " (you)" : "") + '</span>' +
+          '<span class="badge ' + statusColor + '">' + statusLabel + '</span>' +
+        '</div>' +
+        '<div class="colony-stats">' +
+          '<span class="stat-chip score">score ' + score + '</span>' +
+          '<span class="stat-chip pop">pop ' + population + '</span>' +
+          '<span class="stat-chip morale">morale ' + moraleN + '</span>' +
+          '<span class="stat-chip">shield ' + shield + '</span>' +
+        '</div>' +
+        '<div class="stock-grid">' +
+          '<span class="stock-cell">stone ' + stone + '</span>' +
+          '<span class="stock-cell">grain ' + grain + '</span>' +
+          '<span class="stock-cell">wall ' + wall + '</span>' +
+          '<span class="stock-cell">weapon ' + weapon + '</span>' +
+          '<span class="stock-cell">intel ' + intel + '</span>' +
+          '<span class="stock-cell">stamina ' + stamina + '</span>' +
+        '</div>';
+      host.appendChild(div);
+    }
+  }
+
+  function renderActor(view, legalActions, context){
+    var title = document.getElementById("sb-actor-title");
+    var body = document.getElementById("sb-actor-body");
+    body.innerHTML = "";
+    var myId = context && context.myId ? context.myId : null;
+    if (context && context.gameOver){
+      title.textContent = "FINAL TALLY";
+      var go = document.createElement("div");
+      go.className = "gameover";
+      var headline = context.gameOver.summary || "The burrow is silent.";
+      var winners = (context.gameOver.playerIds || []).map(function(id){
+        return (view.playerNames && view.playerNames[id]) || id;
+      });
+      go.innerHTML = '<h2>' + escapeHtml(winners.length === 1 ? winners[0].toUpperCase() + " HOLDS THE BURROW" : (winners.length > 0 ? "STALEMATE AT THE GATE" : "RUIN")) + '</h2>' +
+        '<div class="reference">' + escapeHtml(headline) + '</div>';
+      body.appendChild(go);
+      return;
+    }
+    if (!myId){
+      title.textContent = "SCROLL FLOOR";
+      var spec = document.createElement("div");
+      spec.className = "spectator-banner";
+      spec.textContent = "Spectator view — colonies are sealing scrolls.";
+      body.appendChild(spec);
+      return;
+    }
+    if (view.alive && view.alive[myId] === false){
+      title.textContent = "CRYPT WATCH";
+      var elim = document.createElement("div");
+      elim.className = "spectator-banner";
+      elim.textContent = "Your colony fell. Watch the surviving burrows finish out the run.";
+      body.appendChild(elim);
+      return;
+    }
+    var submitIdx = findSubmitOpportunityIdx(legalActions);
+    if (submitIdx < 0){
+      title.textContent = "WAITING ON THE OTHERS";
+      var w = document.createElement("div");
+      w.className = "waiting";
+      var waitingList = [];
+      var players = view.players || [];
+      for (var i = 0; i < players.length; i++){
+        var pid = players[i];
+        if (view.alive && view.alive[pid] === false) continue;
+        if (!(view.submissionStatus && view.submissionStatus[pid])) waitingList.push((view.playerNames && view.playerNames[pid]) || pid);
+      }
+      w.textContent = waitingList.length === 0
+        ? "All scrolls sealed. The biome stirs..."
+        : "Still drafting: " + waitingList.join(", ");
+      body.appendChild(w);
+      return;
+    }
+    title.textContent = "DRAFT YOUR SCROLL";
+    // Build presets list from choose options (excluding the schema custom one)
+    var rawOpp = legalActions[submitIdx];
+    var presetsHost = document.createElement("div");
+    presetsHost.className = "presets";
+    var presetOptions = [];
+    var customIdx = -1;
+    for (var k = 0; k < legalActions.length; k++){
+      var entry = legalActions[k];
+      var d = unwrap(entry);
+      if (!d || d.type !== "submit") continue;
+      if (entry && entry.schema){
+        customIdx = k;
+      } else {
+        presetOptions.push({ entry: entry, idx: k });
+      }
+    }
+    for (var p = 0; p < presetOptions.length; p++){
+      (function(opt){
+        var btn = document.createElement("button");
+        btn.className = "preset action";
+        btn.setAttribute("data-action-idx", String(opt.idx));
+        btn.setAttribute("data-action-type", "submit");
+        var label = opt.entry.label || ("Preset " + opt.idx);
+        var program = (opt.entry.decision && typeof opt.entry.decision.program === "string") ? opt.entry.decision.program : "";
+        btn.setAttribute("data-action-label", label);
+        btn.setAttribute("aria-label", label);
+        var labelSpan = document.createElement("span");
+        labelSpan.textContent = label;
+        btn.appendChild(labelSpan);
+        var progSpan = document.createElement("span");
+        progSpan.className = "prog";
+        if (program.length === 0){
+          progSpan.className = "prog prog-empty";
+          progSpan.textContent = "(empty scroll)";
+        } else {
+          progSpan.textContent = program;
+        }
+        btn.appendChild(progSpan);
+        btn.addEventListener("click", function(){
+          if (playgent.sound) playgent.sound("ui.confirm");
+          playgent.submitAction({ type: "submit", program: program });
+        });
+        presetsHost.appendChild(btn);
+      })(presetOptions[p]);
+    }
+    body.appendChild(presetsHost);
+
+    var compose = document.createElement("div");
+    compose.className = "compose";
+    var lbl = document.createElement("div");
+    lbl.style.cssText = "font-size:11px;letter-spacing:1px;color:#c4b5fd;margin-bottom:4px;";
+    lbl.textContent = "OR COMPOSE A LOOPGLYPH SCROLL";
+    compose.appendChild(lbl);
+    var ta = document.createElement("textarea");
+    ta.id = "sb-scroll";
+    ta.setAttribute("data-action-target", "submit");
+    ta.setAttribute("aria-label", "Loopglyph scroll editor");
+    ta.setAttribute("maxlength", String(view.scrollMaxChars || 240));
+    ta.placeholder = "++++++++[>+++<-]>.. (write Loopglyph here — prime char count earns a biome boon)";
+    ta.value = draftBuffer;
+    ta.addEventListener("input", function(){
+      draftBuffer = ta.value;
+      updateMeta();
+    });
+    compose.appendChild(ta);
+    var meta = document.createElement("div");
+    meta.className = "meta";
+    meta.id = "sb-meta";
+    compose.appendChild(meta);
+    var btnRow = document.createElement("div");
+    btnRow.className = "btn-row";
+    var submitBtn = document.createElement("button");
+    submitBtn.className = "action primary";
+    submitBtn.id = "sb-submit";
+    submitBtn.textContent = "Seal Scroll";
+    submitBtn.setAttribute("aria-label", "Seal and submit Loopglyph scroll");
+    if (customIdx >= 0){
+      submitBtn.setAttribute("data-action-idx", String(customIdx));
+      submitBtn.setAttribute("data-action-type", "submit");
+      submitBtn.setAttribute("data-action-label", "Seal Loopglyph scroll");
+    }
+    submitBtn.addEventListener("click", function(){
+      var program = draftBuffer || "";
+      if (program.length > (view.scrollMaxChars || 240)){
+        program = program.slice(0, view.scrollMaxChars || 240);
+      }
+      if (!bracketsBalanced(program)){
+        if (playgent.sound) playgent.sound("negative.denied");
+        if (playgent.toast) playgent.toast("Brackets do not match.", "error");
+        return;
+      }
+      if (playgent.sound) playgent.sound("ui.confirm");
+      playgent.submitAction({ type: "submit", program: program });
+    });
+    btnRow.appendChild(submitBtn);
+    var clearBtn = document.createElement("button");
+    clearBtn.className = "action";
+    clearBtn.id = "sb-clear";
+    clearBtn.textContent = "Clear";
+    clearBtn.setAttribute("aria-label", "Clear scroll editor");
+    clearBtn.addEventListener("click", function(){
+      draftBuffer = "";
+      ta.value = "";
+      updateMeta();
+      if (playgent.sound) playgent.sound("ui.cancel");
+    });
+    btnRow.appendChild(clearBtn);
+    compose.appendChild(btnRow);
+    body.appendChild(compose);
+    updateMeta();
+  }
+
+  function updateMeta(){
+    var meta = document.getElementById("sb-meta");
+    if (!meta) return;
+    var program = draftBuffer || "";
+    var len = program.length;
+    var prime = isPrime(len);
+    var balanced = bracketsBalanced(program);
+    meta.innerHTML = "";
+    var lenSpan = document.createElement("span");
+    lenSpan.className = "len";
+    lenSpan.textContent = len + " chars";
+    meta.appendChild(lenSpan);
+    var primeSpan = document.createElement("span");
+    primeSpan.className = prime && len > 0 ? "prime" : "nonprime";
+    primeSpan.textContent = prime && len > 0 ? "PRIME LENGTH — boon eligible" : (len === 0 ? "empty scroll" : "not prime");
+    meta.appendChild(primeSpan);
+    if (!balanced){
+      var errSpan = document.createElement("span");
+      errSpan.className = "err";
+      errSpan.textContent = "brackets unbalanced";
+      meta.appendChild(errSpan);
+    }
+  }
+
+  function renderHistory(view){
+    var panel = document.getElementById("sb-history-panel");
+    var host = document.getElementById("sb-history");
+    var history = view.history || [];
+    if (history.length === 0){
+      panel.style.display = "none";
+      return;
+    }
+    panel.style.display = "";
+    host.innerHTML = "";
+    for (var h = history.length - 1; h >= 0; h--){
+      var hr = history[h];
+      var rdiv = document.createElement("div");
+      rdiv.className = "history-round";
+      var head = document.createElement("h3");
+      head.textContent = "Round " + hr.round + " — " + hr.name + " · " + hr.threatName + " (need " + hr.threshold + "+ " + hr.directiveName + ")";
+      rdiv.appendChild(head);
+      for (var rv = 0; rv < hr.reveals.length; rv++){
+        var rev = hr.reveals[rv];
+        var rdv = document.createElement("div");
+        rdv.className = "reveal";
+        var directiveIdx = DIRECTIVE_NAMES.indexOf(hr.directiveName);
+        if (directiveIdx < 0) directiveIdx = 0;
+        var count = rev.directiveCounts ? rev.directiveCounts[directiveIdx] : 0;
+        var who = document.createElement("div");
+        who.className = "who";
+        who.textContent = rev.playerName + " — " + rev.charLen + " chars" + (rev.isPrime ? " (PRIME)" : "");
+        rdv.appendChild(who);
+        var progEl = document.createElement("span");
+        progEl.className = "prog";
+        progEl.textContent = rev.program && rev.program.length ? rev.program : "(empty)";
+        rdv.appendChild(progEl);
+        var sum = document.createElement("div");
+        sum.className = "summary";
+        var metClass = rev.threatMet ? "met" : "missed";
+        sum.innerHTML =
+          hr.directiveName + ": <strong>" + count + "</strong> · " +
+          '<span class="' + metClass + '">' + (rev.threatMet ? "threat repelled" : (rev.shieldUsed ? "shield absorbed" : "morale falls")) + '</span> · ' +
+          "score +" + rev.scoreDelta;
+        if (rev.boon){
+          sum.innerHTML += " · <span class=\"boon\">boon: " + escapeHtml(rev.boon.label) + "</span>";
+        }
+        if (rev.runError){
+          sum.innerHTML += ' · <span class="missed">scroll error: ' + escapeHtml(rev.runError) + '</span>';
+        }
+        rdv.appendChild(sum);
+        rdiv.appendChild(rdv);
+      }
+      host.appendChild(rdiv);
+    }
+  }
+
+  function escapeHtml(s){
+    if (s == null) return "";
+    return String(s).replace(/[&<>"']/g, function(c){
+      return c === "&" ? "&amp;"
+        : c === "<" ? "&lt;"
+        : c === ">" ? "&gt;"
+        : c === '"' ? "&quot;"
+        : "&#39;";
+    });
+  }
+
+  function playSoundsForUpdate(view, context){
+    var ctx = context || {};
+    var myId = ctx.myId || null;
+    // Mark sealed-scroll sound when I just submitted
+    if (myId && view && view.submissionStatus && view.submissionStatus[myId]){
+      var key = "sealed:" + view.round + ":" + myId;
+      if (key !== lastSubmittedSoundKey){
+        lastSubmittedSoundKey = key;
+        if (playgent.sound) playgent.sound("card.place.firm");
+      }
+    }
+    // Round resolved sound — when round changed
+    if (view && view.round !== lastRound && lastRound > 0){
+      lastRound = view.round;
+      if (playgent.sound) playgent.sound("score.tick");
+    } else if (view){
+      lastRound = view.round;
+    }
+    // Game-over sound
+    if (ctx.gameOver){
+      var goKey = JSON.stringify(ctx.gameOver.playerIds || []);
+      if (goKey !== lastOutcomeSoundKey){
+        lastOutcomeSoundKey = goKey;
+        var won = myId && ctx.gameOver.playerIds && ctx.gameOver.playerIds.indexOf(myId) >= 0;
+        if (playgent.sound) playgent.sound(won ? "positive.perfect" : "game.defeat");
+      }
+    } else {
+      lastOutcomeSoundKey = "";
+    }
+  }
+
+  function render(){
+    if (!lastView) return;
+    applyLandmarks(lastView, lastLegalActions, lastContext || {});
+    renderHeader(lastView);
+    renderBiome(lastView);
+    renderColonies(lastView, lastContext || {});
+    renderActor(lastView, lastLegalActions, lastContext || {});
+    renderHistory(lastView);
+    decorateControls();
+    playSoundsForUpdate(lastView, lastContext);
+  }
+
+  playgent.onStateChange(function(view, legalActions, context){
+    lastView = view;
+    lastContext = context || {};
+    lastLegalActions = legalActions || [];
+    render();
+  });
+}());
+</script>

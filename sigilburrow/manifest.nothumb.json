@@ -1,0 +1,18 @@
+{
+  "slug": "sigilburrow",
+  "name": "Sigilburrow",
+  "description": "Run a burrow of rune-monks who only obey Loopglyph, an 8-symbol scripting tongue. Prime-length scrolls catch the biome's eye.",
+  "minPlayers": 2,
+  "maxPlayers": 4,
+  "version": "1.0.0",
+  "tags": [
+    "strategy",
+    "simultaneous",
+    "programming",
+    "hidden-info",
+    "asymmetric"
+  ],
+  "maxTicks": 800,
+  "rules": "OVERVIEW\nYou keep a colony of rune-monks holed up in Sigilburrow. Every round a hostile biome rolls in. Each colony submits one Loopglyph scroll (the eight symbols > < + - . , [ ]). Scrolls run in a tiny sandbox tape; each output byte chooses one of eight directives (Dig, Plant, Harvest, Build, Forge, Scout, Pray, Sleep). The biome announces which directive it wants and how many. Hit the threshold and survive with score and stockpile; miss it and lose morale, then population. After six rounds the highest score wins. A colony at zero population is eliminated.\n\nVISIBLE STATE\nThe shared view shows every colony's population, morale, score, stockpile, current biome name, threat description, required directive, threshold, and the biome's tide (the bytes the , instruction will read). Your own scroll-in-progress is visible only to you until the round resolves. Past rounds reveal every scroll, its directive tally, and whether prime-length triggered a biome boon.\n\nDECISIONS\nDuring draft you have one opportunity: submit a Loopglyph scroll. Pick a preset or compose your own through the schema option. Scroll length is capped at 240 characters. Only > < + - . , [ ] count as instructions; other characters are padding that still counts toward the character total for the prime check. Brackets must match. Once you submit you wait for the rest of the colonies. The system resolves the round automatically when all living colonies have submitted.\n\nPRIME RULE\nIf the submitted scroll's total character length is a prime number, a biome boon is drawn from this round's biome boon table and applied to your colony. Boons can include extra stockpile, free directives, score, or one-round protection. The boon table varies per biome.\n\nOUTCOME\nHighest score after the final round wins. If population hits zero you are eliminated and your final score is locked. Ties are broken by population, then morale, then bracket-balanced scroll count. A draw is declared only when every surviving colony is tied on all tiebreakers.",
+  "rounds": 6
+}

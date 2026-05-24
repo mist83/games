@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+  <rect width="400" height="400" fill="#1a1230"/>
+  <rect y="200" width="400" height="200" fill="#0d0820"/>
+  <rect y="260" width="400" height="140" fill="#2a1a4a"/>
+  <rect y="320" width="400" height="80" fill="#19102e"/>
+
+  <circle cx="312" cy="92" r="38" fill="#facc15"/>
+  <circle cx="298" cy="84" r="8" fill="#fde68a"/>
+  <circle cx="320" cy="100" r="5" fill="#fde68a"/>
+
+  <circle cx="40" cy="60" r="1.6" fill="#fde68a"/>
+  <circle cx="90" cy="34" r="1.2" fill="#fde68a"/>
+  <circle cx="160" cy="76" r="1.4" fill="#fde68a"/>
+  <circle cx="220" cy="40" r="1.1" fill="#fde68a"/>
+  <circle cx="260" cy="60" r="1.3" fill="#fde68a"/>
+  <circle cx="370" cy="40" r="1.6" fill="#fde68a"/>
+  <circle cx="380" cy="160" r="1.2" fill="#fde68a"/>
+
+  <polygon points="0,300 80,260 160,290 240,250 320,290 400,260 400,400 0,400" fill="#3d2a5c"/>
+
+  <path d="M80,330 Q90,300 130,300 Q170,300 175,335" fill="none" stroke="#facc15" stroke-width="2.5"/>
+  <path d="M210,330 Q220,290 270,290 Q310,290 315,335" fill="none" stroke="#facc15" stroke-width="2.5"/>
+  <path d="M30,346 Q60,326 90,346" fill="none" stroke="#facc15" stroke-width="2.5"/>
+
+  <rect x="118" y="318" width="6" height="9" rx="1" fill="#fcd34d"/>
+  <rect x="142" y="314" width="6" height="13" rx="1" fill="#fcd34d"/>
+  <rect x="248" y="304" width="6" height="13" rx="1" fill="#fcd34d"/>
+  <rect x="276" y="312" width="6" height="9" rx="1" fill="#fcd34d"/>
+
+  <g font-family="'Menlo','Consolas','Courier New',monospace" font-weight="700" font-size="42" fill="#f5d0fe">
+    <text x="36" y="172">+</text>
+    <text x="68" y="172">+</text>
+    <text x="100" y="172">[</text>
+    <text x="132" y="172">&gt;</text>
+    <text x="164" y="172">+</text>
+    <text x="196" y="172">&lt;</text>
+    <text x="228" y="172">-</text>
+    <text x="260" y="172">]</text>
+    <text x="292" y="172">.</text>
+    <text x="324" y="172">.</text>
+  </g>
+
+  <g font-family="'Menlo','Consolas','Courier New',monospace" font-weight="700" font-size="42" fill="#fbcfe8" opacity="0.85">
+    <text x="36" y="218">&gt;</text>
+    <text x="68" y="218">,</text>
+    <text x="100" y="218">[</text>
+    <text x="132" y="218">+</text>
+    <text x="164" y="218">.</text>
+    <text x="196" y="218">,</text>
+    <text x="228" y="218">]</text>
+    <text x="260" y="218">.</text>
+  </g>
+
+  <g text-anchor="middle">
+    <text x="200" y="92" font-family="'Cinzel','Georgia','Times New Roman',serif" font-weight="900" font-size="44" fill="#f9fafb" letter-spacing="2">SIGILBURROW</text>
+    <text x="200" y="124" font-family="'Menlo','Consolas','Courier New',monospace" font-size="12" fill="#fcd34d" letter-spacing="6">PRIME-LENGTH BOONS</text>
+  </g>
+
+  <text x="200" y="376" text-anchor="middle" font-family="'Menlo','Consolas','Courier New',monospace" font-size="11" fill="#a78bfa" letter-spacing="3">8 SYMBOLS &#8226; 6 BIOMES &#8226; 1 BURROW</text>
+</svg>
