@@ -166,8 +166,8 @@ var C = {
   MARK_PULSE_SPEED: 0.04,
 
   /* ── Layout ── */
-  CIRCLE_RADIUS_RATIO: 0.32,
-  CIRCLE_CENTER_Y: 0.42,
+  CIRCLE_RADIUS_RATIO: 0.28,
+  CIRCLE_CENTER_Y: 0.5,
   AVATAR_SIZE: 48,
 
   /* ── Scene director ── */
