@@ -13,6 +13,7 @@ var SceneDirector = {
   internalW: 0,
   internalH: 0,
   internalRenderDom: null,
+  internalRenderPhaseHud: null,
   internalMyId: null,
   internalIsSpectator: false,
   internalIsDead: false,
@@ -28,6 +29,8 @@ var SceneDirector = {
 
     /* Buffer state while queue is playing */
     if (SceneDirector.internalPlaying) {
+      if (SceneDirector.internalRenderPhaseHud)
+        SceneDirector.internalRenderPhaseHud(view, legalActions, context);
       SceneDirector.internalPendingView = view;
       SceneDirector.internalPendingLegalActions = legalActions;
       SceneDirector.internalPendingContext = context;
@@ -49,6 +52,8 @@ var SceneDirector = {
     SceneDirector.internalPrevView = view;
 
     if (queue.length > 0) {
+      if (SceneDirector.internalRenderPhaseHud)
+        SceneDirector.internalRenderPhaseHud(view, legalActions, context);
       SceneDirector.internalQueue = queue;
       SceneDirector.internalPlaying = true;
       SceneDirector.internalStep(view, legalActions, context, 0);

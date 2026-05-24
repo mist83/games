@@ -101,11 +101,84 @@ body {
 /* ── Phase header ── */
 #phase-header {
   position: absolute; top: 12px; left: 16px; right: 16px;
-  display: flex; justify-content: space-between; align-items: center; pointer-events: none;
+  display: flex; justify-content: center; pointer-events: none;
+  z-index: 8;
 }
-.phase-label { font-size: 13px; font-weight: 600; color: #94a3b8; }
-.timer-display { font-size: 20px; font-weight: 700; color: #a855f7; min-width: 36px; text-align: center; }
-.timer-display.urgent { color: #ef4444; }
+.phase-banner {
+  width: min(520px, 100%);
+  padding: 10px 12px 11px;
+  border: 1px solid rgba(226, 232, 240, 0.16);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(15, 15, 26, 0.74)),
+    linear-gradient(90deg, rgba(252, 211, 77, 0.08), rgba(96, 165, 250, 0.08), rgba(168, 85, 247, 0.08));
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+.phase-banner::before {
+  content: "";
+  display: block;
+  height: 2px;
+  margin: -10px -12px 9px;
+  background: linear-gradient(90deg, #fcd34d, #60a5fa, #a855f7);
+  opacity: 0.8;
+}
+.phase-banner[data-tone="night"]::before { background: linear-gradient(90deg, #6366f1, #a855f7, #ef4444); }
+.phase-banner[data-tone="vote"]::before { background: linear-gradient(90deg, #fcd34d, #ef4444, #a855f7); }
+.phase-banner[data-tone="result"]::before { background: linear-gradient(90deg, #ef4444, #fcd34d, #22c55e); }
+.phase-banner[data-tone="secret"]::before { background: linear-gradient(90deg, #a855f7, #60a5fa, #fcd34d); }
+.phase-main {
+  display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: start;
+}
+.phase-kicker {
+  font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0;
+  color: #fcd34d; line-height: 1.2;
+}
+.phase-banner[data-tone="night"] .phase-kicker { color: #c4b5fd; }
+.phase-banner[data-tone="vote"] .phase-kicker { color: #fca5a5; }
+.phase-banner[data-tone="result"] .phase-kicker { color: #fde68a; }
+.phase-banner[data-tone="secret"] .phase-kicker { color: #d8b4fe; }
+.phase-label {
+  font-size: 22px; font-weight: 900; color: #f8fafc; line-height: 1.05;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.45);
+}
+.phase-detail {
+  margin-top: 4px; font-size: 12px; font-weight: 600; color: #cbd5e1; line-height: 1.35;
+}
+.timer-display {
+  min-width: 48px; height: 40px; padding: 0 9px;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid rgba(168, 85, 247, 0.42); border-radius: 8px;
+  background: rgba(15, 15, 26, 0.64);
+  font-size: 18px; font-weight: 900; color: #e9d5ff; text-align: center;
+  box-shadow: inset 0 0 16px rgba(168, 85, 247, 0.14);
+}
+.timer-display.urgent { color: #fecaca; border-color: rgba(239, 68, 68, 0.75); box-shadow: inset 0 0 16px rgba(239, 68, 68, 0.18); }
+.phase-steps {
+  display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 5px;
+  margin-top: 10px;
+}
+.phase-step {
+  position: relative; min-width: 0; height: 22px; padding: 0 5px;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid rgba(148, 163, 184, 0.18); border-radius: 7px;
+  background: rgba(15, 23, 42, 0.46); color: #94a3b8;
+  font-size: 10px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.phase-step.complete {
+  color: #cbd5e1; border-color: rgba(252, 211, 77, 0.28);
+  background: rgba(252, 211, 77, 0.08);
+}
+.phase-step.active {
+  color: #ffffff; border-color: rgba(255, 255, 255, 0.42);
+  background: rgba(96, 165, 250, 0.22);
+  box-shadow: 0 0 18px rgba(96, 165, 250, 0.2);
+}
+.phase-step.active::after {
+  content: "";
+  position: absolute; left: 7px; right: 7px; bottom: 3px; height: 2px;
+  border-radius: 2px; background: currentColor; opacity: 0.7;
+}
 
 /* ── Discussion hint ── */
 .discuss-hint { font-size: 15px; color: #ffffff; margin-top: 8px; animation: pulse 2s ease-in-out infinite; text-shadow: 0 1px 4px rgba(0,0,0,0.5); }
@@ -130,10 +203,14 @@ body {
 
 /* ── Vote history ── */
 #vote-history-area {
-  position: absolute; top: 36px; left: 16px;
+  position: absolute; top: 118px; left: 16px;
   pointer-events: auto; max-width: 280px; z-index: 5;
 }
-.vh-toggle { background: none; border: none; color: #94a3b8; font-size: 12px; font-weight: 600; font-family: inherit; cursor: pointer; padding: 4px 0; display: block; }
+.vh-toggle {
+  min-height: 36px; background: none; border: none; color: #94a3b8;
+  font-size: 12px; font-weight: 600; font-family: inherit; cursor: pointer;
+  padding: 6px 0; display: inline-flex; align-items: center;
+}
 .vh-toggle:hover { color: #e2e8f0; }
 .vh-content { display: none; font-size: 11px; color: #94a3b8; line-height: 1.6; max-height: 180px; overflow-y: auto; margin-top: 4px; background: rgba(26, 26, 46, 0.9); border-radius: 8px; padding: 8px 12px; }
 .vh-content.open { display: block; }
@@ -143,15 +220,36 @@ body.no-canvas #canvas-container { display: none; }
 body.no-canvas { background: #0f0f1a; }
 body.no-canvas.phase-night { background: #0a0a1f; }
 body.no-canvas.phase-day { background: #1a1508; }
+
+@media (max-width: 520px) {
+  #phase-header { top: 8px; left: 8px; right: 8px; }
+  .phase-banner { padding: 8px 9px 9px; }
+  .phase-banner::before { margin: -8px -9px 8px; }
+  .phase-label { font-size: 18px; }
+  .phase-detail { font-size: 11px; }
+  .timer-display { min-width: 44px; height: 36px; font-size: 16px; }
+  .phase-step { font-size: 0; height: 12px; padding: 0; border-radius: 6px; }
+  .phase-step.active::after { left: 3px; right: 3px; bottom: 3px; }
+  #vote-history-area { top: 104px; max-width: 220px; }
+}
 </style>
 
 <div id="bg-base"></div>
 <div id="bg-crossfade"></div>
 <div id="canvas-container"></div>
 <div id="dom-overlay">
-  <div id="phase-header">
-    <span class="phase-label" id="phase-label"></span>
-    <span class="timer-display" id="timer-display"></span>
+  <div id="phase-header" aria-live="polite">
+    <div class="phase-banner" id="phase-banner" data-tone="secret">
+      <div class="phase-main">
+        <div>
+          <div class="phase-kicker" id="phase-kicker"></div>
+          <div class="phase-label" id="phase-label"></div>
+          <div class="phase-detail" id="phase-detail"></div>
+        </div>
+        <span class="timer-display" id="timer-display"></span>
+      </div>
+      <div class="phase-steps" id="phase-steps"></div>
+    </div>
   </div>
   <div id="center-content"></div>
   <div id="vote-history-area"></div>
@@ -581,6 +679,119 @@ function phaseLabel(phase, round) {
   return typeof label === 'function' ? label(round) : label;
 }
 
+var PHASE_STEPS = [
+  { phase: 'roleReveal', label: 'Role' },
+  { phase: 'day_discussion', label: 'Talk' },
+  { phase: 'day_vote', label: 'Vote' },
+  { phase: 'day_result', label: 'Verdict' },
+  { phase: 'night', label: 'Night' },
+  { phase: 'night_result', label: 'Dawn' }
+];
+
+var PHASE_INFO = {
+  roleReveal: { tone: 'secret', kicker: 'Opening', title: 'Roles Revealed', detail: 'Each player is learning their secret role.' },
+  day_discussion: { tone: 'day', kicker: 'Day', title: 'Discussion', detail: 'Talk in chat, share suspicions, and build a case.' },
+  day_vote: { tone: 'vote', kicker: 'Day', title: 'Village Vote', detail: 'Choose who to eliminate, or skip if the village is unsure.' },
+  day_result: { tone: 'result', kicker: 'Day', title: 'Vote Result', detail: 'The village sees what the vote decided.' },
+  night: { tone: 'night', kicker: 'Night', title: 'Night Actions', detail: 'Werewolves, seer, and doctor act in secret.' },
+  night_result: { tone: 'result', kicker: 'Dawn', title: 'Night Result', detail: 'The village wakes to learn what happened.' },
+  gameOver: { tone: 'result', kicker: 'Finale', title: 'Game Over', detail: 'The winning team is revealed.' },
+  finished: { tone: 'result', kicker: 'Finale', title: 'Finished', detail: 'The match has ended.' }
+};
+
+function displayRound(round) {
+  var n = parseInt(round, 10);
+  if (isNaN(n)) return 1;
+  return Math.max(1, n + 1);
+}
+
+function phaseIndex(phase) {
+  for (var i = 0; i < PHASE_STEPS.length; i++) {
+    if (PHASE_STEPS[i].phase === phase) return i;
+  }
+  return phase === 'gameOver' || phase === 'finished' ? PHASE_STEPS.length : 0;
+}
+
+function phaseDetail(phase, view, actions, isDead, isSpectator, myRole) {
+  if (phase === 'day_vote') {
+    if (isDead || isSpectator) return 'The living village is voting on who, if anyone, to eliminate.';
+    if (view.myVote !== undefined) return 'Your vote is locked in. Waiting for the rest of the village.';
+    if (actions.length > 0) return 'Cast your vote before the village runs out of time.';
+  }
+  if (phase === 'night') {
+    if (isDead || isSpectator) return 'Secret night actions are resolving around the village.';
+    if (myRole === 'werewolf' && view.myWolfVote) return 'Your target is chosen. Waiting for the rest of the night.';
+    if (myRole === 'seer' && view.seerTarget) return 'Your vision has resolved. Waiting for the night to end.';
+    if (myRole === 'doctor' && actions.length === 0) return 'Your protection is sent. Waiting for the night to end.';
+    if (actions.length > 0) return 'Choose your night action before dawn.';
+    return 'The village sleeps while secret roles make their moves.';
+  }
+  var info = PHASE_INFO[phase] || {};
+  return info.detail || 'Watch the village state change.';
+}
+
+function renderPhaseSteps(phase) {
+  var active = phaseIndex(phase);
+  var h = '';
+  for (var i = 0; i < PHASE_STEPS.length; i++) {
+    var cls = 'phase-step';
+    if (i < active) cls += ' complete';
+    if (i === active) cls += ' active';
+    h += '<span class="' + cls + '">' + esc(PHASE_STEPS[i].label) + '</span>';
+  }
+  return h;
+}
+
+function renderPhaseHeader(view, actions, isDead, isSpectator, myRole) {
+  var phase = view.phase;
+  var info = PHASE_INFO[phase] || { tone: 'day', kicker: 'Phase', title: phaseLabel(phase, view.round), detail: '' };
+  var round = displayRound(view.round);
+  var kicker = info.kicker;
+  if (phase === 'day_discussion' || phase === 'day_vote' || phase === 'day_result') kicker = 'Day ' + round;
+  if (phase === 'night') kicker = 'Night ' + round;
+  var banner = document.getElementById('phase-banner');
+  if (banner) banner.setAttribute('data-tone', info.tone || 'day');
+  document.getElementById('phase-kicker').textContent = kicker;
+  document.getElementById('phase-label').textContent = info.title || phaseLabel(phase, view.round);
+  document.getElementById('phase-detail').textContent = phaseDetail(phase, view, actions, isDead, isSpectator, myRole);
+  document.getElementById('phase-steps').innerHTML = renderPhaseSteps(phase);
+}
+
+function updatePhaseClockAndSound(phase, context, myId) {
+  if (phase === _lastRenderedPhase) return;
+  if (playgent.sound) {
+    if (phase === 'roleReveal') playgent.sound('info.secret');
+    else if (phase === 'night') playgent.sound('phase.night');
+    else if (phase === 'day_discussion' || phase === 'day_vote') playgent.sound('phase.day');
+    else if (phase === 'day_result' || phase === 'night_result') playgent.sound('info.reveal');
+    else if (phase === 'gameOver') playgent.sound(context.gameOver && context.gameOver.winners && context.gameOver.winners.indexOf(myId) !== -1 ? 'game.victory' : (myId ? 'game.defeat' : 'game.over'));
+    else playgent.sound('phase.change');
+  }
+  startTimer(C.PHASE_TIMEOUTS[phase] || 0);
+  _lastRenderedPhase = phase;
+}
+
+function renderPhaseHud(view, legalActions, context) {
+  legalActions = (legalActions || []).map(unwrapAction);
+  var phase = view.phase;
+  var myId = context.myId;
+  var isSpectator = !myId || (view.players || []).indexOf(myId) === -1;
+  var isDead = myId && view.alive && !view.alive[myId];
+  var myRole = view.myRole || null;
+  var phaseChanged = phase !== _lastRenderedPhase;
+  var actions = [];
+  for (var i = 0; i < legalActions.length; i++) {
+    if (legalActions[i].type !== 'advance_phase') actions.push(legalActions[i]);
+  }
+  renderPhaseHeader(view, actions, isDead, isSpectator, myRole);
+  if (phaseChanged) {
+    document.getElementById('center-content').innerHTML = '';
+    document.getElementById('action-tray').innerHTML = '';
+    _lastCenterHtml = null;
+  }
+  updatePhaseClockAndSound(phase, context, myId);
+}
+
 var ROLE_DESCS = {
   werewolf: 'Choose a villager to eliminate each night. Blend in by day.',
   seer: 'Investigate one player each night to learn their true role.',
@@ -765,19 +976,8 @@ function renderDom(view, legalActions, context) {
   }
 
   /* Phase header + timer */
-  document.getElementById('phase-label').textContent = phaseLabel(phase, view.round);
-  if (phase !== _lastRenderedPhase) {
-    if (playgent.sound) {
-      if (phase === 'roleReveal') playgent.sound('info.secret');
-      else if (phase === 'night') playgent.sound('phase.night');
-      else if (phase === 'day_discussion' || phase === 'day_vote') playgent.sound('phase.day');
-      else if (phase === 'day_result' || phase === 'night_result') playgent.sound('info.reveal');
-      else if (phase === 'gameOver') playgent.sound(context.gameOver && context.gameOver.winners && context.gameOver.winners.indexOf(myId) !== -1 ? 'game.victory' : (myId ? 'game.defeat' : 'game.over'));
-      else playgent.sound('phase.change');
-    }
-    startTimer(C.PHASE_TIMEOUTS[phase] || 0);
-    _lastRenderedPhase = phase;
-  }
+  renderPhaseHeader(view, actions, isDead, isSpectator, myRole);
+  updatePhaseClockAndSound(phase, context, myId);
 
   /* No-canvas fallback */
   if (!_canvasReady) {
@@ -921,8 +1121,8 @@ function initCanvas() {
     Atmosphere.create(atmoLayer, w, h);
     VoteLines.create(voteLayer);
     Effects.create(fxLayer, world);
-    SceneDirector._w = w;
-    SceneDirector._h = h;
+    SceneDirector.internalW = w;
+    SceneDirector.internalH = h;
 
     app.ticker.add(function(ticker) {
       var dt = ticker.deltaTime;
@@ -950,12 +1150,13 @@ function initCanvas() {
    ══════════════════════════════════════ */
 
 PlayerCircle.create(document.getElementById('dom-overlay'));
-PlayerCircle._w = window.innerWidth;
-PlayerCircle._h = window.innerHeight;
+PlayerCircle.internalW = window.innerWidth;
+PlayerCircle.internalH = window.innerHeight;
 
-SceneDirector._renderDom = renderDom;
-SceneDirector._w = window.innerWidth;
-SceneDirector._h = window.innerHeight;
+SceneDirector.internalRenderDom = renderDom;
+SceneDirector.internalRenderPhaseHud = renderPhaseHud;
+SceneDirector.internalW = window.innerWidth;
+SceneDirector.internalH = window.innerHeight;
 
 try { initCanvas().catch(function() { document.body.classList.add('no-canvas'); }); }
 catch (e) { document.body.classList.add('no-canvas'); }
