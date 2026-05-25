@@ -135,6 +135,41 @@ var HandEval = {
     return out;
   },
 
+  internalCombinationCount: function (n, k) {
+    var choose = k;
+    var result = 1;
+    var i;
+    if (choose < 0 || choose > n) return 0;
+    if (choose > n - choose) choose = n - choose;
+    for (i = 1; i <= choose; i++) {
+      result = (result * (n - choose + i)) / i;
+    }
+    return Math.round(result);
+  },
+
+  internalCombinationAt: function (arr, k, index) {
+    var result = [];
+    var start = 0;
+    var pos;
+    for (pos = 0; pos < k; pos++) {
+      var maxStart = arr.length - (k - pos);
+      var choice;
+      for (choice = start; choice <= maxStart; choice++) {
+        var branchCount = HandEval.internalCombinationCount(
+          arr.length - choice - 1,
+          k - pos - 1,
+        );
+        if (index < branchCount) {
+          result.push(arr[choice]);
+          start = choice + 1;
+          break;
+        }
+        index -= branchCount;
+      }
+    }
+    return result;
+  },
+
   evaluate: function (cards) {
     var nums = cards.map(function (card) {
       return HandEval.internalToNum(card);
@@ -282,66 +317,24 @@ var HandEval = {
       }
     } else {
       /* 3+ cards remaining: deterministic sampling.
-         Math.random() throws in sandboxed iframes, so no Monte Carlo.
-         Enumerate up to 2000 evenly-spaced combos from the deck. */
-      var deckLen = deck.length;
-      var step = Math.max(1, Math.floor(deckLen / 15));
-      for (var d4 = 0; d4 < deckLen; d4 += step) {
-        for (var d5 = d4 + 1; d5 < deckLen; d5 += step) {
-          if (remaining >= 3) {
-            for (var d6 = d5 + 1; d6 < deckLen; d6 += step) {
-              var b3 = community.concat([deck[d4], deck[d5], deck[d6]]);
-              if (remaining >= 4) {
-                for (var d7 = d6 + 1; d7 < deckLen; d7 += step) {
-                  if (remaining >= 5) {
-                    for (var d8 = d7 + 1; d8 < deckLen; d8 += step) {
-                      HandEval.internalScoreRound(
-                        players,
-                        community.concat([
-                          deck[d4],
-                          deck[d5],
-                          deck[d6],
-                          deck[d7],
-                          deck[d8],
-                        ]),
-                        wins,
-                        ties,
-                      );
-                      total++;
-                    }
-                  } else {
-                    HandEval.internalScoreRound(
-                      players,
-                      community.concat([
-                        deck[d4],
-                        deck[d5],
-                        deck[d6],
-                        deck[d7],
-                      ]),
-                      wins,
-                      ties,
-                    );
-                    total++;
-                  }
-                }
-              } else {
-                HandEval.internalScoreRound(players, b3, wins, ties);
-                total++;
-              }
-              if (total > 2000) break;
-            }
-          } else {
-            HandEval.internalScoreRound(
-              players,
-              community.concat([deck[d4], deck[d5]]),
-              wins,
-              ties,
-            );
-            total++;
-          }
-          if (total > 2000) break;
-        }
-        if (total > 2000) break;
+         Math.random() throws in sandboxed iframes, so sample evenly across the
+         full combination index space instead of stepping through sorted cards. */
+      var comboTotal = HandEval.internalCombinationCount(deck.length, remaining);
+      var sampleTotal = Math.min(comboTotal, 4000);
+      var sampleIndex;
+      for (sampleIndex = 0; sampleIndex < sampleTotal; sampleIndex++) {
+        var comboIndex = Math.floor(
+          ((sampleIndex + 0.5) * comboTotal) / sampleTotal,
+        );
+        HandEval.internalScoreRound(
+          players,
+          community.concat(
+            HandEval.internalCombinationAt(deck, remaining, comboIndex),
+          ),
+          wins,
+          ties,
+        );
+        total++;
       }
     }
 
